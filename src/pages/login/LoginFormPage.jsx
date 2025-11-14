@@ -1,11 +1,171 @@
-// src/pages/LoginFormPage.jsx
-import React from "react";
-import "../../css/login/LoginFormPage.css"; // 나중에 만들면 됨
+// src/pages/login/LoginFormPage.jsx
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import "../../css/login/LoginFormPage.css";
+import LogoImg from "../../images/loginpage/logo.svg";
+import { useAuth } from "../../context/AuthContext";
+
+// 눈 아이콘 이미지
+import EyeOpenIcon from "../../images/loginpage/icon-eye-open.svg";
+import EyeClosedIcon from "../../images/loginpage/icon-eye-closed.svg";
 
 export default function LoginFormPage() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const [id, setId] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleBack = () => {
+    navigate("/login");
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      // ✅ 백엔드 로그인 요청: loginId + password
+      await login({
+        loginId: id,
+        password,
+      });
+
+      // 로그인 성공 → 홈으로 이동
+      navigate("/", { replace: true });
+    } catch (err) {
+      console.error(err);
+      setError("아이디 또는 비밀번호를 확인해주세요.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClickFindAccount = () => {
+    navigate("/login/find");
+  };
+
+  const handleClickSignup = () => {
+    navigate("/signup");
+  };
+
+  const togglePasswordVisible = () => {
+    setShowPassword((prev) => !prev);
+  };
+
   return (
     <div className="login-form-page">
-      로그인 폼 들어갈 자리
+      <div className="login-form-inner">
+        {/* 상단 헤더 (뒤로가기 + 로고) */}
+        <header className="login-form-header">
+          <button
+            type="button"
+            className="login-form-back-button"
+            onClick={handleBack}
+            aria-label="뒤로가기"
+          >
+            <span className="login-form-back-icon" />
+          </button>
+
+          <div className="login-form-logo-area">
+            <div className="login-form-logo-circle">
+              <img
+                src={LogoImg}
+                alt="캠플 로고"
+                className="login-form-logo-image"
+              />
+            </div>
+          </div>
+        </header>
+
+        {/* 폼 영역 */}
+        <form className="login-form-body" onSubmit={handleSubmit}>
+          {/* 아이디 필드 */}
+          <div className="login-form-field">
+            <label className="login-form-label" htmlFor="login-id">
+              아이디
+            </label>
+            <div className="login-form-input-wrapper">
+              <input
+                id="login-id"
+                type="text"
+                value={id}
+                onChange={(e) => setId(e.target.value)}
+                placeholder="아이디를 입력해주세요."
+                className="login-form-input"
+                autoComplete="username"
+                required
+              />
+            </div>
+          </div>
+
+          {/* 비밀번호 필드 */}
+          <div className="login-form-field">
+            <label className="login-form-label" htmlFor="login-password">
+              비밀번호
+            </label>
+            <div className="login-form-input-wrapper">
+              <input
+                id="login-password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="비밀번호"
+                className="login-form-input login-form-input-password"
+                autoComplete="current-password"
+                required
+              />
+              <button
+                type="button"
+                className="login-form-password-toggle"
+                onClick={togglePasswordVisible}
+                aria-label={
+                  showPassword ? "비밀번호 숨기기" : "비밀번호 보기"
+                }
+              >
+                <img
+                  src={showPassword ? EyeOpenIcon : EyeClosedIcon}
+                  alt={showPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
+                  className="login-form-password-icon"
+                />
+              </button>
+            </div>
+          </div>
+
+          {error && <div className="login-form-error">{error}</div>}
+
+          {/* 시작하기 버튼 */}
+          <button
+            type="submit"
+            className="login-form-submit-button"
+            disabled={loading}
+          >
+            {loading ? "시작하는 중..." : "시작하기"}
+          </button>
+        </form>
+
+        {/* 아래 링크 영역 */}
+        <div className="login-form-footer">
+          <button
+            type="button"
+            className="login-form-link"
+            onClick={handleClickFindAccount}
+          >
+            아이디/ 비밀번호 찾기
+          </button>
+          <button
+            type="button"
+            className="login-form-link"
+            onClick={handleClickSignup}
+          >
+            회원가입
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

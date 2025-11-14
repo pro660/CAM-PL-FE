@@ -15,7 +15,7 @@ export default function LoginPage() {
   };
 
   const handleClickKakao = () => {
-    // 카카오 로그인 시작 (아래 3️⃣에서 env로 설명)
+    // 카카오 로그인 시작 
     window.location.href = process.env.REACT_APP_KAKAO_AUTH_URL;
   };
 

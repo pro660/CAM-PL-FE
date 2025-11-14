@@ -1,0 +1,194 @@
+/* 전체 페이지 배경 */
+.login-form-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  background: linear-gradient(180deg, #9ac5ed 0%, #c09ef1 80%, #c09ef1 100%);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Noto Sans KR",
+    sans-serif;
+}
+
+/* 내부 컨테이너 */
+.login-form-inner {
+  width: 100%;
+  max-width: 26.25rem;
+  padding: 2.5rem 1.5rem 2.5rem;
+  margin: 0 auto;
+}
+
+/* 헤더 (뒤로가기 + 로고) */
+.login-form-header {
+  display: flex;
+  align-items: center;
+  margin-left: -1.5rem;
+  margin-bottom: 2.5rem;
+  margin-top: -1rem;
+}
+
+/* 뒤로가기 버튼 */
+.login-form-back-button {
+  border: none;
+  background: transparent;
+  padding: 0.4rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* < 모양 화살표 아이콘 */
+.login-form-back-icon {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-left: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+  transform: rotate(45deg);
+}
+
+/* 로고 영역 */
+.login-form-logo-area {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  position: relative; /* 로고만 시각적으로 내리기 위함 */
+}
+
+.login-form-logo-circle {
+  width: 10rem;
+  height: 10rem;
+  border-radius: 50%;
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* ✅ 다른 요소 레이아웃은 그대로 두고, 로고 원만 아래로 이동 */
+  transform: translateY(5rem); /* 필요하면 0.8rem~1.5rem 사이로 조절 */
+}
+
+.login-form-logo-image {
+  width: 100%;
+  height: auto;
+}
+
+/* 폼 영역 */
+.login-form-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+  margin-top: 22rem; /* 필요하면 나중에 줄여도 됨 */
+}
+
+/* 필드 공통 */
+.login-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.login-form-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #777777;
+}
+
+/* input 감싸는 래퍼 (아이디/비번 공통) */
+.login-form-input-wrapper {
+  position: relative;
+  width: 100%;
+  height: 3rem;
+  border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 0.4rem 1rem rgba(0, 0, 0, 0.12);
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  box-sizing: border-box; /* 패딩 포함해서 같은 폭 유지 */
+}
+
+/* 실제 인풋 */
+.login-form-input {
+  flex: 1;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.9rem;
+  color: #333333;
+}
+
+.login-form-input::placeholder {
+  color: #c0c0c0;
+}
+
+/* 비밀번호 인풋은 아이콘 자리만 여유 있게 */
+.login-form-input-password {
+  padding-right: 2.4rem;
+}
+
+/* 비밀번호 토글 버튼 */
+.login-form-password-toggle {
+  position: absolute;
+  right: 0.9rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 눈 아이콘 이미지 */
+.login-form-password-icon {
+  width: 1.2rem;
+  height: 1.2rem;
+  object-fit: contain;
+}
+
+/* 에러 메시지 */
+.login-form-error {
+  margin-top: 0.2rem;
+  font-size: 0.8rem;
+  color: #ffe2e2;
+}
+
+/* 시작하기 버튼 */
+.login-form-submit-button {
+  margin-top: 0.6rem;
+  width: 100%;
+  height: 3.2rem;
+  border-radius: 999px;
+  border: none;
+  font-size: 1rem;
+  font-weight: 600;
+  background-color: #ffffff;
+  color: #5a4bff;
+  box-shadow: 0 0.6rem 1.1rem rgba(0, 0, 0, 0.22);
+  cursor: pointer;
+}
+
+.login-form-submit-button:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+/* 하단 링크 영역 */
+.login-form-footer {
+  margin-top: 1.2rem;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+}
+
+.login-form-link {
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: #ffffff;
+  cursor: pointer;
+  white-space: nowrap;
+}

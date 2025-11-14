@@ -5,53 +5,58 @@ import api from "../api/axios";
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);      // 로그인한 유저 정보
-  const [isLoading, setIsLoading] = useState(true); // 초기 인증 체크 상태
+  const [user, setUser] = useState(null);
+  const [accessToken, setAccessToken] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // 앱 시작 시 쿠키 기반으로 로그인 상태 확인
+  // 앱 시작 시 localStorage에서 로그인 정보 복원
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const { data } = await api.get("/auth/me"); // ✅ 백엔드에서 현재 유저 반환
-        setUser(data); // data 안에 email, nickname, ... 들어있다고 가정
-      } catch (error) {
-        setUser(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    const storedUser = localStorage.getItem("camp_user");
+    const storedAccessToken = localStorage.getItem("camp_access_token");
 
-    checkAuth();
+    if (storedUser && storedAccessToken) {
+      try {
+        setUser(JSON.parse(storedUser));
+        setAccessToken(storedAccessToken);
+      } catch (e) {
+        console.error("저장된 사용자 정보 파싱 실패:", e);
+        localStorage.removeItem("camp_user");
+        localStorage.removeItem("camp_access_token");
+      }
+    }
+
+    setIsLoading(false);
   }, []);
 
-  // 이메일/비밀번호 로그인 (폼에서 호출)
-  // credentials 예: { email, password }
+  // 로그인: /auth/login 호출 → accessToken + 유저 정보 저장
   const login = async (credentials) => {
-    // 백엔드가 이 요청에서 쿠키를 심어줌
+    // credentials 예: { loginId, password }
     const { data } = await api.post("/auth/login", credentials);
+    // data = { accessToken, id, loginId, name, email, provider }
 
-    // 응답 구조에 따라 조정 (data.user가 있으면 그걸, 아니면 data 자체)
-    const nextUser = data.user ?? data;
-    setUser(nextUser);
+    const { accessToken: newAccessToken, ...userInfo } = data;
 
-    return nextUser;
+    setUser(userInfo);
+    setAccessToken(newAccessToken);
+
+    localStorage.setItem("camp_user", JSON.stringify(userInfo));
+    localStorage.setItem("camp_access_token", newAccessToken);
+
+    return userInfo;
   };
 
   // 로그아웃
-  const logout = async () => {
-    try {
-      await api.post("/auth/logout"); // 서버에서 쿠키 제거
-    } catch (error) {
-      // 실패해도 일단 프론트 상태는 비우기
-      console.error("로그아웃 요청 중 오류:", error);
-    } finally {
-      setUser(null);
-    }
+  const logout = () => {
+    setUser(null);
+    setAccessToken(null);
+    localStorage.removeItem("camp_user");
+    localStorage.removeItem("camp_access_token");
   };
 
   const value = {
     user,
-    isAuthenticated: !!user,
+    accessToken,
+    isAuthenticated: !!accessToken,
     isLoading,
     login,
     logout,
@@ -60,7 +65,6 @@ export function AuthProvider({ children }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-// 어디서든 useAuth()로 로그인 정보/함수 꺼내 쓰기
 export function useAuth() {
   return useContext(AuthContext);
 }
