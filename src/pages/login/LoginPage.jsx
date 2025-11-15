@@ -4,6 +4,7 @@ import "../../css/login/LoginPage.css";
 import LogoImg from "../../images/loginpage/logo.svg";
 
 export default function LoginPage() {
+  const kakaoAuthUrl = "";
   const navigate = useNavigate();
 
   const handleClickLogin = () => {
@@ -15,7 +16,7 @@ export default function LoginPage() {
   };
 
   const handleClickKakao = () => {
-  const kakaoAuthUrl = process.env.REACT_APP_KAKAO_AUTH_URL;
+  kakaoAuthUrl = process.env.REACT_APP_KAKAO_AUTH_URL;
 
   
   if (!kakaoAuthUrl) {
