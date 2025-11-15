@@ -65,7 +65,7 @@ function AppRouter() {
           <Route path="/signup" element={<SignupPage />} />
 
           <Route
-            path="/home"
+            path="/"
             element={
               // 필요하면 ProtectedRoute 다시 감싸기
               // <ProtectedRoute>
