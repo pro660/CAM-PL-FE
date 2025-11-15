@@ -19,9 +19,10 @@ function Layout({ children }) {
 
   // 헤더/메뉴를 숨길 경로들
   const hiddenPaths = [
-    "/login", // /login, /login/form, /login/find, /login/reset-password 포함
-    "/signup", // 회원가입
-    "/oauth/kakao/callback",
+    "/login",              // /login, /login/form, /login/find, /login/reset-password 포함
+    "/signup",             // 회원가입
+    "/oauth/signed-in",    // 카카오 콜백 (실제 백엔드 리다이렉트 경로)
+    "/oauth/kakao/callback" // 예전 콜백 경로도 혹시 모르게 같이 처리
   ];
 
   const shouldHide = hiddenPaths.some((path) =>
@@ -54,7 +55,9 @@ function AppRouter() {
           {/* 로그인 랜딩 */}
           <Route path="/login" element={<LoginPage />} />
 
-          {/* 카카오 콜백 */}
+          {/* 카카오 콜백 (현재 사용하는 경로) */}
+          <Route path="/oauth/signed-in" element={<KakaoCallbackPage />} />
+          {/* 혹시 백엔드에서 /oauth/kakao/callback 을 쓸 때도 대비 */}
           <Route path="/oauth/kakao/callback" element={<KakaoCallbackPage />} />
 
           {/* 로그인 폼 */}
@@ -65,8 +68,11 @@ function AppRouter() {
 
           {/* 비밀번호 재설정(새 비번 입력) */}
           <Route path="/login/reset-password" element={<ResetPasswordPage />} />
-          <Route path="/login/reset-password/done" element={<ResetPasswordDonePage />} />
-          
+          <Route
+            path="/login/reset-password/done"
+            element={<ResetPasswordDonePage />}
+          />
+
           {/* 회원가입 폼 */}
           <Route path="/signup" element={<SignupPage />} />
 
@@ -74,9 +80,10 @@ function AppRouter() {
           <Route
             path="/"
             element={
-              // <ProtectedRoute>
+              <ProtectedRoute>
                 <HomePage />
-              // </ProtectedRoute>
+              </ProtectedRoute>
+              // 디버깅용으로 보호 끄고 싶으면 위 3줄 대신 <HomePage /> 만 넣어도 됨
             }
           />
         </Routes>
