@@ -9,14 +9,17 @@ import LoginPage from "./pages/login/LoginPage";
 import HomePage from "./pages/HomePage";
 import LoginFormPage from "./pages/login/LoginFormPage";
 import SignupPage from "./pages/login/SignupPage";
+import FindAccountPage from "./pages/login/FindAccountPage";
+import ResetPasswordPage from "./pages/login/ResetPasswordPage";
+import ResetPasswordDonePage from "./pages/login/ResetPasswordDonePage";
 
 function Layout({ children }) {
   const location = useLocation();
 
   // 헤더/메뉴를 숨길 경로들
   const hiddenPaths = [
-    "/login",   // /login, /login/form 모두 포함
-    "/signup",  // 회원가입
+    "/login", // /login, /login/form, /login/find, /login/reset-password 포함
+    "/signup", // 회원가입
   ];
 
   const shouldHide = hiddenPaths.some((path) =>
@@ -52,6 +55,13 @@ function AppRouter() {
           {/* 로그인 폼 */}
           <Route path="/login/form" element={<LoginFormPage />} />
 
+          {/* 아이디/비밀번호 찾기 */}
+          <Route path="/login/find" element={<FindAccountPage />} />
+
+          {/* 비밀번호 재설정(새 비번 입력) */}
+          <Route path="/login/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/login/reset-password/done" element={<ResetPasswordDonePage />} />
+          
           {/* 회원가입 폼 */}
           <Route path="/signup" element={<SignupPage />} />
 
