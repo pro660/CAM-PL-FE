@@ -4,8 +4,10 @@ import "../../css/login/LoginPage.css";
 import LogoImg from "../../images/loginpage/logo.svg";
 
 export default function LoginPage() {
-  const kakaoAuthUrl = "";
   const navigate = useNavigate();
+
+  // 빌드 시점에 환경변수에서 한 번만 읽어옴
+  const kakaoAuthUrl = process.env.REACT_APP_KAKAO_AUTH_URL || "";
 
   const handleClickLogin = () => {
     navigate("/login/form");
@@ -16,18 +18,14 @@ export default function LoginPage() {
   };
 
   const handleClickKakao = () => {
-  kakaoAuthUrl = process.env.REACT_APP_KAKAO_AUTH_URL;
+    if (!kakaoAuthUrl) {
+      console.error("⚠️ REACT_APP_KAKAO_AUTH_URL 이 설정되어 있지 않습니다.");
+      alert("카카오 로그인 설정이 잘못되었습니다. 관리자에게 문의해주세요.");
+      return;
+    }
 
-  
-  if (!kakaoAuthUrl) {
-    console.error("⚠️ REACT_APP_KAKAO_AUTH_URL 이 설정되어 있지 않습니다.");
-    alert("카카오 로그인 설정이 잘못되었습니다. 관리자에게 문의해주세요.");
-    return;
-  }
-
-  window.location.href = kakaoAuthUrl;
-};
-
+    window.location.href = kakaoAuthUrl;
+  };
 
   return (
     <div className="login-page">
