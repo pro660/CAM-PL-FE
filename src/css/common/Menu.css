@@ -1,0 +1,69 @@
+/* 하단 고정 메뉴바 */
+.bottom-menu {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 600px; /* Layout 메인과 맞춤 */
+
+  display: flex;
+  justify-content: space-between;
+
+  padding: 0.4rem 1.5rem;
+  padding-bottom: calc(0.6rem + env(safe-area-inset-bottom)); /* 아이폰 노치 대응 */
+
+  background-color: #ffffff;
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.04);
+
+  z-index: 100;
+  box-sizing: border-box;
+}
+
+/* 각 메뉴 아이템 (버튼) */
+.bottom-menu-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+
+  padding: 0.25rem 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+/* 아이콘 (이미지는 너가 교체) */
+.bottom-menu-icon {
+  width: 3rem;
+  height: 3rem;
+  object-fit: contain;
+  opacity: 0.5; /* 기본은 흐리게 (비활성 느낌) */
+  transition: opacity 0.2s ease, filter 0.2s ease;
+}
+
+/* 라벨 텍스트 (지금은 안 쓰지만 나중에 쓸 수도 있어서 남겨둠) */
+.bottom-menu-label {
+  font-size: 0.7rem;
+  letter-spacing: -0.01em;
+  color: #b0b0b0; /* 회색 텍스트 */
+}
+
+/* 활성 탭 (예: 현재 머무는 페이지) */
+.bottom-menu-item.active .bottom-menu-icon {
+  opacity: 1;
+
+  /* 아이콘이 단색(검정/회색) SVG일 때 #C09EF1 느낌으로 틴트 주는 필터 */
+  filter: brightness(0) saturate(100%)
+    invert(80%) sepia(18%) saturate(1043%) hue-rotate(215deg)
+    brightness(101%) contrast(96%);
+}
+
+/* 혹시 라벨을 다시 쓸 경우 활성 색상 */
+.bottom-menu-item.active .bottom-menu-label {
+  color: #c09ef1;
+  font-weight: 500;
+}

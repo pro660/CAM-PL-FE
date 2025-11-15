@@ -1,17 +1,17 @@
 // src/routes/Router.jsx
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import ProtectedRoute from "./ProtectedRoute";
+import ProtectedRoute from "../ProtectedRoute";
 
-import Header from "./components/Header";
-import Menu from "./components/Menu";
+import Header from "../components/Header";
+import Menu from "../components/Menu";
 
-import LoginPage from "./pages/login/LoginPage";
-import HomePage from "./pages/HomePage";
-import LoginFormPage from "./pages/login/LoginFormPage";
-import SignupPage from "./pages/login/SignupPage";
-import FindAccountPage from "./pages/login/FindAccountPage";
-import ResetPasswordPage from "./pages/login/ResetPasswordPage";
-import ResetPasswordDonePage from "./pages/login/ResetPasswordDonePage";
+import LoginPage from "../pages/login/LoginPage";
+import HomePage from "../pages/HomePage";
+import LoginFormPage from "../pages/login/LoginFormPage";
+import SignupPage from "../pages/login/SignupPage";
+import FindAccountPage from "../pages/login/FindAccountPage";
+import ResetPasswordPage from "../pages/login/ResetPasswordPage";
+import ResetPasswordDonePage from "../pages/login/ResetPasswordDonePage";
 
 function Layout({ children }) {
   const location = useLocation();
@@ -69,9 +69,9 @@ function AppRouter() {
           <Route
             path="/"
             element={
-              <ProtectedRoute>
+              // <ProtectedRoute>
                 <HomePage />
-              </ProtectedRoute>
+              // </ProtectedRoute>
             }
           />
         </Routes>
