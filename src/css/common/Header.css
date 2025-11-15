@@ -1,30 +1,42 @@
-/* 상단 헤더 */
-
 .header {
-  height: 3rem; /* 대략 48px */
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 600px;
+
   display: flex;
-  justify-content: center;
   align-items: center;
-  padding: 0 1rem;
+  justify-content: center;
+
+  
   background-color: #ffffff;
-  border-bottom: 1px solid #eeeeee;
-  box-sizing: border-box;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+
+  z-index: 200; /* 메뉴보다 위에 오게 하고 싶으면 200 이상 */
 }
 
-/* 로고 + 텍스트 버튼 (좌측 정렬) */
+/* 로고 버튼 기본 */
 .header-logo-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0;
+  gap: 0.4rem;
+
   border: none;
   background: none;
+  padding: 0;
   cursor: pointer;
 }
 
-/* 로고 이미지  */
 .header-logo-img {
-  width: 5rem;   
-  height: 3rem;
+  width: 5rem;
+  height: 4rem;
   object-fit: contain;
+}
+
+.header-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #333333;
 }

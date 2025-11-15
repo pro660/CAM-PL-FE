@@ -6,7 +6,7 @@ import Header from "../components/Header";
 import Menu from "../components/Menu";
 
 import LoginPage from "../pages/login/LoginPage";
-import HomePage from "../pages/HomePage";
+import HomePage from "../pages/home/HomePage";
 import LoginFormPage from "../pages/login/LoginFormPage";
 import SignupPage from "../pages/login/SignupPage";
 import FindAccountPage from "../pages/login/FindAccountPage";

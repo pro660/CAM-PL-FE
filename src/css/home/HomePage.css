@@ -1,0 +1,499 @@
+/* =========================
+   공통 설정
+   ========================= */
+
+.home-page {
+  min-height: 100vh;
+  background-color: #f5f5f7; /* 헤더/메뉴와 분리되는 연한 회색 배경 */
+  padding: 2rem 1rem 1rem 1rem;
+}
+
+/* 섹션 공통 */
+
+.home-section {
+  margin-top: 1.5rem;
+}
+
+.home-section-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #555555;
+  margin-bottom: 0.7rem;
+}
+
+/* 카드 공통 */
+
+.home-section-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.home-card {
+  background-color: #ffffff;
+  border-radius: 1rem;
+  padding: 0.75rem 0.9rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+  box-sizing: border-box;
+}
+
+.home-card-header {
+  margin-bottom: 0.35rem;
+}
+
+.home-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+/* 강의용 Pill (건물명) */
+.home-pill-building {
+  background-color: #f0e7ff;
+  color: #7a51e7;
+}
+
+/* 일정용 Pill (카테고리) */
+.home-pill-category {
+  background-color: #ffe9f1;
+  color: #e0529a;
+}
+
+.home-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.home-card-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #333333;
+}
+
+.home-card-subtext {
+  font-size: 0.72rem;
+  color: #777777;
+}
+
+.home-card-time {
+  font-size: 0.72rem;
+  color: #9c9c9c;
+}
+
+/* =========================
+   상단 날짜 + D-DAY 카드
+   ========================= */
+
+.home-top-section {
+  padding-top: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.home-date-text {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #606060;
+  margin-bottom: 0.6rem;
+}
+
+.home-dday-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  background: linear-gradient(135deg, #c09ef1, #8c6ce8);
+  border-radius: 1rem;
+  padding: 0.9rem 1rem;
+  color: #ffffff;
+  box-shadow: 0 6px 14px rgba(140, 108, 232, 0.3);
+}
+
+.home-dday-texts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+
+.home-dday-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.home-dday-sub {
+  font-size: 0.7rem;
+  opacity: 0.9;
+}
+
+.home-dday-value {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 3.2rem;
+  height: 2.2rem;
+  border-radius: 0.9rem;
+  background-color: rgba(255, 255, 255, 0.18);
+}
+
+.home-dday-number {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+/* =========================
+   지도 / 시간표 토글 섹션
+   ========================= */
+
+.home-timetable-map-section {
+  margin-top: 1.4rem;
+}
+
+.home-timetable-map-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+/* 오른쪽 버튼 묶음 */
+.home-timetable-map-header-right {
+  display: flex;
+  gap: 0.4rem;
+}
+
+/* 토글 버튼 공통 */
+.home-toggle-btn {
+  border: none;
+  outline: none;
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.7rem;
+  font-weight: 500;
+  background-color: #ece8f7;
+  color: #7a61c5;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.1s ease;
+}
+
+.home-toggle-btn.active {
+  background-color: #c09ef1;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+/* 지도 / 시간표 박스 영역 */
+
+.home-timetable-map-content {
+  border-radius: 1rem;
+  overflow: hidden;
+  background-color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+/* =========================
+   시간표 스타일
+   ========================= */
+
+.home-timetable {
+  padding: 0;
+  box-sizing: border-box;
+  font-size: 0.7rem;
+}
+
+/* 로딩 텍스트 */
+.home-timetable-loading {
+  padding: 1.2rem;
+  text-align: center;
+  color: #9a8fba;
+}
+
+/* 상단 요일 헤더 줄 */
+.home-timetable-header-row {
+  display: grid;
+  grid-template-columns: 2.4rem repeat(5, 1fr); /* 시간축 + 평일 5칸 */
+  column-gap: 0;
+  background-color: #c9a8ff; /* 상단 보라색 바 */
+}
+
+.home-timetable-header-cell {
+  padding: 0.4rem 0;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.72rem;
+  color: #ffffff;
+  border-right: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.home-timetable-header-cell.time-col {
+  border-right: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* 본문 영역: 왼쪽 시간축 + 오른쪽 그리드 */
+.home-timetable-body {
+  display: grid;
+  grid-template-columns: 2.4rem 1fr; /* 시간축 + 나머지 */
+  column-gap: 0;
+  background-color: #f6f0ff; /* 전체 연보라 배경 */
+}
+
+/* 왼쪽 시간축 */
+.home-timetable-time-col {
+  background-color: #f0e3ff;
+  border-right: 1px solid #e2d4ff;
+}
+
+.home-timetable-time-slot {
+  height: 2.4rem; /* 1시간 칸 높이 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: #9b8ac8;
+  border-bottom: 1px solid #e4d9ff;
+}
+
+/* 오른쪽 요일 그리드 전체 */
+.home-timetable-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  position: relative;
+}
+
+/* 각 요일 칼럼 */
+.home-timetable-day-column {
+  position: relative;
+  min-height: calc(2.4rem * 9); /* 9시~6시 정도 높이 */
+
+  /* 얇은 가로 줄을 반복해서 그리드 느낌 */
+  background-image: repeating-linear-gradient(
+    to bottom,
+    #f6f0ff 0,
+    #f6f0ff calc(2.4rem - 1px),
+    #e4d9ff calc(2.4rem - 1px),
+    #e4d9ff 2.4rem
+  );
+  border-right: 1px solid #e2d4ff;
+}
+
+.home-timetable-day-column:last-child {
+  border-right: none;
+}
+
+/* 강의 블록 */
+.home-timetable-class-block {
+  position: absolute;
+  left: 0.25rem;
+  right: 0.25rem;
+
+  background-color: #c9a8ff;
+  border-radius: 0.3rem;
+  padding: 0.25rem 0.3rem;
+
+  color: #ffffff;
+  box-shadow: 0 3px 6px rgba(171, 132, 245, 0.6);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* 블록 안 텍스트 */
+.home-timetable-class-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.2;
+  margin-bottom: 0.12rem;
+}
+
+.home-timetable-class-location {
+  font-size: 0.64rem;
+  opacity: 0.95;
+}
+
+.home-timetable-class-time {
+  font-size: 0.62rem;
+  opacity: 0.9;
+  margin-top: 0.05rem;
+}
+
+/* =========================
+   오늘의 강의 리스트
+   ========================= */
+
+.home-lecture-section {
+  margin-top: 1.6rem;
+}
+
+.home-lecture-card {
+  /* 공통 .home-card에서 이미 radius / shadow / padding 설정됨 */
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* 상단 건물 pill 정렬 */
+.home-lecture-card .home-card-header {
+  margin-bottom: 0.25rem;
+}
+
+/* 건물명 pill (왼쪽 보라 타원) */
+.home-pill-building {
+  background: #f3e7ff;
+  color: #7b56e9;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 0.16rem 0.7rem;
+}
+
+/* 강의 제목 (굵고 살짝 크게) */
+.home-lecture-card .home-card-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #333333;
+  line-height: 1.3;
+}
+
+/* 강의 상세 위치 ([H05] …) */
+.home-lecture-card .home-card-subtext {
+  font-size: 0.72rem;
+  color: #797979;
+}
+
+/* 시간 텍스트 (아이콘 자리는 나중에 넣어도 됨) */
+.home-lecture-card .home-card-time {
+  font-size: 0.7rem;
+  color: #a0a0a0;
+}
+
+/* .home-lecture-section { }  
+   필요하면 여기서만 마진/간격 조정해도 됨 */
+
+/* =========================
+   오늘의 일정 리스트
+   ========================= */
+
+.home-schedule-section {
+  margin-top: 1.6rem;
+}
+
+/* 카드 기본은 .home-card 공통 사용 */
+.home-schedule-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* 카테고리 Pill (발표 / 팀플 등) */
+.home-pill-category {
+  background: #d7c5ff;   /* 연보라 배경 */
+  color: #ffffff;        /* 흰 글씨 */
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 0.16rem 0.7rem;
+}
+
+/* 제목 (굵고 살짝 크게) */
+.home-schedule-card .home-card-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #333333;
+  line-height: 1.3;
+}
+
+/* 장소 ([H05] …, 세이커피 등) */
+.home-schedule-card .home-card-subtext {
+  font-size: 0.72rem;
+  color: #797979;
+}
+
+/* 시간 (14:00, 18:00) */
+.home-schedule-card .home-card-time {
+  font-size: 0.7rem;
+  color: #a0a0a0;
+}
+
+/* =========================
+   과제하기 좋은 장소 추천 섹션
+   ========================= */
+
+.home-studyplace-section {
+  margin-bottom: 1.5rem;
+}
+
+.home-studyplace-scroll {
+  display: flex;
+  gap: 0.7rem;
+  overflow-x: auto;
+  padding-bottom: 0.4rem;
+  margin-right: -0.5rem; /* 살짝 더 넓게 보이게 */
+}
+
+/* 스크롤바 숨기기 (브라우저별) */
+.home-studyplace-scroll::-webkit-scrollbar {
+  display: none;
+}
+.home-studyplace-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.home-studyplace-card {
+  flex: 0 0 8.5rem; /* 카드 너비 */
+  max-width: 9rem;
+  background-color: #ffffff;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.home-studyplace-image-wrap {
+  width: 100%;
+  height: 5.2rem;
+  overflow: hidden;
+}
+
+.home-studyplace-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.home-studyplace-info {
+  padding: 0.45rem 0.55rem 0.55rem;
+}
+
+.home-studyplace-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #333333;
+  margin-bottom: 0.25rem;
+}
+
+.home-studyplace-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.07rem;
+}
+
+.home-studyplace-rating {
+  font-size: 0.7rem;
+  color: #f39c12; /* 별점 색 (노랑) */
+}
+
+.home-studyplace-distance {
+  font-size: 0.68rem;
+  color: #9b9b9b;
+}
+
+/* =========================
+   네이버 지도 영역
+   ========================= */
+
+.home-naver-map {
+  width: 100%;
+  height: 23rem;
+}
