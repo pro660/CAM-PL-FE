@@ -17,12 +17,10 @@ import KakaoCallbackPage from "../pages/login/KakaoCallbackPage";
 function Layout({ children }) {
   const location = useLocation();
 
-  // 헤더/메뉴를 숨길 경로들
   const hiddenPaths = [
-    "/login",              // /login, /login/form, /login/find, /login/reset-password 포함
-    "/signup",             // 회원가입
-    "/oauth/signed-in",    // 카카오 콜백 (실제 백엔드 리다이렉트 경로)
-    "/oauth/kakao/callback" // 예전 콜백 경로도 혹시 모르게 같이 처리
+    "/login",
+    "/signup",
+    "/oauth/signed-in",  // ✅ 콜백 페이지
   ];
 
   const shouldHide = hiddenPaths.some((path) =>
@@ -52,38 +50,27 @@ function AppRouter() {
     <BrowserRouter>
       <Layout>
         <Routes>
-          {/* 로그인 랜딩 */}
           <Route path="/login" element={<LoginPage />} />
 
-          {/* 카카오 콜백 (현재 사용하는 경로) */}
+          {/* ✅ 카카오 콜백 */}
           <Route path="/oauth/signed-in" element={<KakaoCallbackPage />} />
-          {/* 혹시 백엔드에서 /oauth/kakao/callback 을 쓸 때도 대비 */}
-          <Route path="/oauth/kakao/callback" element={<KakaoCallbackPage />} />
 
-          {/* 로그인 폼 */}
           <Route path="/login/form" element={<LoginFormPage />} />
-
-          {/* 아이디/비밀번호 찾기 */}
           <Route path="/login/find" element={<FindAccountPage />} />
-
-          {/* 비밀번호 재설정(새 비번 입력) */}
           <Route path="/login/reset-password" element={<ResetPasswordPage />} />
           <Route
             path="/login/reset-password/done"
             element={<ResetPasswordDonePage />}
           />
-
-          {/* 회원가입 폼 */}
           <Route path="/signup" element={<SignupPage />} />
 
-          {/* 보호된 홈 라우트 */}
           <Route
-            path="/"
+            path="/home"
             element={
-              <ProtectedRoute>
-                <HomePage />
-              </ProtectedRoute>
-              // 디버깅용으로 보호 끄고 싶으면 위 3줄 대신 <HomePage /> 만 넣어도 됨
+              // 필요하면 ProtectedRoute 다시 감싸기
+              // <ProtectedRoute>
+              <HomePage />
+              // </ProtectedRoute>
             }
           />
         </Routes>

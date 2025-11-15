@@ -1,62 +1,64 @@
 // src/context/AuthContext.jsx
 import React, { createContext, useContext, useEffect, useState } from "react";
+import api from "../api/axios";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  // auth: 백엔드에서 내려준 전체 객체를 저장 (accessToken 포함)
-  const [auth, setAuth] = useState(null);
+  const [user, setUser] = useState(null);
+  const [accessToken, setAccessToken] = useState(null);
 
-  // 앱 시작할 때 localStorage에서 복원
+  // 앱 시작 시 localStorage에서 복원
   useEffect(() => {
-    const stored = localStorage.getItem("camp_auth");
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setAuth(parsed);
-      } catch (e) {
-        console.error("camp_auth 파싱 오류:", e);
-        localStorage.removeItem("camp_auth");
-      }
+    const storedUser = localStorage.getItem("camp_user");
+    const storedAccessToken = localStorage.getItem("camp_access_token");
+
+    if (storedUser && storedAccessToken) {
+      setUser(JSON.parse(storedUser));
+      setAccessToken(storedAccessToken);
     }
   }, []);
 
-  // 공통 로그인 함수: 백엔드 응답 전체를 그대로 넘겨주면 됨
-  // 예: { accessToken, refreshToken, id, loginId, name, email, provider }
-  const login = (payload) => {
-    if (!payload || !payload.accessToken) {
-      console.error("login() payload가 이상합니다:", payload);
-      return;
+  // ✅ 로그인 응답(JSON)을 공통으로 적용하는 함수
+  const applyAuthResponse = (data) => {
+    if (!data) return;
+
+    const { accessToken: token, ...userInfo } = data;
+
+    if (token) {
+      setAccessToken(token);
+      localStorage.setItem("camp_access_token", token);
     }
 
-    setAuth(payload);
-    localStorage.setItem("camp_auth", JSON.stringify(payload));
+    setUser(userInfo);
+    localStorage.setItem("camp_user", JSON.stringify(userInfo));
   };
 
-  // 로그아웃
+  // ✅ 일반 로그인 (아이디/비밀번호)
+  const login = async ({ loginId, password }) => {
+    const { data } = await api.post("/auth/login", { loginId, password });
+    applyAuthResponse(data);
+  };
+
+  // ✅ refresh(쿠키 기반, 카카오 콜백에서 사용)
+  const loginWithRefresh = async () => {
+    const { data } = await api.post("/auth/refresh", null);
+    applyAuthResponse(data);
+  };
+
   const logout = () => {
-    setAuth(null);
-    localStorage.removeItem("camp_auth");
+    setUser(null);
+    setAccessToken(null);
+    localStorage.removeItem("camp_user");
+    localStorage.removeItem("camp_access_token");
   };
-
-  // 편의를 위해 user / accessToken / isAuthenticated 제공
-  const accessToken = auth?.accessToken || null;
-  const user = auth
-    ? {
-        id: auth.id,
-        loginId: auth.loginId,
-        name: auth.name,
-        email: auth.email,
-        provider: auth.provider,
-      }
-    : null;
 
   const value = {
-    auth,              // 전체 응답
-    user,              // 필요한 필드만 추려낸 사용자 정보
+    user,
     accessToken,
     isAuthenticated: !!accessToken,
-    login,
+    login,             // 아이디/비번 로그인
+    loginWithRefresh,  // 카카오 콜백에서 사용
     logout,
   };
 

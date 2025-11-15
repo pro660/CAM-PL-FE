@@ -9,47 +9,16 @@ if (!baseURL) {
 
 const api = axios.create({
   baseURL,
-  // 쿠키 안 쓰면 withCredentials 필요 없음
-  // withCredentials: true,
+  withCredentials: true,           // ✅ HttpOnly 쿠키(REFRESH_TOKEN) 같이 보내기
 });
-
-// localStorage에서 access / refresh 토큰 꺼내는 헬퍼
-function getTokensFromStorage() {
-  const stored = localStorage.getItem("camp_auth");
-  if (!stored) return { accessToken: null, refreshToken: null };
-
-  try {
-    const parsed = JSON.parse(stored);
-    return {
-      accessToken: parsed.accessToken || null,
-      refreshToken: parsed.refreshToken || null,
-    };
-  } catch (e) {
-    console.error("camp_auth 파싱 오류:", e);
-    return { accessToken: null, refreshToken: null };
-  }
-}
-
-function saveTokensToStorage(partial) {
-  const stored = localStorage.getItem("camp_auth");
-  if (!stored) return;
-
-  try {
-    const parsed = JSON.parse(stored);
-    const updated = { ...parsed, ...partial };
-    localStorage.setItem("camp_auth", JSON.stringify(updated));
-  } catch (e) {
-    console.error("camp_auth 저장 중 오류:", e);
-  }
-}
 
 /**
  * 요청 인터셉터
- * - camp_auth에서 accessToken을 읽어 Authorization 헤더에 넣어줌
+ * - localStorage에 저장된 accessToken을 Authorization 헤더에 자동으로 붙임
  */
 api.interceptors.request.use(
   (config) => {
-    const { accessToken } = getTokensFromStorage();
+    const accessToken = localStorage.getItem("camp_access_token");
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
@@ -60,7 +29,8 @@ api.interceptors.request.use(
 
 /**
  * 응답 인터셉터
- * - 401 → refresh 토큰으로 재발급 시도 (있다면)
+ * - 401이면 refresh 쿠키로 accessToken 재발급 시도
+ * - 동시에 여러 요청이 401 난 경우, refresh 완료 후 한 번에 재요청
  */
 let isRefreshing = false;
 let refreshSubscribers = [];
@@ -84,27 +54,24 @@ api.interceptors.response.use(
 
       if (!isRefreshing) {
         isRefreshing = true;
-        const { refreshToken } = getTokensFromStorage();
-
-        if (!refreshToken) {
-          isRefreshing = false;
-          return Promise.reject(error);
-        }
 
         try {
-          // ⚠️ 실제 리프레시 엔드포인트에 맞게 수정
-          const { data } = await axios.post(`${baseURL}/auth/refresh`, {
-            refreshToken,
-          });
+          // ✅ 바디 없이, 쿠키만 가지고 refresh
+          const { data } = await axios.post(
+            `${baseURL}/auth/refresh`,
+            null,
+            { withCredentials: true }
+          );
 
           const newAccessToken = data.accessToken;
-          const newRefreshToken = data.refreshToken;
 
-          // 전체 camp_auth 안의 토큰들 갱신
-          saveTokensToStorage({
-            accessToken: newAccessToken,
-            refreshToken: newRefreshToken ?? refreshToken,
-          });
+          // accessToken, 유저 정보 갱신
+          if (newAccessToken) {
+            localStorage.setItem("camp_access_token", newAccessToken);
+
+            const { accessToken, ...user } = data;
+            localStorage.setItem("camp_user", JSON.stringify(user));
+          }
 
           isRefreshing = false;
           onRefreshed(newAccessToken);
