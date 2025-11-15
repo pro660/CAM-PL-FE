@@ -1,0 +1,27 @@
+/* src/css/login/KakaoCallbackPage.css */
+
+.kakao-callback-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  background: linear-gradient(180deg, #9ac5ed 0%, #c09ef1 80%, #c09ef1 100%);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Noto Sans KR",
+    sans-serif;
+}
+
+.kakao-callback-inner {
+  width: 100%;
+  max-width: 26.25rem;
+  padding: 2.5rem 1.5rem 2.5rem;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.kakao-callback-text {
+  color: #ffffff;
+  font-size: 0.95rem;
+  text-align: center;
+}
