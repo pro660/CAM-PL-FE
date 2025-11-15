@@ -12,6 +12,7 @@ import SignupPage from "../pages/login/SignupPage";
 import FindAccountPage from "../pages/login/FindAccountPage";
 import ResetPasswordPage from "../pages/login/ResetPasswordPage";
 import ResetPasswordDonePage from "../pages/login/ResetPasswordDonePage";
+import KakaoCallbackPage from "../pages/login/KakaoCallbackPage";
 
 function Layout({ children }) {
   const location = useLocation();
@@ -20,6 +21,7 @@ function Layout({ children }) {
   const hiddenPaths = [
     "/login", // /login, /login/form, /login/find, /login/reset-password 포함
     "/signup", // 회원가입
+    "/oauth/kakao/callback",
   ];
 
   const shouldHide = hiddenPaths.some((path) =>
@@ -51,6 +53,9 @@ function AppRouter() {
         <Routes>
           {/* 로그인 랜딩 */}
           <Route path="/login" element={<LoginPage />} />
+
+          {/* 카카오 콜백 */}
+          <Route path="/oauth/kakao/callback" element={<KakaoCallbackPage />} />
 
           {/* 로그인 폼 */}
           <Route path="/login/form" element={<LoginFormPage />} />

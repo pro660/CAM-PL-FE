@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import "../../css/login/LoginFormPage.css";
 import LogoImg from "../../images/loginpage/logo.svg";
 import { useAuth } from "../../context/AuthContext";
+import api from "../../api/axios"; // ✅ 로그인 API 호출용
 
 // 눈 아이콘 이미지
 import EyeOpenIcon from "../../images/loginpage/icon-eye-open.svg";
@@ -29,17 +30,33 @@ export default function LoginFormPage() {
     setLoading(true);
 
     try {
-      // ✅ 백엔드 로그인 요청: loginId + password
-      await login({
+      // ✅ 실제 로그인 API 호출
+      // baseURL이 예: https://api.campl.site/api 라고 가정하면
+      // 최종 URL: https://api.campl.site/api/auth/login
+      const { data } = await api.post("/auth/login", {
         loginId: id,
         password,
       });
+
+      // ✅ 백엔드에서 내려준 전체 응답(data)을 AuthContext에 저장
+      // data 예시:
+      // {
+      //   "accessToken": "...",
+      //   "id": 8,
+      //   "loginId": "test1234",
+      //   "name": "test1234",
+      //   "email": "op9563_2@naver.com",
+      //   "provider": "LOCAL"
+      // }
+      login(data);
 
       // 로그인 성공 → 홈으로 이동
       navigate("/", { replace: true });
     } catch (err) {
       console.error(err);
-      setError("아이디 또는 비밀번호를 확인해주세요.");
+      const msg =
+        err.response?.data?.error || "아이디 또는 비밀번호를 확인해주세요.";
+      setError(msg);
     } finally {
       setLoading(false);
     }

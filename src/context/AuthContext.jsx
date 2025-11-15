@@ -1,63 +1,61 @@
 // src/context/AuthContext.jsx
 import React, { createContext, useContext, useEffect, useState } from "react";
-import api from "../api/axios";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [accessToken, setAccessToken] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // auth: 백엔드에서 내려준 전체 객체를 저장 (accessToken 포함)
+  const [auth, setAuth] = useState(null);
 
-  // 앱 시작 시 localStorage에서 로그인 정보 복원
+  // 앱 시작할 때 localStorage에서 복원
   useEffect(() => {
-    const storedUser = localStorage.getItem("camp_user");
-    const storedAccessToken = localStorage.getItem("camp_access_token");
-
-    if (storedUser && storedAccessToken) {
+    const stored = localStorage.getItem("camp_auth");
+    if (stored) {
       try {
-        setUser(JSON.parse(storedUser));
-        setAccessToken(storedAccessToken);
+        const parsed = JSON.parse(stored);
+        setAuth(parsed);
       } catch (e) {
-        console.error("저장된 사용자 정보 파싱 실패:", e);
-        localStorage.removeItem("camp_user");
-        localStorage.removeItem("camp_access_token");
+        console.error("camp_auth 파싱 오류:", e);
+        localStorage.removeItem("camp_auth");
       }
     }
-
-    setIsLoading(false);
   }, []);
 
-  // 로그인: /auth/login 호출 → accessToken + 유저 정보 저장
-  const login = async (credentials) => {
-    // credentials 예: { loginId, password }
-    const { data } = await api.post("/auth/login", credentials);
-    // data = { accessToken, id, loginId, name, email, provider }
+  // 공통 로그인 함수: 백엔드 응답 전체를 그대로 넘겨주면 됨
+  // 예: { accessToken, refreshToken, id, loginId, name, email, provider }
+  const login = (payload) => {
+    if (!payload || !payload.accessToken) {
+      console.error("login() payload가 이상합니다:", payload);
+      return;
+    }
 
-    const { accessToken: newAccessToken, ...userInfo } = data;
-
-    setUser(userInfo);
-    setAccessToken(newAccessToken);
-
-    localStorage.setItem("camp_user", JSON.stringify(userInfo));
-    localStorage.setItem("camp_access_token", newAccessToken);
-
-    return userInfo;
+    setAuth(payload);
+    localStorage.setItem("camp_auth", JSON.stringify(payload));
   };
 
   // 로그아웃
   const logout = () => {
-    setUser(null);
-    setAccessToken(null);
-    localStorage.removeItem("camp_user");
-    localStorage.removeItem("camp_access_token");
+    setAuth(null);
+    localStorage.removeItem("camp_auth");
   };
 
+  // 편의를 위해 user / accessToken / isAuthenticated 제공
+  const accessToken = auth?.accessToken || null;
+  const user = auth
+    ? {
+        id: auth.id,
+        loginId: auth.loginId,
+        name: auth.name,
+        email: auth.email,
+        provider: auth.provider,
+      }
+    : null;
+
   const value = {
-    user,
+    auth,              // 전체 응답
+    user,              // 필요한 필드만 추려낸 사용자 정보
     accessToken,
     isAuthenticated: !!accessToken,
-    isLoading,
     login,
     logout,
   };
