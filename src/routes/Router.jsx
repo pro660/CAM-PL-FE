@@ -13,6 +13,7 @@ import FindAccountPage from "../pages/login/FindAccountPage";
 import ResetPasswordPage from "../pages/login/ResetPasswordPage";
 import ResetPasswordDonePage from "../pages/login/ResetPasswordDonePage";
 import KakaoCallbackPage from "../pages/login/KakaoCallbackPage";
+import CalendarPage from "../pages/calendar/CalendarPage";
 
 function Layout({ children }) {
   const location = useLocation();
@@ -70,6 +71,14 @@ function AppRouter() {
               // 필요하면 ProtectedRoute 다시 감싸기
               // <ProtectedRoute>
               <HomePage />
+              // </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/calendar"
+            element={
+              // <ProtectedRoute>
+              <CalendarPage />
               // </ProtectedRoute>
             }
           />

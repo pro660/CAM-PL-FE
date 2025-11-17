@@ -1,0 +1,246 @@
+/* 전체 페이지 컨테이너 */
+.calendar-page {
+  position: relative;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 3rem;
+}
+
+/* 상단 연/월 + 좌우 화살표 */
+.calendar-top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 0.4rem;
+}
+
+.calendar-month-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333333;
+}
+
+.calendar-month-button {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+
+/* 달력 카드 */
+.calendar-card {
+  background-color: #ffffff;
+  border-radius: 1.5rem;
+  
+  padding: 1rem 0.7rem 0.9rem;
+}
+
+/* 요일 헤더 */
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 0.4rem;
+  font-size: 0.75rem;
+}
+
+.calendar-weekday {
+  text-align: center;
+  color: #999999;
+}
+
+.calendar-weekday.sun {
+  color: #ff6b6b;
+}
+
+.calendar-weekday.sat {
+  color: #4f7cff;
+}
+
+/* 날짜 그리드 */
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  row-gap: 0.8rem;
+}
+
+.calendar-day {
+  position: relative;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.calendar-day.empty {
+  cursor: default;
+}
+
+.calendar-day-number {
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  color: #444444;
+}
+
+/* 선택된 날짜 */
+.calendar-day.selected .calendar-day-number {
+  background: #7b5cff;
+  color: #ffffff;
+}
+
+/* 오늘 날짜 (현재 달) */
+.calendar-day.today:not(.selected) .calendar-day-number {
+  border: 2px solid #7b5cff;
+}
+
+/* 일정 있는 날 점 표시 */
+.calendar-day-dot {
+  margin-top: 0.15rem;
+  width: 0.22rem;
+  height: 0.22rem;
+  border-radius: 50%;
+  background-color: #7b5cff;
+}
+
+/* 바텀시트 */
+.calendar-bottom-sheet {
+  margin-top: 0.9rem;
+  background-color: #ffffff;
+  border-radius: 1.4rem 1.4rem 0 0;
+  box-shadow: 0 -0.3rem 1.2rem rgba(0, 0, 0, 0.08);
+  padding: 0.6rem 1rem 1.4rem;
+}
+
+/* 위쪽 작은 손잡이 */
+.calendar-bottom-handle {
+  width: 2.5rem;
+  height: 0.22rem;
+  border-radius: 999px;
+  background-color: #e0e0e0;
+  margin: 0 auto 0.7rem;
+}
+
+/* 선택 날짜 텍스트 */
+.calendar-bottom-header {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #555555;
+  margin-bottom: 0.7rem;
+}
+
+/* 에러 / 빈 상태 */
+.calendar-error-text {
+  font-size: 0.8rem;
+  color: #ff6b6b;
+  margin-bottom: 0.4rem;
+}
+
+.calendar-empty-text {
+  font-size: 0.85rem;
+  color: #aaaaaa;
+  padding: 0.4rem 0;
+}
+
+/* 일정 리스트 */
+.calendar-event-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.calendar-event-item {
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 0.3rem 1rem rgba(0, 0, 0, 0.06);
+  padding: 0.75rem 0.9rem;
+}
+
+.calendar-event-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.calendar-event-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* 카테고리 태그 */
+.calendar-event-tag {
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background-color: #f1e7ff;
+  color: #7b5cff;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+/* 메모 버튼 (오른쪽) */
+.calendar-event-memo-button {
+  border-radius: 999px;
+  border: none;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.7rem;
+  background-color: #f7f1ff;
+  color: #7b5cff;
+  cursor: pointer;
+}
+
+/* 일정 제목 / 위치 / 시간 */
+.calendar-event-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333333;
+}
+
+.calendar-event-location {
+  font-size: 0.8rem;
+  color: #777777;
+}
+
+.calendar-event-time {
+  font-size: 0.78rem;
+  color: #999999;
+}
+
+/* 플로팅 + 버튼 */
+.calendar-fab {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 5rem; /* 하단 메뉴와 겹치지 않게 */
+  width: 3.3rem;
+  height: 3.3rem;
+  border-radius: 50%;
+  border: none;
+  background: #7b5cff;
+  color: #ffffff;
+  font-size: 1.8rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0.5rem 1.2rem rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+}
