@@ -87,6 +87,7 @@
   padding: 0.7rem 0.9rem;
   min-height: 8rem;
   box-sizing: border-box;
+  position: relative; /* 내부 placeholder overlay를 위해 */
 }
 
 /* 텍스트 입력 */
@@ -101,8 +102,28 @@
   color: #444444;
   font-family: inherit;
   box-sizing: border-box;
+  background: transparent; /* 아래 흰 배경 + placeholder와 어울리게 */
 }
 
-.calendar-memo-textarea::placeholder {
-  color: #c2c2c2;
+/* 메모가 없을 때 가운데 표시되는 영역 */
+.calendar-memo-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none; /* 입력 막지 않게 */
+}
+
+.calendar-memo-empty-icon {
+  width: 1.9rem;
+  height: 1.9rem;
+  margin-bottom: 0.4rem;
+  opacity: 0.6;
+}
+
+.calendar-memo-empty-text {
+  font-size: 0.8rem;
+  color: #b0a5d8;
 }

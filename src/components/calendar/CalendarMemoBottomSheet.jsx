@@ -2,6 +2,11 @@
 import React, { useEffect, useState } from "react";
 import "../../css/calendar/CalendarMemoBottomSheet.css";
 
+import EMPTY_MEMO_ICON from "../../images/calendar/nomemo.svg"
+import EDIT_ICON from "../../images/calendar/edit.svg"
+
+// 메모 없을 때 보여줄 아이콘 이미지 경로
+
 function getCategoryLabel(category) {
   switch (category) {
     case "LECTURE":
@@ -96,6 +101,8 @@ export default function CalendarMemoBottomSheet({
     }
   };
 
+  const isEmpty = memoText.trim().length === 0;
+
   return (
     <div
       className="calendar-memo-overlay"
@@ -139,7 +146,9 @@ export default function CalendarMemoBottomSheet({
               type="button"
               className="calendar-memo-edit-button"
             >
-              <span className="calendar-memo-edit-icon">✏</span>
+              <span className="calendar-memo-edit-icon">
+                <img src={EDIT_ICON} alt="아이콘"/>
+              </span>
             </button>
           </div>
 
@@ -148,8 +157,19 @@ export default function CalendarMemoBottomSheet({
               className="calendar-memo-textarea"
               value={memoText}
               onChange={handleChange}
-              placeholder="이 일정에 대한 메모를 자유롭게 적어보세요."
             />
+            {isEmpty && (
+              <div className="calendar-memo-empty">
+                <img
+                  src={EMPTY_MEMO_ICON}
+                  alt="메모 없음"
+                  className="calendar-memo-empty-icon"
+                />
+                <p className="calendar-memo-empty-text">
+                  작성된 메모가 없습니다.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
