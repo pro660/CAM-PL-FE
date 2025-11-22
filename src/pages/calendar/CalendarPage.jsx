@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import "../../css/calendar/CalendarPage.css";
 import api from "../../api/axios";
 import CalendarAddBottomSheet from "../../components/calendar/CalendarAddBottomSheet";
+import CalendarMemoBottomSheet from "../../components/calendar/CalendarMemoBottomSheet";
 
 const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
 const DAY_NAMES_LONG = [
@@ -68,6 +69,18 @@ function getCategoryLabel(category) {
       return "시험";
     case "PRESENTATION":
       return "발표";
+    case "TEAM":
+      return "팀플";
+    case "MEETING":
+      return "미팅";
+    case "ASSIGNMENT":
+      return "과제";
+    case "MEAL":
+      return "식사";
+    case "REST":
+      return "휴식";
+    case "GATHERING":
+      return "모임";
     default:
       return "일정";
   }
@@ -107,6 +120,10 @@ export default function CalendarPage() {
   // 새 일정 추가 후 재로딩용
   const [monthReloadKey, setMonthReloadKey] = useState(0);
   const [dayReloadKey, setDayReloadKey] = useState(0);
+
+  // 메모 컴포넌트용
+  const [isMemoOpen, setIsMemoOpen] = useState(false);
+  const [selectedMemoEvent, setSelectedMemoEvent] = useState(null);
 
   const yearMonthLabel = `${currentMonth.getFullYear()}년 ${
     currentMonth.getMonth() + 1
@@ -252,6 +269,37 @@ export default function CalendarPage() {
     setIsAddSheetOpen(false);
   };
 
+  // 메모 열기
+  const handleOpenMemo = (event) => {
+    setSelectedMemoEvent(event);
+    setIsMemoOpen(true);
+  };
+
+  const handleMemoClose = () => {
+    setIsMemoOpen(false);
+    setSelectedMemoEvent(null);
+  };
+
+  // 메모 저장 (프론트에서만 처리)
+  const handleMemoSaved = (memoText) => {
+    if (!selectedMemoEvent) return;
+    const id = selectedMemoEvent.id;
+
+    // 오늘의 일정 리스트 state에 메모 반영
+    setDayEvents((prev) =>
+      prev.map((ev) =>
+        ev.id === id ? { ...ev, memo: memoText } : ev
+      )
+    );
+
+    // 월 이벤트 목록에도 같은 id가 있다면 반영 (선택 사항)
+    setMonthEvents((prev) =>
+      prev.map((ev) =>
+        ev.id === id ? { ...ev, memo: memoText } : ev
+      )
+    );
+  };
+
   const isSameDate = (d1, d2) =>
     d1.getFullYear() === d2.getFullYear() &&
     d1.getMonth() === d2.getMonth() &&
@@ -271,7 +319,12 @@ export default function CalendarPage() {
         </button>
         <h2 className="calendar-month-label">
           {yearMonthLabel}
-          {monthLoading && <span className="calendar-month-loading"> · 불러오는 중</span>}
+          {monthLoading && (
+            <span className="calendar-month-loading">
+              {" "}
+              · 불러오는 중
+            </span>
+          )}
         </h2>
         <button
           type="button"
@@ -372,10 +425,11 @@ export default function CalendarPage() {
                     <span className="calendar-event-tag">
                       {getCategoryLabel(ev.category)}
                     </span>
-                    {/* 메모 버튼 자리 */}
+                    {/* 메모 버튼 */}
                     <button
                       type="button"
                       className="calendar-event-memo-button"
+                      onClick={() => handleOpenMemo(ev)}
                     >
                       메모
                     </button>
@@ -412,6 +466,14 @@ export default function CalendarPage() {
         date={selectedDate}
         onClose={handleAddSheetClose}
         onAdded={handleEventAdded}
+      />
+
+      {/* 메모 컴포넌트 (달력 페이지와 연동) */}
+      <CalendarMemoBottomSheet
+        visible={isMemoOpen}
+        event={selectedMemoEvent}
+        onClose={handleMemoClose}
+        onSave={handleMemoSaved}
       />
     </div>
   );

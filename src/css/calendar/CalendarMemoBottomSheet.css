@@ -1,0 +1,105 @@
+/* 전체 오버레이 (배경은 어둡게 안 하고 투명) */
+.calendar-memo-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  z-index: 1050; /* 시간 선택 모달(1100)보다 살짝 낮게, 추가 시 조정 가능 */
+  pointer-events: auto;
+}
+
+/* 중앙 정렬 래퍼 */
+.calendar-memo-wrapper {
+  margin-top: 5.2rem; /* 상단 헤더/달력과 간격 */
+  width: 100%;
+  max-width: 600px;
+  padding: 0 1rem 1.5rem;
+  box-sizing: border-box;
+}
+
+/* 상단 일정 카드와 아래 메모 카드 사이 여백 */
+.calendar-memo-top-card {
+  margin-bottom: 0.9rem;
+}
+
+/* 상단 카드 오른쪽 '뒤로' 버튼 */
+.calendar-memo-back-button {
+  border: none;
+  background: transparent;
+  font-size: 0.85rem;
+  color: #9b8cff;
+  cursor: pointer;
+  padding: 0.1rem 0.2rem;
+}
+
+/* 메모 전체 박스 (하단 큰 카드) */
+.calendar-memo-panel {
+  background-color: #ffffff;
+  border-radius: 1.4rem;
+  box-shadow: 0 0.35rem 1.3rem rgba(0, 0, 0, 0.08);
+  padding: 0.9rem 1.0rem 1.1rem;
+}
+
+/* "해당 일정의 메모입니다." 라인 */
+.calendar-memo-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}
+
+.calendar-memo-panel-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #555555;
+}
+
+/* 오른쪽 연필 아이콘 버튼 */
+.calendar-memo-edit-button {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: default; /* 동작은 안 하니 pointer 말고 default */
+}
+
+.calendar-memo-edit-icon {
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 999px;
+  border: 1.5px solid #b89cff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: #b89cff;
+}
+
+/* 메모 입력 박스 (보라색 테두리) */
+.calendar-memo-textbox-wrapper {
+  margin-top: 0.3rem;
+  border-radius: 1.2rem;
+  border: 2px solid #d3c2ff;
+  background-color: #ffffff;
+  padding: 0.7rem 0.9rem;
+  min-height: 8rem;
+  box-sizing: border-box;
+}
+
+/* 실제 텍스트 입력 textarea */
+.calendar-memo-textarea {
+  width: 100%;
+  min-height: 6rem;
+  border: none;
+  outline: none;
+  resize: vertical;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: #444444;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.calendar-memo-textarea::placeholder {
+  color: #c2c2c2;
+}
