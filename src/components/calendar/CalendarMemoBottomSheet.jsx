@@ -40,100 +40,117 @@ function formatTimeRange(startIso, endIso) {
   return `${toTime(s)} ~ ${toTime(e)}`;
 }
 
-export default function CalendarMemoBottomSheet({ event, onClose, onSave }) {
+export default function CalendarMemoBottomSheet({
+  visible,
+  event,
+  onClose,
+  onSave,
+}) {
   const [memoText, setMemoText] = useState("");
 
-  // event 바뀌거나 처음 열릴 때 memo 초기화
+  // 팝업 열릴 때 기본 메모값 설정
   useEffect(() => {
-    if (!event) return;
+    if (!visible || !event) return;
 
-    let baseText = event.memo || "";
+    // 1순위: localStorage, 2순위: 프론트 memo, 3순위: 서버 description
+    let base = event.memo ?? event.description ?? "";
 
     try {
       const stored = window.localStorage.getItem(
         `calendarMemo:${event.id}`
       );
       if (stored !== null) {
-        baseText = stored;
+        base = stored;
       }
-    } catch (e) {
-      // localStorage 접근 실패해도 무시
+    } catch {
+      // localStorage 실패해도 무시
     }
 
-    setMemoText(baseText);
-  }, [event]);
+    setMemoText(base);
+  }, [visible, event]);
 
-  if (!event) return null;
+  if (!visible || !event) return null;
 
   const handleChange = (e) => {
     setMemoText(e.target.value);
   };
 
-  const handleBack = () => {
+  const commitAndClose = () => {
     const trimmed = memoText.trim();
 
+    // localStorage에 캐시
     try {
       window.localStorage.setItem(`calendarMemo:${event.id}`, trimmed);
-    } catch (e) {
+    } catch {
       // ignore
     }
 
-    if (onSave) {
-      onSave(trimmed);
-    }
-    if (onClose) {
-      onClose();
+    if (onSave) onSave(trimmed);
+    if (onClose) onClose();
+  };
+
+  const handleOverlayClick = (e) => {
+    if (e.target === e.currentTarget) {
+      // 회색 배경 클릭 시에도 저장 후 닫기
+      commitAndClose();
     }
   };
 
   return (
-    <div className="calendar-memo-section">
-      {/* 상단 선택 일정 카드 (기존 카드 스타일 그대로, 우측은 '뒤로') */}
-      <div className="calendar-event-item calendar-memo-top-card">
-        <div className="calendar-event-main">
-          <div className="calendar-event-header">
-            <span className="calendar-event-tag">
-              {getCategoryLabel(event.category)}
+    <div
+      className="calendar-memo-overlay"
+      onClick={handleOverlayClick}
+    >
+      <div className="calendar-memo-sheet">
+        {/* 상단: 선택 일정 카드 */}
+        <div className="calendar-event-item calendar-memo-event-card">
+          <div className="calendar-event-main">
+            <div className="calendar-event-header">
+              <span className="calendar-event-tag">
+                {getCategoryLabel(event.category)}
+              </span>
+              <button
+                type="button"
+                className="calendar-memo-back-button"
+                onClick={commitAndClose}
+              >
+                뒤로
+              </button>
+            </div>
+            <div className="calendar-event-title">{event.title}</div>
+            {event.location && (
+              <div className="calendar-event-location">
+                {event.location}
+              </div>
+            )}
+            <div className="calendar-event-time">
+              {formatTimeRange(event.startAt, event.endAt)}
+            </div>
+          </div>
+        </div>
+
+        {/* 하단: 메모 카드 */}
+        <div className="calendar-memo-card">
+          <div className="calendar-memo-card-header">
+            <span className="calendar-memo-card-title">
+              해당 일정의 메모입니다.
             </span>
             <button
               type="button"
-              className="calendar-memo-back-button"
-              onClick={handleBack}
+              className="calendar-memo-edit-button"
             >
-              뒤로
+              <span className="calendar-memo-edit-icon">✏</span>
             </button>
           </div>
-          <div className="calendar-event-title">{event.title}</div>
-          {event.location && (
-            <div className="calendar-event-location">{event.location}</div>
-          )}
-          <div className="calendar-event-time">
-            {formatTimeRange(event.startAt, event.endAt)}
+
+          <div className="calendar-memo-textbox-wrapper">
+            <textarea
+              className="calendar-memo-textarea"
+              value={memoText}
+              onChange={handleChange}
+              placeholder="이 일정에 대한 메모를 자유롭게 적어보세요."
+            />
           </div>
-        </div>
-      </div>
-
-      {/* 하단 메모 카드 */}
-      <div className="calendar-memo-card">
-        <div className="calendar-memo-card-header">
-          <span className="calendar-memo-card-title">
-            해당 일정의 메모입니다.
-          </span>
-          <button
-            type="button"
-            className="calendar-memo-edit-button"
-          >
-            <span className="calendar-memo-edit-icon">✏</span>
-          </button>
-        </div>
-
-        <div className="calendar-memo-textbox-wrapper">
-          <textarea
-            className="calendar-memo-textarea"
-            value={memoText}
-            onChange={handleChange}
-            placeholder="이 일정에 대한 메모를 자유롭게 적어보세요."
-          />
         </div>
       </div>
     </div>
