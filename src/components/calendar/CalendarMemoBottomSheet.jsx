@@ -2,10 +2,8 @@
 import React, { useEffect, useState } from "react";
 import "../../css/calendar/CalendarMemoBottomSheet.css";
 
-import EMPTY_MEMO_ICON from "../../images/calendar/nomemo.svg"
-import EDIT_ICON from "../../images/calendar/edit.svg"
-
-// 메모 없을 때 보여줄 아이콘 이미지 경로
+import EMPTY_MEMO_ICON from "../../images/calendar/nomemo.svg";
+import EDIT_ICON from "../../images/calendar/edit.svg";
 
 function getCategoryLabel(category) {
   switch (category) {
@@ -57,8 +55,8 @@ export default function CalendarMemoBottomSheet({
   useEffect(() => {
     if (!visible || !event) return;
 
-    // 1순위: localStorage, 2순위: 프론트 memo, 3순위: 서버 description
-    let base = event.memo ?? event.description ?? "";
+    // 1순위: localStorage, 2순위: 서버 description(추가 페이지 메모), 3순위: 프론트 memo
+    let base = event.description ?? event.memo ?? "";
 
     try {
       const stored = window.localStorage.getItem(
@@ -85,7 +83,10 @@ export default function CalendarMemoBottomSheet({
 
     // localStorage에 캐시
     try {
-      window.localStorage.setItem(`calendarMemo:${event.id}`, trimmed);
+      window.localStorage.setItem(
+        `calendarMemo:${event.id}`,
+        trimmed
+      );
     } catch {
       // ignore
     }
@@ -145,9 +146,10 @@ export default function CalendarMemoBottomSheet({
             <button
               type="button"
               className="calendar-memo-edit-button"
+              aria-label="메모 수정"
             >
               <span className="calendar-memo-edit-icon">
-                <img src={EDIT_ICON} alt="아이콘"/>
+                <img src={EDIT_ICON} alt="수정 아이콘" />
               </span>
             </button>
           </div>

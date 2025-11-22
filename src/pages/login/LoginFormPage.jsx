@@ -3,8 +3,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../css/login/LoginFormPage.css";
 import LogoImg from "../../images/loginpage/logo.svg";
-import { useAuth } from "../../context/AuthContext";
-import api from "../../api/axios"; // ✅ 로그인 API 호출용
+import api, { setAuth } from "../../api/axios"; // ✅ 단일 camp_auth 저장용
 
 // 눈 아이콘 이미지
 import EyeOpenIcon from "../../images/loginpage/icon-eye-open.svg";
@@ -12,7 +11,6 @@ import EyeClosedIcon from "../../images/loginpage/icon-eye-closed.svg";
 
 export default function LoginFormPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
 
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
@@ -27,18 +25,21 @@ export default function LoginFormPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (!id.trim() || !password.trim()) {
+      setError("아이디와 비밀번호를 입력해주세요.");
+      return;
+    }
+
     setLoading(true);
 
     try {
       // ✅ 실제 로그인 API 호출
-      // baseURL이 예: https://api.campl.site/api 라고 가정하면
-      // 최종 URL: https://api.campl.site/api/auth/login
       const { data } = await api.post("/auth/login", {
-        loginId: id,
+        loginId: id.trim(),
         password,
       });
 
-      // ✅ 백엔드에서 내려준 전체 응답(data)을 AuthContext에 저장
       // data 예시:
       // {
       //   "accessToken": "...",
@@ -48,14 +49,23 @@ export default function LoginFormPage() {
       //   "email": "op9563_2@naver.com",
       //   "provider": "LOCAL"
       // }
-      login(data);
+
+      // ✅ 예전 키들 싹 정리 (한 번 정리해두면 스토리지 안 지저분해짐)
+      localStorage.removeItem("auth");
+      localStorage.removeItem("camp_access_token");
+      localStorage.removeItem("camp_user");
+
+      // ✅ camp_auth 하나에 accessToken + 유저 정보 통째로 저장
+      setAuth(data);
 
       // 로그인 성공 → 홈으로 이동
       navigate("/", { replace: true });
     } catch (err) {
       console.error(err);
       const msg =
-        err.response?.data?.error || "아이디 또는 비밀번호를 확인해주세요.";
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        "아이디 또는 비밀번호를 확인해주세요.";
       setError(msg);
     } finally {
       setLoading(false);

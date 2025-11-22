@@ -142,7 +142,7 @@ export default function CalendarPage() {
     [currentMonth]
   );
 
-  // 월 단위 이벤트 맵 (yyyy-MM-DD -> { hasLectureDot, hasOtherDot })
+  // 월 단위 이벤트 맵 (yyyy-MM-DD -> { hasTimetable: boolean, hasOther: boolean })
   const eventDateMap = useMemo(() => {
     const map = {};
     if (!monthEvents || monthEvents.length === 0) return map;
@@ -163,20 +163,19 @@ export default function CalendarPage() {
         Math.min(end.getTime(), lastOfMonth.getTime())
       );
 
+      const isTimetable = ev.origin === "TIMETABLE";
+
       while (d.getTime() <= endClamped.getTime()) {
         const key = formatDate(d);
 
         if (!map[key]) {
-          map[key] = { hasLectureDot: false, hasOtherDot: false };
+          map[key] = { hasTimetable: false, hasOther: false };
         }
 
-        const isLectureFromTimetable =
-          ev.origin === "TIMETABLE" && ev.type === "LECTURE";
-
-        if (isLectureFromTimetable) {
-          map[key].hasLectureDot = true;
+        if (isTimetable) {
+          map[key].hasTimetable = true;
         } else {
-          map[key].hasOtherDot = true;
+          map[key].hasOther = true;
         }
 
         d.setDate(d.getDate() + 1);
@@ -371,9 +370,12 @@ export default function CalendarPage() {
               const isSelected = isSameDate(cellDate, selectedDate);
               const dateKey = formatDate(cellDate);
               const dotInfo = eventDateMap[dateKey] || {
-                hasLectureDot: false,
-                hasOtherDot: false,
+                hasTimetable: false,
+                hasOther: false,
               };
+
+              const hasTimetable = dotInfo.hasTimetable;
+              const hasOther = dotInfo.hasOther;
 
               return (
                 <button
@@ -386,14 +388,16 @@ export default function CalendarPage() {
                 >
                   <span className="calendar-day-number">{day}</span>
 
-                  <div className="calendar-day-dots">
-                    {dotInfo.hasLectureDot && (
-                      <span className="calendar-day-dot calendar-day-dot-lecture" />
-                    )}
-                    {dotInfo.hasOtherDot && (
-                      <span className="calendar-day-dot calendar-day-dot-other" />
-                    )}
-                  </div>
+                  {(hasTimetable || hasOther) && (
+                    <div className="calendar-day-dots">
+                      {hasTimetable && (
+                        <span className="calendar-day-dot timetable" />
+                      )}
+                      {hasOther && (
+                        <span className="calendar-day-dot other" />
+                      )}
+                    </div>
+                  )}
                 </button>
               );
             })
