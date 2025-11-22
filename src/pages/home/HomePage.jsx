@@ -8,6 +8,44 @@ import StudyPlaceList from "./StudyPlaceList";
 import "../../css/home/HomePage.css";
 import api from "../../api/axios";
 
+// 카테고리 한글 라벨링 (캘린더랑 맞추기)
+function getCategoryLabel(category) {
+  switch (category) {
+    case "LECTURE":
+      return "강의";
+    case "PRESENTATION":
+      return "발표";
+    case "TEAM":
+      return "팀플";
+    case "MEETING":
+      return "미팅";
+    case "ASSIGNMENT":
+      return "과제";
+    case "MEAL":
+      return "식사";
+    case "REST":
+      return "휴식";
+    case "GATHERING":
+      return "모임";
+    default:
+      return "일정";
+  }
+}
+
+// "2025-11-23T10:00:00" → "10:00 ~ 11:00"
+function formatTimeRange(startIso, endIso) {
+  if (!startIso || !endIso) return "";
+  const s = new Date(startIso);
+  const e = new Date(endIso);
+
+  const toTime = (d) =>
+    `${String(d.getHours()).padStart(2, "0")}:${String(
+      d.getMinutes()
+    ).padStart(2, "0")}`;
+
+  return `${toTime(s)} ~ ${toTime(e)}`;
+}
+
 const HomePage = () => {
   // TimetableMapSection에서 내려주는 오늘의 강의 리스트
   const [todayLectures, setTodayLectures] = useState([]);
@@ -140,12 +178,21 @@ const HomePage = () => {
     };
 
     fetchMainEvents();
-    // 🔥 year, month가 바뀔 때만 재호출 (startOfToday는 effect 내부에서 계산)
-  }, [year, month]);
+    // year, month 바뀔 때만 재호출
+  }, [year, month, date, today]);
 
   /* =========================
      2. 오늘의 일정 API 호출
         GET /calendar/summary/today
+        응답 예:
+        {
+          "ddays": [...],
+          "events": [ {...}, ... ],
+          "eventCount": 3,
+          "lectures": [...],
+          "date": "2025-11-23",
+          "lectureCount": 0
+        }
      ========================= */
   useEffect(() => {
     const fetchTodaySchedules = async () => {
@@ -153,21 +200,27 @@ const HomePage = () => {
         const res = await api.get("/calendar/summary/today");
         const body = res.data ?? {};
 
+        // ✅ 응답 구조에 맞게 events 사용
         const rawData = Array.isArray(body)
           ? body
-          : body.schedules || body.items || [];
+          : body.events || [];
 
-        const mapped = rawData.map((item) => ({
-          id: item.id,
-          category: item.category || item.type || "일정",
+        const mapped = rawData.map((item, idx) => ({
+          // 해당 API에 id가 없으면 title+time 조합으로 key 대체
+          id:
+            item.id ??
+            `${item.title || "schedule"}-${item.startAt || idx}`,
+          category: getCategoryLabel(item.category || item.type),
           title: item.title || "",
           place: item.place || item.location || "",
           timeRange:
             item.timeRange ||
             item.time ||
-            (item.startTime && item.endTime
+            (item.startAt && item.endAt
+              ? formatTimeRange(item.startAt, item.endAt)
+              : item.startTime && item.endTime
               ? `${item.startTime} ~ ${item.endTime}`
-              : item.startTime || item.endTime || ""),
+              : ""),
         }));
 
         setTodaySchedules(mapped);
@@ -179,7 +232,7 @@ const HomePage = () => {
       }
     };
 
-    // 🔥 마운트 시 한 번만 호출
+    // 마운트 시 한 번만 호출
     fetchTodaySchedules();
   }, []);
 
@@ -209,10 +262,12 @@ const HomePage = () => {
       {/* 지도 / 시간표 */}
       <TimetableMapSection onTodayLecturesChange={setTodayLectures} />
 
-      {/* 오늘의 강의 리스트 */}
+      {/* 오늘의 강의 리스트
+          👉 현재는 /timetable 기준으로만 채워짐
+          (캘린더에서 추가한 LECTURE는 '오늘의 일정' 섹션에 나오는 구조) */}
       <TodayLectureList lectures={todayLectures} />
 
-      {/* 오늘의 일정 리스트 */}
+      {/* 오늘의 일정 리스트 (이제 /calendar/summary/today.events 사용) */}
       <TodayScheduleList
         schedules={todaySchedules}
         loading={scheduleLoading}
