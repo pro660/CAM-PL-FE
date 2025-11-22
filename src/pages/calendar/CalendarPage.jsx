@@ -121,9 +121,8 @@ export default function CalendarPage() {
   const [monthReloadKey, setMonthReloadKey] = useState(0);
   const [dayReloadKey, setDayReloadKey] = useState(0);
 
-  // 메모 컴포넌트용
-  const [isMemoOpen, setIsMemoOpen] = useState(false);
-  const [selectedMemoEvent, setSelectedMemoEvent] = useState(null);
+  // 메모 대상 일정
+  const [memoTargetEvent, setMemoTargetEvent] = useState(null);
 
   const yearMonthLabel = `${currentMonth.getFullYear()}년 ${
     currentMonth.getMonth() + 1
@@ -252,6 +251,7 @@ export default function CalendarPage() {
     const y = currentMonth.getFullYear();
     const m = currentMonth.getMonth();
     setSelectedDate(new Date(y, m, day));
+    setMemoTargetEvent(null); // 날짜 바뀌면 메모 닫기
   };
 
   const handleClickAdd = () => {
@@ -271,32 +271,23 @@ export default function CalendarPage() {
 
   // 메모 열기
   const handleOpenMemo = (event) => {
-    setSelectedMemoEvent(event);
-    setIsMemoOpen(true);
+    setMemoTargetEvent(event);
   };
 
   const handleMemoClose = () => {
-    setIsMemoOpen(false);
-    setSelectedMemoEvent(null);
+    setMemoTargetEvent(null);
   };
 
   // 메모 저장 (프론트에서만 처리)
   const handleMemoSaved = (memoText) => {
-    if (!selectedMemoEvent) return;
-    const id = selectedMemoEvent.id;
+    if (!memoTargetEvent) return;
+    const id = memoTargetEvent.id;
 
-    // 오늘의 일정 리스트 state에 메모 반영
     setDayEvents((prev) =>
-      prev.map((ev) =>
-        ev.id === id ? { ...ev, memo: memoText } : ev
-      )
+      prev.map((ev) => (ev.id === id ? { ...ev, memo: memoText } : ev))
     );
-
-    // 월 이벤트 목록에도 같은 id가 있다면 반영 (선택 사항)
     setMonthEvents((prev) =>
-      prev.map((ev) =>
-        ev.id === id ? { ...ev, memo: memoText } : ev
-      )
+      prev.map((ev) => (ev.id === id ? { ...ev, memo: memoText } : ev))
     );
   };
 
@@ -320,10 +311,7 @@ export default function CalendarPage() {
         <h2 className="calendar-month-label">
           {yearMonthLabel}
           {monthLoading && (
-            <span className="calendar-month-loading">
-              {" "}
-              · 불러오는 중
-            </span>
+            <span className="calendar-month-loading"> · 불러오는 중</span>
           )}
         </h2>
         <button
@@ -406,6 +394,13 @@ export default function CalendarPage() {
         <div className="calendar-bottom-handle" />
         <div className="calendar-bottom-header">{selectedDateLabel}</div>
 
+        {/* 선택된 일정 메모 영역 (위 스샷처럼 상단에 끼워 넣기) */}
+        <CalendarMemoBottomSheet
+          event={memoTargetEvent}
+          onClose={handleMemoClose}
+          onSave={handleMemoSaved}
+        />
+
         {error && <div className="calendar-error-text">{error}</div>}
 
         {dayLoading ? (
@@ -450,7 +445,7 @@ export default function CalendarPage() {
         )}
       </section>
 
-      {/* 플로팅 + 버튼 */}
+      {/* 플로팅 + 버튼 (이미 fixed로 바꾼 버전 쓰면 됨) */}
       <button
         type="button"
         className="calendar-fab"
@@ -466,14 +461,6 @@ export default function CalendarPage() {
         date={selectedDate}
         onClose={handleAddSheetClose}
         onAdded={handleEventAdded}
-      />
-
-      {/* 메모 컴포넌트 (달력 페이지와 연동) */}
-      <CalendarMemoBottomSheet
-        visible={isMemoOpen}
-        event={selectedMemoEvent}
-        onClose={handleMemoClose}
-        onSave={handleMemoSaved}
       />
     </div>
   );

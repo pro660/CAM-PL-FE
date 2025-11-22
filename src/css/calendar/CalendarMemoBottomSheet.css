@@ -1,26 +1,17 @@
-/* 전체 오버레이 (배경은 어둡게 안 하고 투명) */
-.calendar-memo-overlay {
-  position: fixed;
-  inset: 0;
+/* 메모 섹션 전체 (상단 선택 카드 + 하단 메모 카드) */
+.calendar-memo-section {
+  margin-top: 0.9rem;
+  margin-bottom: 0.6rem;
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  z-index: 1050; /* 시간 선택 모달(1100)보다 살짝 낮게, 추가 시 조정 가능 */
-  pointer-events: auto;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
-/* 중앙 정렬 래퍼 */
-.calendar-memo-wrapper {
-  margin-top: 5.2rem; /* 상단 헤더/달력과 간격 */
-  width: 100%;
-  max-width: 600px;
-  padding: 0 1rem 1.5rem;
-  box-sizing: border-box;
-}
-
-/* 상단 일정 카드와 아래 메모 카드 사이 여백 */
+/* 상단 카드: 기존 일정 카드와 거의 동일한 느낌 유지 */
 .calendar-memo-top-card {
-  margin-bottom: 0.9rem;
+  /* .calendar-event-item 스타일을 그대로 사용하되
+     살짝 더 둥글게 보이도록 radius만 조정 */
+  border-radius: 1.2rem;
 }
 
 /* 상단 카드 오른쪽 '뒤로' 버튼 */
@@ -30,26 +21,27 @@
   font-size: 0.85rem;
   color: #9b8cff;
   cursor: pointer;
-  padding: 0.1rem 0.2rem;
+  padding: 0.1rem 0.3rem;
 }
 
-/* 메모 전체 박스 (하단 큰 카드) */
-.calendar-memo-panel {
+/* 하단 메모 카드 (전체 컨테이너) */
+.calendar-memo-card {
   background-color: #ffffff;
-  border-radius: 1.4rem;
-  box-shadow: 0 0.35rem 1.3rem rgba(0, 0, 0, 0.08);
-  padding: 0.9rem 1.0rem 1.1rem;
+  border-radius: 1rem; /* 일정 카드와 동일한 둥근 정도 */
+  box-shadow: 0 0.3rem 1rem rgba(0, 0, 0, 0.06);
+  padding: 0.8rem 0.95rem 1rem;
+  box-sizing: border-box;
 }
 
-/* "해당 일정의 메모입니다." 라인 */
-.calendar-memo-panel-header {
+/* 상단 "해당 일정의 메모입니다." 라인 */
+.calendar-memo-card-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: space_between;
   align-items: center;
   margin-bottom: 0.6rem;
 }
 
-.calendar-memo-panel-title {
+.calendar-memo-card-title {
   font-size: 0.9rem;
   font-weight: 600;
   color: #555555;
@@ -60,24 +52,25 @@
   border: none;
   background: transparent;
   padding: 0;
-  cursor: default; /* 동작은 안 하니 pointer 말고 default */
+  cursor: default; /* 기능 없음: 포인터 대신 기본 커서 */
 }
 
 .calendar-memo-edit-icon {
-  width: 1.4rem;
-  height: 1.4rem;
+  width: 1.5rem;
+  height: 1.5rem;
   border-radius: 999px;
-  border: 1.5px solid #b89cff;
+  border: 1.5px solid #c1a8ff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.85rem;
-  color: #b89cff;
+  color: #c1a8ff;
+  background-color: #fbf7ff;
 }
 
-/* 메모 입력 박스 (보라색 테두리) */
+/* 메모 입력 영역 */
 .calendar-memo-textbox-wrapper {
-  margin-top: 0.3rem;
+  margin-top: 0.2rem;
   border-radius: 1.2rem;
   border: 2px solid #d3c2ff;
   background-color: #ffffff;
@@ -86,7 +79,7 @@
   box-sizing: border-box;
 }
 
-/* 실제 텍스트 입력 textarea */
+/* 실제 textarea */
 .calendar-memo-textarea {
   width: 100%;
   min-height: 6rem;
@@ -94,7 +87,7 @@
   outline: none;
   resize: vertical;
   font-size: 0.85rem;
-  line-height: 1.4;
+  line-height: 1.5;
   color: #444444;
   font-family: inherit;
   box-sizing: border-box;
