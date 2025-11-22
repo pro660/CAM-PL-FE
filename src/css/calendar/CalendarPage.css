@@ -41,7 +41,6 @@
 .calendar-card {
   background-color: #ffffff;
   border-radius: 1.5rem;
-  
   padding: 1rem 0.7rem 0.9rem;
 }
 
@@ -110,13 +109,29 @@
   border: 2px solid #7b5cff;
 }
 
-/* 일정 있는 날 점 표시 */
-.calendar-day-dot {
+/* 일정 점 영역 */
+.calendar-day-dots {
   margin-top: 0.15rem;
+  display: flex;
+  justify-content: center;
+  gap: 0.18rem;
+}
+
+/* 공통 점 스타일 */
+.calendar-dot {
   width: 0.22rem;
   height: 0.22rem;
   border-radius: 50%;
+}
+
+/* TIMETABLE → 보라색 */
+.calendar-dot-timetable {
   background-color: #7b5cff;
+}
+
+/* 그 외(SCHOOL, MANUAL 등) → 파란색 */
+.calendar-dot-other {
+  background-color: #4aaeff;
 }
 
 /* 바텀시트 */

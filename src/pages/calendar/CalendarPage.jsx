@@ -120,7 +120,10 @@ export default function CalendarPage() {
     [currentMonth]
   );
 
-  // 월 단위 이벤트 맵 (yyyy-MM-DD -> true)
+  /**
+   * 월 단위 이벤트 맵
+   * yyyy-MM-DD -> { hasTimetable: boolean, hasOther: boolean }
+   */
   const eventDateMap = useMemo(() => {
     const map = {};
     if (!monthEvents || monthEvents.length === 0) return map;
@@ -144,7 +147,17 @@ export default function CalendarPage() {
 
       while (d.getTime() <= endClamped.getTime()) {
         const key = formatDate(d);
-        map[key] = true;
+
+        if (!map[key]) {
+          map[key] = { hasTimetable: false, hasOther: false };
+        }
+
+        if (ev.origin === "TIMETABLE") {
+          map[key].hasTimetable = true;
+        } else {
+          map[key].hasOther = true;
+        }
+
         d.setDate(d.getDate() + 1);
       }
     });
@@ -261,11 +274,7 @@ export default function CalendarPage() {
             <div
               key={name}
               className={`calendar-weekday ${
-                idx === 0
-                  ? "sun"
-                  : idx === 6
-                  ? "sat"
-                  : ""
+                idx === 0 ? "sun" : idx === 6 ? "sat" : ""
               }`}
             >
               {name}
@@ -278,7 +287,12 @@ export default function CalendarPage() {
           {calendarWeeks.map((week, wi) =>
             week.map((day, di) => {
               if (day === null) {
-                return <div key={`${wi}-${di}`} className="calendar-day empty" />;
+                return (
+                  <div
+                    key={`${wi}-${di}`}
+                    className="calendar-day empty"
+                  />
+                );
               }
 
               const cellDate = new Date(
@@ -289,7 +303,9 @@ export default function CalendarPage() {
               const isToday = isSameDate(cellDate, today);
               const isSelected = isSameDate(cellDate, selectedDate);
               const dateKey = formatDate(cellDate);
-              const hasEvent = !!eventDateMap[dateKey];
+              const dayInfo = eventDateMap[dateKey];
+              const hasTimetable = dayInfo?.hasTimetable;
+              const hasOther = dayInfo?.hasOther;
 
               return (
                 <button
@@ -301,7 +317,18 @@ export default function CalendarPage() {
                   onClick={() => handleSelectDate(day)}
                 >
                   <span className="calendar-day-number">{day}</span>
-                  {hasEvent && <span className="calendar-day-dot" />}
+
+                  {/* 일정 점들 */}
+                  {(hasTimetable || hasOther) && (
+                    <div className="calendar-day-dots">
+                      {hasTimetable && (
+                        <span className="calendar-dot calendar-dot-timetable" />
+                      )}
+                      {hasOther && (
+                        <span className="calendar-dot calendar-dot-other" />
+                      )}
+                    </div>
+                  )}
                 </button>
               );
             })
@@ -317,7 +344,9 @@ export default function CalendarPage() {
         {error && <div className="calendar-error-text">{error}</div>}
 
         {dayLoading ? (
-          <div className="calendar-empty-text">일정을 불러오는 중입니다...</div>
+          <div className="calendar-empty-text">
+            일정을 불러오는 중입니다...
+          </div>
         ) : dayEvents.length === 0 ? (
           <div className="calendar-empty-text">
             아직 등록된 일정이 없습니다.
@@ -331,7 +360,7 @@ export default function CalendarPage() {
                     <span className="calendar-event-tag">
                       {getCategoryLabel(ev.category)}
                     </span>
-                    {/* 수정 아이콘/메모 버튼 자리 */}
+                    {/* 메모 버튼 자리 */}
                     <button
                       type="button"
                       className="calendar-event-memo-button"
