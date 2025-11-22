@@ -368,9 +368,6 @@
   color: #a0a0a0;
 }
 
-/* .home-lecture-section { }  
-   필요하면 여기서만 마진/간격 조정해도 됨 */
-
 /* =========================
    오늘의 일정 리스트
    ========================= */
@@ -379,41 +376,58 @@
   margin-top: 1.6rem;
 }
 
-/* 카드 기본은 .home-card 공통 사용 */
+/* 오늘의 일정 카드:
+   - 전체 높이 줄이고
+   - 왼쪽에 카테고리 pill, 오른쪽에 텍스트 묶음 */
 .home-schedule-card {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  align-items: center;
+  padding: 0.55rem 0.8rem; /* 기본 카드보다 살짝 낮은 높이 */
+}
+
+/* 왼쪽 카테고리 pill 영역 */
+.home-schedule-card .home-card-header {
+  margin: 0;
+  margin-right: 0.6rem;
+  flex-shrink: 0;
 }
 
 /* 카테고리 Pill (발표 / 팀플 등) */
-.home-pill-category {
+.home-schedule-card .home-pill-category {
   background: #d7c5ff;   /* 연보라 배경 */
   color: #ffffff;        /* 흰 글씨 */
   font-size: 0.7rem;
   font-weight: 600;
   border-radius: 999px;
-  padding: 0.16rem 0.7rem;
+  padding: 0.14rem 0.65rem;
 }
 
-/* 제목 (굵고 살짝 크게) */
+/* 오른쪽 텍스트 묶음 */
+.home-schedule-card .home-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+/* 제목 (굵고 살짝 컴팩트) */
 .home-schedule-card .home-card-title {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: #333333;
-  line-height: 1.3;
+  line-height: 1.25;
 }
 
 /* 장소 ([H05] …, 세이커피 등) */
 .home-schedule-card .home-card-subtext {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: #797979;
 }
 
 /* 시간 (14:00, 18:00) */
 .home-schedule-card .home-card-time {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   color: #a0a0a0;
+  margin-top: 0.05rem;
 }
 
 /* =========================
