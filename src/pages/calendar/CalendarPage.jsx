@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import "../../css/calendar/CalendarPage.css";
 import api from "../../api/axios";
-import { useNavigate } from "react-router-dom";
+import CalendarAddBottomSheet from "../../components/calendar/CalendarAddBottomSheet";
 
 const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
 const DAY_NAMES_LONG = [
@@ -86,8 +86,6 @@ function formatTimeRange(startIso, endIso) {
 }
 
 export default function CalendarPage() {
-  const navigate = useNavigate();
-
   const today = useMemo(() => new Date(), []);
   const [currentMonth, setCurrentMonth] = useState(() => {
     const t = new Date();
@@ -102,6 +100,13 @@ export default function CalendarPage() {
   const [dayLoading, setDayLoading] = useState(false);
 
   const [error, setError] = useState("");
+
+  // 일정 추가 바텀시트
+  const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
+
+  // 새 일정 추가 후 재로딩용
+  const [monthReloadKey, setMonthReloadKey] = useState(0);
+  const [dayReloadKey, setDayReloadKey] = useState(0);
 
   const yearMonthLabel = `${currentMonth.getFullYear()}년 ${
     currentMonth.getMonth() + 1
@@ -120,10 +125,7 @@ export default function CalendarPage() {
     [currentMonth]
   );
 
-  /**
-   * 월 단위 이벤트 맵
-   * yyyy-MM-DD -> { hasTimetable: boolean, hasOther: boolean }
-   */
+  // 월 단위 이벤트 맵 (yyyy-MM-DD -> { hasLectureDot, hasOtherDot })
   const eventDateMap = useMemo(() => {
     const map = {};
     if (!monthEvents || monthEvents.length === 0) return map;
@@ -137,7 +139,6 @@ export default function CalendarPage() {
       const start = new Date(ev.startAt);
       const end = new Date(ev.endAt);
 
-      // 해당 월 범위와 겹치는 구간만 계산
       const d = new Date(
         Math.max(start.getTime(), firstOfMonth.getTime())
       );
@@ -149,13 +150,16 @@ export default function CalendarPage() {
         const key = formatDate(d);
 
         if (!map[key]) {
-          map[key] = { hasTimetable: false, hasOther: false };
+          map[key] = { hasLectureDot: false, hasOtherDot: false };
         }
 
-        if (ev.origin === "TIMETABLE") {
-          map[key].hasTimetable = true;
+        const isLectureFromTimetable =
+          ev.origin === "TIMETABLE" && ev.type === "LECTURE";
+
+        if (isLectureFromTimetable) {
+          map[key].hasLectureDot = true;
         } else {
-          map[key].hasOther = true;
+          map[key].hasOtherDot = true;
         }
 
         d.setDate(d.getDate() + 1);
@@ -203,7 +207,7 @@ export default function CalendarPage() {
       .finally(() => {
         setMonthLoading(false);
       });
-  }, [currentMonth]);
+  }, [currentMonth, monthReloadKey]);
 
   /* ---------- 선택 날짜 일정 로딩 ---------- */
   useEffect(() => {
@@ -224,7 +228,7 @@ export default function CalendarPage() {
       .finally(() => {
         setDayLoading(false);
       });
-  }, [selectedDate]);
+  }, [selectedDate, dayReloadKey]);
 
   const handleSelectDate = (day) => {
     if (!day) return;
@@ -234,8 +238,18 @@ export default function CalendarPage() {
   };
 
   const handleClickAdd = () => {
-    // 일정 추가 페이지 라우트는 이후에 실제 경로로 변경하면 됨
-    navigate("/calendar/add");
+    setIsAddSheetOpen(true);
+  };
+
+  const handleAddSheetClose = () => {
+    setIsAddSheetOpen(false);
+  };
+
+  const handleEventAdded = () => {
+    // 새 일정 추가 후 월/일 데이터 다시 불러오기
+    setMonthReloadKey((v) => v + 1);
+    setDayReloadKey((v) => v + 1);
+    setIsAddSheetOpen(false);
   };
 
   const isSameDate = (d1, d2) =>
@@ -255,7 +269,10 @@ export default function CalendarPage() {
         >
           ‹
         </button>
-        <h2 className="calendar-month-label">{yearMonthLabel}</h2>
+        <h2 className="calendar-month-label">
+          {yearMonthLabel}
+          {monthLoading && <span className="calendar-month-loading"> · 불러오는 중</span>}
+        </h2>
         <button
           type="button"
           className="calendar-month-button"
@@ -288,10 +305,7 @@ export default function CalendarPage() {
             week.map((day, di) => {
               if (day === null) {
                 return (
-                  <div
-                    key={`${wi}-${di}`}
-                    className="calendar-day empty"
-                  />
+                  <div key={`${wi}-${di}`} className="calendar-day empty" />
                 );
               }
 
@@ -303,9 +317,10 @@ export default function CalendarPage() {
               const isToday = isSameDate(cellDate, today);
               const isSelected = isSameDate(cellDate, selectedDate);
               const dateKey = formatDate(cellDate);
-              const dayInfo = eventDateMap[dateKey];
-              const hasTimetable = dayInfo?.hasTimetable;
-              const hasOther = dayInfo?.hasOther;
+              const dotInfo = eventDateMap[dateKey] || {
+                hasLectureDot: false,
+                hasOtherDot: false,
+              };
 
               return (
                 <button
@@ -318,17 +333,14 @@ export default function CalendarPage() {
                 >
                   <span className="calendar-day-number">{day}</span>
 
-                  {/* 일정 점들 */}
-                  {(hasTimetable || hasOther) && (
-                    <div className="calendar-day-dots">
-                      {hasTimetable && (
-                        <span className="calendar-dot calendar-dot-timetable" />
-                      )}
-                      {hasOther && (
-                        <span className="calendar-dot calendar-dot-other" />
-                      )}
-                    </div>
-                  )}
+                  <div className="calendar-day-dots">
+                    {dotInfo.hasLectureDot && (
+                      <span className="calendar-day-dot calendar-day-dot-lecture" />
+                    )}
+                    {dotInfo.hasOtherDot && (
+                      <span className="calendar-day-dot calendar-day-dot-other" />
+                    )}
+                  </div>
                 </button>
               );
             })
@@ -393,6 +405,14 @@ export default function CalendarPage() {
       >
         +
       </button>
+
+      {/* 일정 추가 바텀시트 */}
+      <CalendarAddBottomSheet
+        visible={isAddSheetOpen}
+        date={selectedDate}
+        onClose={handleAddSheetClose}
+        onAdded={handleEventAdded}
+      />
     </div>
   );
 }

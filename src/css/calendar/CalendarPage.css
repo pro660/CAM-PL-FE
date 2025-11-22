@@ -23,6 +23,12 @@
   color: #333333;
 }
 
+.calendar-month-loading {
+  font-size: 0.75rem;
+  color: #999999;
+  margin-left: 0.2rem;
+}
+
 .calendar-month-button {
   width: 2rem;
   height: 2rem;
@@ -109,29 +115,30 @@
   border: 2px solid #7b5cff;
 }
 
-/* 일정 점 영역 */
+/* 날짜 아래 점 영역 */
 .calendar-day-dots {
   margin-top: 0.15rem;
   display: flex;
+  align-items: center;
   justify-content: center;
-  gap: 0.18rem;
 }
 
-/* 공통 점 스타일 */
-.calendar-dot {
+/* 일정 있는 날 점 공통 */
+.calendar-day-dot {
   width: 0.22rem;
   height: 0.22rem;
   border-radius: 50%;
 }
 
-/* TIMETABLE → 보라색 */
-.calendar-dot-timetable {
+/* TIMETABLE(Lecture) 일정: 보라색 점 */
+.calendar-day-dot-lecture {
   background-color: #7b5cff;
 }
 
-/* 그 외(SCHOOL, MANUAL 등) → 파란색 */
-.calendar-dot-other {
-  background-color: #4aaeff;
+/* 그 외 일정: 파란색 점 */
+.calendar-day-dot-other {
+  background-color: #4f7cff;
+  margin-left: 0.12rem;
 }
 
 /* 바텀시트 */
@@ -243,7 +250,8 @@
 /* 플로팅 + 버튼 */
 .calendar-fab {
   position: fixed;
-  right: 1.5rem;
+  /* 메인 컨테이너(최대 600px)의 오른쪽 안쪽에 1.5rem 띄워서 배치 */
+  right: calc((100vw - min(100vw, 600px)) / 2 + 1.5rem);
   bottom: 5rem; /* 하단 메뉴와 겹치지 않게 */
   width: 3.3rem;
   height: 3.3rem;

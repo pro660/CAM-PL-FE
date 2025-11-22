@@ -1,0 +1,121 @@
+.timepicker-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.35);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  z-index: 1100;
+}
+
+.timepicker-sheet {
+  width: 100%;
+  max-width: 600px;
+  background-color: #ffffff;
+  border-radius: 1.4rem 1.4rem 0 0;
+  padding: 1rem 1.2rem 1.2rem;
+  box-sizing: border-box;
+}
+
+/* 헤더 */
+.timepicker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.7rem;
+}
+
+.timepicker-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #555555;
+}
+
+.timepicker-close {
+  border: none;
+  background: transparent;
+  font-size: 1.1rem;
+  color: #999999;
+  cursor: pointer;
+}
+
+/* 본문 */
+.timepicker-body {
+  display: flex;
+  gap: 0.8rem;
+  justify-content: center;
+  margin-bottom: 0.7rem;
+}
+
+/* 세로 컬럼 공통 */
+.timepicker-column {
+  flex: 1;
+  max-height: 8rem;
+  border-radius: 1rem;
+  background-color: #faf7ff;
+  padding: 0.3rem 0.2rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.timepicker-scroll {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* 일반 숫자 아이템 */
+.timepicker-item {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-size: 0.9rem;
+  color: #777777;
+  padding: 0.25rem 0;
+  cursor: pointer;
+}
+
+.timepicker-item.selected {
+  background-color: #e6dbff;
+  border-radius: 0.7rem;
+  color: #7b5cff;
+  font-weight: 600;
+}
+
+/* AM/PM 컬럼 */
+.timepicker-meridiem-col {
+  flex: 0.9;
+}
+
+.timepicker-meridiem-item {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-size: 0.85rem;
+  color: #777777;
+  padding: 0.3rem 0;
+  cursor: pointer;
+}
+
+.timepicker-meridiem-item.selected {
+  background-color: #e6dbff;
+  border-radius: 0.7rem;
+  color: #7b5cff;
+  font-weight: 600;
+}
+
+/* 확인 버튼 */
+.timepicker-confirm {
+  width: 100%;
+  height: 2.6rem;
+  border-radius: 999px;
+  border: none;
+  background: #7b5cff;
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
