@@ -61,7 +61,17 @@ function buildCalendarGrid(baseMonth) {
   return weeks;
 }
 
+// 카테고리 라벨
 function getCategoryLabel(category) {
+  if (!category) return "일정";
+
+  // 이미 한글로 온 경우는 그대로 사용
+  const koreanLabels = ["강의", "시험", "발표", "팀플", "미팅", "과제", "식사", "휴식", "모임", "일정"];
+  if (koreanLabels.includes(category)) {
+    return category;
+  }
+
+  // 영문 코드 → 한글 매핑
   switch (category) {
     case "LECTURE":
       return "강의";
@@ -82,7 +92,8 @@ function getCategoryLabel(category) {
     case "GATHERING":
       return "모임";
     default:
-      return "일정";
+      // 모르는 값이면 백엔드가 준 그대로 노출
+      return category;
   }
 }
 
@@ -143,42 +154,46 @@ export default function CalendarPage() {
   );
 
   // 월 단위 이벤트 맵 (yyyy-MM-DD -> { hasTimetable: boolean, hasOther: boolean })
+  // ✅ 이벤트의 "시작 날짜" 기준으로만 점을 찍고, 현재 달에 해당하는 날짜만 사용
   const eventDateMap = useMemo(() => {
     const map = {};
-    if (!monthEvents || monthEvents.length === 0) return map;
+    if (!Array.isArray(monthEvents) || monthEvents.length === 0) return map;
 
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth(); // 0~11
-    const firstOfMonth = new Date(year, month, 1);
-    const lastOfMonth = new Date(year, month + 1, 0);
 
     monthEvents.forEach((ev) => {
-      const start = new Date(ev.startAt);
-      const end = new Date(ev.endAt);
+      // 백엔드에서 내려줄 수 있는 여러 날짜 필드 후보
+      let dateKey =
+        ev.date ||
+        ev.eventDate ||
+        ev.startDate ||
+        (ev.startAt ? ev.startAt.slice(0, 10) : null);
 
-      const d = new Date(
-        Math.max(start.getTime(), firstOfMonth.getTime())
-      );
-      const endClamped = new Date(
-        Math.min(end.getTime(), lastOfMonth.getTime())
-      );
+      if (!dateKey) return;
+
+      const [yyyy, mm, dd] = dateKey.split("-").map(Number);
+      if (!yyyy || !mm || !dd) return;
+
+      const eventDate = new Date(yyyy, mm - 1, dd);
+
+      // 현재 달에 속하는 이벤트만 점 처리
+      if (
+        eventDate.getFullYear() !== year ||
+        eventDate.getMonth() !== month
+      ) {
+        return;
+      }
+
+      if (!map[dateKey]) {
+        map[dateKey] = { hasTimetable: false, hasOther: false };
+      }
 
       const isTimetable = ev.origin === "TIMETABLE";
-
-      while (d.getTime() <= endClamped.getTime()) {
-        const key = formatDate(d);
-
-        if (!map[key]) {
-          map[key] = { hasTimetable: false, hasOther: false };
-        }
-
-        if (isTimetable) {
-          map[key].hasTimetable = true;
-        } else {
-          map[key].hasOther = true;
-        }
-
-        d.setDate(d.getDate() + 1);
+      if (isTimetable) {
+        map[dateKey].hasTimetable = true;
+      } else {
+        map[dateKey].hasOther = true;
       }
     });
 
@@ -214,7 +229,12 @@ export default function CalendarPage() {
     api
       .get("/calendar/events", { params: { ym } })
       .then((res) => {
-        setMonthEvents(res.data || []);
+        // 응답이 배열이든 객체든 이벤트 배열로 정규화
+        const body = res.data ?? [];
+        const events = Array.isArray(body)
+          ? body
+          : body.events || body.items || [];
+        setMonthEvents(events);
       })
       .catch((e) => {
         console.error(e);
@@ -235,7 +255,11 @@ export default function CalendarPage() {
     api
       .get("/calendar/day", { params: { date: dateStr } })
       .then((res) => {
-        setDayEvents(res.data || []);
+        const body = res.data ?? [];
+        const events = Array.isArray(body)
+          ? body
+          : body.events || body.items || [];
+        setDayEvents(events);
       })
       .catch((e) => {
         console.error(e);
