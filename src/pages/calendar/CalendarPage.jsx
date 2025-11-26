@@ -66,7 +66,18 @@ function getCategoryLabel(category) {
   if (!category) return "일정";
 
   // 이미 한글로 온 경우는 그대로 사용
-  const koreanLabels = ["강의", "시험", "발표", "팀플", "미팅", "과제", "식사", "휴식", "모임", "일정"];
+  const koreanLabels = [
+    "강의",
+    "시험",
+    "발표",
+    "팀플",
+    "미팅",
+    "과제",
+    "식사",
+    "휴식",
+    "모임",
+    "일정",
+  ];
   if (koreanLabels.includes(category)) {
     return category;
   }
@@ -153,8 +164,10 @@ export default function CalendarPage() {
     [currentMonth]
   );
 
-  // 월 단위 이벤트 맵 (yyyy-MM-DD -> { hasTimetable: boolean, hasOther: boolean })
-  // ✅ startAt ~ endAt 구간 전체에 대해, 이 달에 해당하는 날짜들에 점을 찍는다.
+  // ✅ 월 단위 이벤트 맵 (yyyy-MM-DD -> { hasTimetable: boolean, hasOther: boolean })
+  // - startAt, endAt 둘 다 사용해서 "기간 전체"에 점을 찍음
+  // - endAt은 하루(exclusive)라고 보고, multi-day면 endAt - 1일까지 표시
+  // - 단, startAt과 endAt이 같은 날짜(당일 일정)는 그냥 그 하루에 점을 찍음
   const eventDateMap = useMemo(() => {
     const map = {};
     if (!Array.isArray(monthEvents) || monthEvents.length === 0) return map;
@@ -166,23 +179,63 @@ export default function CalendarPage() {
     const lastOfMonth = new Date(year, month + 1, 0);
 
     monthEvents.forEach((ev) => {
-      if (!ev.startAt || !ev.endAt) return;
+      if (!ev.startAt) return;
 
       const start = new Date(ev.startAt);
-      const end = new Date(ev.endAt);
-      if (isNaN(start.getTime()) || isNaN(end.getTime())) return;
+      if (isNaN(start.getTime())) return;
 
-      // 이 달과 겹치는 구간만 사용
-      const d = new Date(
-        Math.max(start.getTime(), firstOfMonth.getTime())
+      const startDateOnly = new Date(
+        start.getFullYear(),
+        start.getMonth(),
+        start.getDate()
       );
-      const endClamped = new Date(
-        Math.min(end.getTime(), lastOfMonth.getTime())
+
+      let endDateOnly;
+      if (ev.endAt) {
+        const end = new Date(ev.endAt);
+        if (isNaN(end.getTime())) return;
+        endDateOnly = new Date(
+          end.getFullYear(),
+          end.getMonth(),
+          end.getDate()
+        );
+      } else {
+        // endAt 없으면 그냥 당일 일정으로 처리
+        endDateOnly = new Date(startDateOnly);
+      }
+
+      let lastDateForDot;
+
+      // 🔥 당일 일정: startDate == endDate → 그 날짜만 찍기
+      if (startDateOnly.getTime() === endDateOnly.getTime()) {
+        lastDateForDot = new Date(startDateOnly);
+      } else {
+        // 🔥 여러 날에 걸친 일정: endAt 기준 하루 빼서 (exclusive) 마지막 날짜 계산
+        lastDateForDot = new Date(endDateOnly);
+        lastDateForDot.setDate(lastDateForDot.getDate() - 1);
+      }
+
+      // 이 달과 겹치는 구간으로 클램프
+      const rangeStart = new Date(
+        Math.max(startDateOnly.getTime(), firstOfMonth.getTime())
       );
+      const rangeEnd = new Date(
+        Math.min(lastDateForDot.getTime(), lastOfMonth.getTime())
+      );
+
+      // 이 달에 걸치는 날짜가 없으면 스킵
+      if (rangeEnd.getTime() < rangeStart.getTime()) {
+        return;
+      }
 
       const isTimetable = ev.origin === "TIMETABLE";
 
-      while (d.getTime() <= endClamped.getTime()) {
+      // rangeStart ~ rangeEnd 까지 하루씩 점 찍기
+      for (
+        let d = new Date(rangeStart);
+        d.getTime() <= rangeEnd.getTime();
+        d.setDate(d.getDate() + 1)
+      ) {
         const key = formatDate(d);
 
         if (!map[key]) {
@@ -194,8 +247,6 @@ export default function CalendarPage() {
         } else {
           map[key].hasOther = true;
         }
-
-        d.setDate(d.getDate() + 1);
       }
     });
 
