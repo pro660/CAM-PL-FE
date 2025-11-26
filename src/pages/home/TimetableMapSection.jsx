@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import NaverMap from "../../components/home/NaverMap";
 import api from "../../api/axios";
+import { useLoading } from "../../context/LoadingContext.jsx"; // ✅ 전역 로더 훅 추가
 
 const weekdayLabels = ["월", "화", "수", "목", "금"];
 const timeSlots = [
@@ -52,6 +53,7 @@ const mapApiDayToKor = (dayStr) => {
 };
 
 const TimetableMapSection = ({ onTodayLecturesChange }) => {
+  const { showLoading, hideLoading } = useLoading(); // ✅ 전역 로더 제어
   const [activeView, setActiveView] = useState("timetable"); // "timetable" | "map"
   const [timetable, setTimetable] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -63,7 +65,10 @@ const TimetableMapSection = ({ onTodayLecturesChange }) => {
 
   // 시간표 API 호출 + 데이터 정규화
   useEffect(() => {
+    let cancelled = false; // ✅ 언마운트 시 안전하게 처리
+
     const fetchTimetable = async () => {
+      showLoading(); // ✅ 전역 로더 +1
       try {
         const res = await api.get("/timetable");
         const rawData = res.data || [];
@@ -84,30 +89,41 @@ const TimetableMapSection = ({ onTodayLecturesChange }) => {
           location: item.location || item.classroom || "",
         }));
 
-        setTimetable(normalized);
+        if (!cancelled) {
+          setTimetable(normalized);
 
-        // === 오늘의 강의 리스트 계산해서 부모(HomePage)로 전달 ===
-        if (onTodayLecturesChange) {
-          const todays = normalized.filter((cls) => cls.day === todayLabel);
-          const todayLectureItems = todays.map((cls) => ({
-            id: cls.id,
-            buildingLabel: "강의실", // 추후 백엔드에서 건물 정보 오면 교체
-            title: cls.title,
-            locationDetail: cls.location,
-            timeRange: `${cls.startTime} ~ ${cls.endTime}`,
-          }));
-          onTodayLecturesChange(todayLectureItems);
+          // === 오늘의 강의 리스트 계산해서 부모(HomePage)로 전달 ===
+          if (onTodayLecturesChange) {
+            const todays = normalized.filter((cls) => cls.day === todayLabel);
+            const todayLectureItems = todays.map((cls) => ({
+              id: cls.id,
+              buildingLabel: "강의실", // 추후 백엔드에서 건물 정보 오면 교체
+              title: cls.title,
+              locationDetail: cls.location,
+              timeRange: `${cls.startTime} ~ ${cls.endTime}`,
+            }));
+            onTodayLecturesChange(todayLectureItems);
+          }
         }
       } catch (error) {
         console.error("시간표 조회 실패:", error);
-        if (onTodayLecturesChange) onTodayLecturesChange([]); // 실패 시 오늘 강의 초기화
+        if (!cancelled && onTodayLecturesChange) {
+          onTodayLecturesChange([]); // 실패 시 오늘 강의 초기화
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
+        hideLoading(); // ✅ 전역 로더 -1
       }
     };
 
     fetchTimetable();
-  }, [onTodayLecturesChange, todayLabel]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [onTodayLecturesChange, todayLabel, showLoading, hideLoading]); // ✅ 훅 의존성 추가
 
   const isMap = activeView === "map";
 

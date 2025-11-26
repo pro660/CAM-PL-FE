@@ -7,6 +7,7 @@ import TodayScheduleList from "./TodayScheduleList";
 import StudyPlaceList from "./StudyPlaceList";
 import "../../css/home/HomePage.css";
 import api from "../../api/axios";
+import { useLoading } from "../../context/LoadingContext.jsx"; // ✅ 전역 로더 훅 추가
 
 // 카테고리 한글 라벨링 (캘린더랑 맞추기)
 function getCategoryLabel(category) {
@@ -47,6 +48,8 @@ function formatTimeRange(startIso, endIso) {
 }
 
 const HomePage = () => {
+  const { showLoading, hideLoading } = useLoading(); // ✅ 전역 로더 제어
+
   // TimetableMapSection에서 내려주는 오늘의 강의 리스트
   const [todayLectures, setTodayLectures] = useState([]);
 
@@ -102,6 +105,7 @@ const HomePage = () => {
      ========================= */
   useEffect(() => {
     const fetchMainEvents = async () => {
+      showLoading(); // ✅ 전역 로더 +1
       try {
         const startOfToday = new Date(year, today.getMonth(), date);
 
@@ -174,36 +178,28 @@ const HomePage = () => {
         console.error("주요 일정(D-Day) 조회 실패:", error);
       } finally {
         setDdayLoading(false);
+        hideLoading(); // ✅ 전역 로더 -1
       }
     };
 
     fetchMainEvents();
-    // year, month 바뀔 때만 재호출
-  }, [year, month, date, today]);
+    // 홈 진입 시 한 번만 호출
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // ✅ 날짜 변하게 되면 그때 로직 따로 잡는 게 좋고, 지금은 첫 진입 기준
 
   /* =========================
      2. 오늘의 일정 API 호출
         GET /calendar/summary/today
-        응답 예:
-        {
-          "ddays": [...],
-          "events": [ {...}, ... ],
-          "eventCount": 3,
-          "lectures": [...],
-          "date": "2025-11-23",
-          "lectureCount": 0
-        }
      ========================= */
   useEffect(() => {
     const fetchTodaySchedules = async () => {
+      showLoading(); // ✅ 전역 로더 +1
       try {
         const res = await api.get("/calendar/summary/today");
         const body = res.data ?? {};
 
         // ✅ 응답 구조에 맞게 events 사용
-        const rawData = Array.isArray(body)
-          ? body
-          : body.events || [];
+        const rawData = Array.isArray(body) ? body : body.events || [];
 
         const mapped = rawData.map((item, idx) => ({
           // 해당 API에 id가 없으면 title+time 조합으로 key 대체
@@ -229,12 +225,13 @@ const HomePage = () => {
         setTodaySchedules([]);
       } finally {
         setScheduleLoading(false);
+        hideLoading(); // ✅ 전역 로더 -1
       }
     };
 
     // 마운트 시 한 번만 호출
     fetchTodaySchedules();
-  }, []);
+  }, [showLoading, hideLoading]);
 
   return (
     <div className="home-page">
@@ -262,12 +259,10 @@ const HomePage = () => {
       {/* 지도 / 시간표 */}
       <TimetableMapSection onTodayLecturesChange={setTodayLectures} />
 
-      {/* 오늘의 강의 리스트
-          👉 현재는 /timetable 기준으로만 채워짐
-          (캘린더에서 추가한 LECTURE는 '오늘의 일정' 섹션에 나오는 구조) */}
+      {/* 오늘의 강의 리스트 */}
       <TodayLectureList lectures={todayLectures} />
 
-      {/* 오늘의 일정 리스트 (이제 /calendar/summary/today.events 사용) */}
+      {/* 오늘의 일정 리스트 */}
       <TodayScheduleList
         schedules={todaySchedules}
         loading={scheduleLoading}
