@@ -15,13 +15,17 @@ import ResetPasswordDonePage from "../pages/login/ResetPasswordDonePage";
 import KakaoCallbackPage from "../pages/login/KakaoCallbackPage";
 import CalendarPage from "../pages/calendar/CalendarPage";
 
+import Loader from "../components/common/Loader";            // ✅ 로더
+import { useLoading } from "../context/LoadingContext.jsx";  // ✅ 로딩 컨텍스트
+
 function Layout({ children }) {
   const location = useLocation();
+  const { isLoading } = useLoading(); // ✅ 전역 로딩 상태 사용
 
   const hiddenPaths = [
     "/login",
     "/signup",
-    "/oauth/signed-in",  // ✅ 콜백 페이지
+    "/oauth/signed-in", // ✅ 콜백 페이지
   ];
 
   const shouldHide = hiddenPaths.some((path) =>
@@ -30,6 +34,23 @@ function Layout({ children }) {
 
   return (
     <>
+      {/* ✅ 전역 로더 오버레이 */}
+      {isLoading && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.2)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}
+        >
+          <Loader />
+        </div>
+      )}
+
       {!shouldHide && <Header />}
       <main
         style={{
@@ -68,7 +89,6 @@ function AppRouter() {
           <Route
             path="/"
             element={
-              // 필요하면 ProtectedRoute 다시 감싸기
               // <ProtectedRoute>
               <HomePage />
               // </ProtectedRoute>

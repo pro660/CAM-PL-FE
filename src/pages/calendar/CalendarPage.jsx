@@ -4,6 +4,7 @@ import "../../css/calendar/CalendarPage.css";
 import api from "../../api/axios";
 import CalendarAddBottomSheet from "../../components/calendar/CalendarAddBottomSheet";
 import CalendarMemoBottomSheet from "../../components/calendar/CalendarMemoBottomSheet";
+import { useLoading } from "../../context/LoadingContext.jsx"; // ✅ 전역 로더 훅
 
 const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
 const DAY_NAMES_LONG = [
@@ -62,10 +63,6 @@ function buildCalendarGrid(baseMonth) {
 }
 
 // 카테고리 라벨
-// - type / origin 을 먼저 보고,
-//   SCHOOL  → "학사"
-//   TIMETABLE / LECTURE → "강의"
-// - PERSONAL(= 수동등록) 은 category 코드 보고 매핑
 function getCategoryLabel(category, type, origin) {
   // 1) 학교 일정 (학사)
   if (type === "SCHOOL") {
@@ -135,6 +132,7 @@ function formatTimeRange(startIso, endIso) {
 }
 
 export default function CalendarPage() {
+  const { showLoading, hideLoading } = useLoading(); // ✅ 전역 로더 제어
   const today = useMemo(() => new Date(), []);
   const [currentMonth, setCurrentMonth] = useState(() => {
     const t = new Date();
@@ -143,7 +141,7 @@ export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState(() => new Date());
 
   const [monthEvents, setMonthEvents] = useState([]);
-  const [monthLoading, setMonthLoading] = useState(false);
+  const [monthLoading, setMonthLoading] = useState(false); // 페이지 로딩 텍스트용
 
   const [error, setError] = useState("");
 
@@ -175,9 +173,6 @@ export default function CalendarPage() {
   );
 
   // ✅ 월 단위 이벤트 맵 (yyyy-MM-DD -> { hasTimetable: boolean, hasOther: boolean })
-  // - startAt, endAt 둘 다 사용해서 "기간 전체"에 점을 찍음
-  // - endAt은 하루(exclusive)라고 보고, multi-day면 endAt - 1일까지 표시
-  // - 단, startAt과 endAt이 같은 날짜(당일 일정)는 그냥 그 하루에만 점을 찍음
   const eventDateMap = useMemo(() => {
     const map = {};
     if (!Array.isArray(monthEvents) || monthEvents.length === 0) return map;
@@ -210,22 +205,18 @@ export default function CalendarPage() {
           end.getDate()
         );
       } else {
-        // endAt 없으면 그냥 당일 일정으로 처리
         endDateOnly = new Date(startDateOnly);
       }
 
       let lastDateForDot;
 
-      // 🔥 당일 일정: startDate == endDate → 그 날짜만 찍기
       if (startDateOnly.getTime() === endDateOnly.getTime()) {
         lastDateForDot = new Date(startDateOnly);
       } else {
-        // 🔥 여러 날에 걸친 일정: endAt 기준 하루 빼서 (exclusive) 마지막 날짜 계산
         lastDateForDot = new Date(endDateOnly);
         lastDateForDot.setDate(lastDateForDot.getDate() - 1);
       }
 
-      // 이 달과 겹치는 구간으로 클램프
       const rangeStart = new Date(
         Math.max(startDateOnly.getTime(), firstOfMonth.getTime())
       );
@@ -233,14 +224,12 @@ export default function CalendarPage() {
         Math.min(lastDateForDot.getTime(), lastOfMonth.getTime())
       );
 
-      // 이 달에 걸치는 날짜가 없으면 스킵
       if (rangeEnd.getTime() < rangeStart.getTime()) {
         return;
       }
 
       const isTimetable = ev.origin === "TIMETABLE";
 
-      // rangeStart ~ rangeEnd 까지 하루씩 점 찍기
       for (
         let d = new Date(rangeStart);
         d.getTime() <= rangeEnd.getTime();
@@ -264,7 +253,6 @@ export default function CalendarPage() {
   }, [monthEvents, currentMonth]);
 
   // ✅ 선택된 날짜에 해당하는 일정 리스트
-  //    → /calendar/day 안 쓰고, monthEvents에서 필터링
   const dayEvents = useMemo(() => {
     if (!Array.isArray(monthEvents) || monthEvents.length === 0) return [];
 
@@ -301,18 +289,14 @@ export default function CalendarPage() {
 
       let lastDateForEvent;
       if (startDateOnly.getTime() === endDateOnly.getTime()) {
-        // 당일 일정
         lastDateForEvent = new Date(startDateOnly);
       } else {
-        // multi-day → 마지막 날은 endDate - 1일
         lastDateForEvent = new Date(endDateOnly);
         lastDateForEvent.setDate(lastDateForEvent.getDate() - 1);
       }
 
       const sd = selectedDateOnly.getTime();
-      return (
-        sd >= startDateOnly.getTime() && sd <= lastDateForEvent.getTime()
-      );
+      return sd >= startDateOnly.getTime() && sd <= lastDateForEvent.getTime();
     });
   }, [monthEvents, selectedDate]);
 
@@ -338,14 +322,16 @@ export default function CalendarPage() {
   /* ---------- 월 이벤트 로딩 ---------- */
   useEffect(() => {
     const ym = formatYearMonth(currentMonth);
+    let cancelled = false; // ✅ 언마운트 안전 처리
 
     setMonthLoading(true);
     setError("");
+    showLoading(); // ✅ 전역 로더 시작
 
     api
       .get("/calendar/events", { params: { ym } })
       .then((res) => {
-        // 응답이 배열이든 객체든 이벤트 배열로 정규화
+        if (cancelled) return;
         const body = res.data ?? [];
         const events = Array.isArray(body)
           ? body
@@ -353,13 +339,22 @@ export default function CalendarPage() {
         setMonthEvents(events);
       })
       .catch((e) => {
+        if (cancelled) return;
         console.error(e);
         setError("달력 정보를 불러오는 중 오류가 발생했습니다.");
       })
       .finally(() => {
-        setMonthLoading(false);
+        if (!cancelled) {
+          setMonthLoading(false);
+        }
+        hideLoading(); // ✅ 전역 로더 종료
       });
-  }, [currentMonth, monthReloadKey]);
+
+    return () => {
+      // 컴포넌트 언마운트 또는 currentMonth 변경 시
+      cancelled = true;
+    };
+  }, [currentMonth, monthReloadKey, showLoading, hideLoading]); // ✅ 의존성 추가
 
   const handleSelectDate = (day) => {
     if (!day) return;
@@ -402,9 +397,7 @@ export default function CalendarPage() {
 
     setMonthEvents((prev) =>
       prev.map((ev) =>
-        ev.id === id
-          ? { ...ev, memo: memoText, description: memoText }
-          : ev
+        ev.id === id ? { ...ev, memo: memoText, description: memoText } : ev
       )
     );
   };
