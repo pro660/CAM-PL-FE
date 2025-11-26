@@ -154,7 +154,7 @@ export default function CalendarPage() {
   );
 
   // 월 단위 이벤트 맵 (yyyy-MM-DD -> { hasTimetable: boolean, hasOther: boolean })
-  // ✅ 이벤트의 "시작 날짜" 기준으로만 점을 찍고, 현재 달에 해당하는 날짜만 사용
+  // ✅ startAt ~ endAt 구간 전체에 대해, 이 달에 해당하는 날짜들에 점을 찍는다.
   const eventDateMap = useMemo(() => {
     const map = {};
     if (!Array.isArray(monthEvents) || monthEvents.length === 0) return map;
@@ -162,38 +162,40 @@ export default function CalendarPage() {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth(); // 0~11
 
+    const firstOfMonth = new Date(year, month, 1);
+    const lastOfMonth = new Date(year, month + 1, 0);
+
     monthEvents.forEach((ev) => {
-      // 백엔드에서 내려줄 수 있는 여러 날짜 필드 후보
-      let dateKey =
-        ev.date ||
-        ev.eventDate ||
-        ev.startDate ||
-        (ev.startAt ? ev.startAt.slice(0, 10) : null);
+      if (!ev.startAt || !ev.endAt) return;
 
-      if (!dateKey) return;
+      const start = new Date(ev.startAt);
+      const end = new Date(ev.endAt);
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) return;
 
-      const [yyyy, mm, dd] = dateKey.split("-").map(Number);
-      if (!yyyy || !mm || !dd) return;
-
-      const eventDate = new Date(yyyy, mm - 1, dd);
-
-      // 현재 달에 속하는 이벤트만 점 처리
-      if (
-        eventDate.getFullYear() !== year ||
-        eventDate.getMonth() !== month
-      ) {
-        return;
-      }
-
-      if (!map[dateKey]) {
-        map[dateKey] = { hasTimetable: false, hasOther: false };
-      }
+      // 이 달과 겹치는 구간만 사용
+      const d = new Date(
+        Math.max(start.getTime(), firstOfMonth.getTime())
+      );
+      const endClamped = new Date(
+        Math.min(end.getTime(), lastOfMonth.getTime())
+      );
 
       const isTimetable = ev.origin === "TIMETABLE";
-      if (isTimetable) {
-        map[dateKey].hasTimetable = true;
-      } else {
-        map[dateKey].hasOther = true;
+
+      while (d.getTime() <= endClamped.getTime()) {
+        const key = formatDate(d);
+
+        if (!map[key]) {
+          map[key] = { hasTimetable: false, hasOther: false };
+        }
+
+        if (isTimetable) {
+          map[key].hasTimetable = true;
+        } else {
+          map[key].hasOther = true;
+        }
+
+        d.setDate(d.getDate() + 1);
       }
     });
 
