@@ -62,10 +62,22 @@ function buildCalendarGrid(baseMonth) {
 }
 
 // 카테고리 라벨
-function getCategoryLabel(category) {
-  if (!category) return "일정";
+// - type / origin 을 먼저 보고,
+//   SCHOOL  → "학사"
+//   TIMETABLE / LECTURE → "강의"
+// - PERSONAL(= 수동등록) 은 category 코드 보고 매핑
+function getCategoryLabel(category, type, origin) {
+  // 1) 학교 일정 (학사)
+  if (type === "SCHOOL") {
+    return "학사";
+  }
 
-  // 이미 한글로 온 경우는 그대로 사용
+  // 2) 시간표/강의
+  if (origin === "TIMETABLE" || type === "LECTURE") {
+    return "강의";
+  }
+
+  // 3) 이미 한글로 온 경우는 그대로 사용
   const koreanLabels = [
     "강의",
     "시험",
@@ -78,11 +90,13 @@ function getCategoryLabel(category) {
     "모임",
     "일정",
   ];
-  if (koreanLabels.includes(category)) {
+  if (category && koreanLabels.includes(category)) {
     return category;
   }
 
-  // 영문 코드 → 한글 매핑
+  if (!category) return "일정";
+
+  // 4) 영문 코드 → 한글 매핑 (PERSONAL 쪽)
   switch (category) {
     case "LECTURE":
       return "강의";
@@ -94,12 +108,12 @@ function getCategoryLabel(category) {
       return "팀플";
     case "MEETING":
       return "미팅";
-    case "ASSIGNMENT":
-      return "과제";
     case "MEAL":
       return "식사";
     case "REST":
       return "휴식";
+    case "ASSIGNMENT":
+      return "과제";
     case "GATHERING":
       return "모임";
     default:
@@ -131,9 +145,6 @@ export default function CalendarPage() {
   const [monthEvents, setMonthEvents] = useState([]);
   const [monthLoading, setMonthLoading] = useState(false);
 
-  const [dayEvents, setDayEvents] = useState([]);
-  const [dayLoading, setDayLoading] = useState(false);
-
   const [error, setError] = useState("");
 
   // 일정 추가 바텀시트
@@ -141,7 +152,6 @@ export default function CalendarPage() {
 
   // 새 일정 추가 후 재로딩용
   const [monthReloadKey, setMonthReloadKey] = useState(0);
-  const [dayReloadKey, setDayReloadKey] = useState(0);
 
   // 메모 팝업
   const [isMemoOpen, setIsMemoOpen] = useState(false);
@@ -167,7 +177,7 @@ export default function CalendarPage() {
   // ✅ 월 단위 이벤트 맵 (yyyy-MM-DD -> { hasTimetable: boolean, hasOther: boolean })
   // - startAt, endAt 둘 다 사용해서 "기간 전체"에 점을 찍음
   // - endAt은 하루(exclusive)라고 보고, multi-day면 endAt - 1일까지 표시
-  // - 단, startAt과 endAt이 같은 날짜(당일 일정)는 그냥 그 하루에 점을 찍음
+  // - 단, startAt과 endAt이 같은 날짜(당일 일정)는 그냥 그 하루에만 점을 찍음
   const eventDateMap = useMemo(() => {
     const map = {};
     if (!Array.isArray(monthEvents) || monthEvents.length === 0) return map;
@@ -253,6 +263,59 @@ export default function CalendarPage() {
     return map;
   }, [monthEvents, currentMonth]);
 
+  // ✅ 선택된 날짜에 해당하는 일정 리스트
+  //    → /calendar/day 안 쓰고, monthEvents에서 필터링
+  const dayEvents = useMemo(() => {
+    if (!Array.isArray(monthEvents) || monthEvents.length === 0) return [];
+
+    const selectedDateOnly = new Date(
+      selectedDate.getFullYear(),
+      selectedDate.getMonth(),
+      selectedDate.getDate()
+    );
+
+    return monthEvents.filter((ev) => {
+      if (!ev.startAt) return false;
+
+      const start = new Date(ev.startAt);
+      if (isNaN(start.getTime())) return false;
+
+      const startDateOnly = new Date(
+        start.getFullYear(),
+        start.getMonth(),
+        start.getDate()
+      );
+
+      let endDateOnly;
+      if (ev.endAt) {
+        const end = new Date(ev.endAt);
+        if (isNaN(end.getTime())) return false;
+        endDateOnly = new Date(
+          end.getFullYear(),
+          end.getMonth(),
+          end.getDate()
+        );
+      } else {
+        endDateOnly = new Date(startDateOnly);
+      }
+
+      let lastDateForEvent;
+      if (startDateOnly.getTime() === endDateOnly.getTime()) {
+        // 당일 일정
+        lastDateForEvent = new Date(startDateOnly);
+      } else {
+        // multi-day → 마지막 날은 endDate - 1일
+        lastDateForEvent = new Date(endDateOnly);
+        lastDateForEvent.setDate(lastDateForEvent.getDate() - 1);
+      }
+
+      const sd = selectedDateOnly.getTime();
+      return (
+        sd >= startDateOnly.getTime() && sd <= lastDateForEvent.getTime()
+      );
+    });
+  }, [monthEvents, selectedDate]);
+
   /* ---------- 월 변경 ---------- */
   const changeMonth = (offset) => {
     setCurrentMonth((prev) => {
@@ -298,31 +361,6 @@ export default function CalendarPage() {
       });
   }, [currentMonth, monthReloadKey]);
 
-  /* ---------- 선택 날짜 일정 로딩 ---------- */
-  useEffect(() => {
-    const dateStr = formatDate(selectedDate);
-
-    setDayLoading(true);
-    setError("");
-
-    api
-      .get("/calendar/day", { params: { date: dateStr } })
-      .then((res) => {
-        const body = res.data ?? [];
-        const events = Array.isArray(body)
-          ? body
-          : body.events || body.items || [];
-        setDayEvents(events);
-      })
-      .catch((e) => {
-        console.error(e);
-        setError("해당 날짜의 일정을 불러오는 중 오류가 발생했습니다.");
-      })
-      .finally(() => {
-        setDayLoading(false);
-      });
-  }, [selectedDate, dayReloadKey]);
-
   const handleSelectDate = (day) => {
     if (!day) return;
     const y = currentMonth.getFullYear();
@@ -341,9 +379,8 @@ export default function CalendarPage() {
   };
 
   const handleEventAdded = () => {
-    // 새 일정 추가 후 월/일 데이터 다시 불러오기
+    // 새 일정 추가 후 월 데이터 다시 불러오기
     setMonthReloadKey((v) => v + 1);
-    setDayReloadKey((v) => v + 1);
     setIsAddSheetOpen(false);
   };
 
@@ -363,13 +400,6 @@ export default function CalendarPage() {
     if (!selectedMemoEvent) return;
     const id = selectedMemoEvent.id;
 
-    setDayEvents((prev) =>
-      prev.map((ev) =>
-        ev.id === id
-          ? { ...ev, memo: memoText, description: memoText }
-          : ev
-      )
-    );
     setMonthEvents((prev) =>
       prev.map((ev) =>
         ev.id === id
@@ -489,7 +519,7 @@ export default function CalendarPage() {
 
         {error && <div className="calendar-error-text">{error}</div>}
 
-        {dayLoading ? (
+        {monthLoading ? (
           <div className="calendar-empty-text">
             일정을 불러오는 중입니다...
           </div>
@@ -504,7 +534,7 @@ export default function CalendarPage() {
                 <div className="calendar-event-main">
                   <div className="calendar-event-header">
                     <span className="calendar-event-tag">
-                      {getCategoryLabel(ev.category)}
+                      {getCategoryLabel(ev.category, ev.type, ev.origin)}
                     </span>
                     {/* 메모 버튼 */}
                     <button
@@ -521,9 +551,11 @@ export default function CalendarPage() {
                       {ev.location}
                     </div>
                   )}
-                  <div className="calendar-event-time">
-                    {formatTimeRange(ev.startAt, ev.endAt)}
-                  </div>
+                  {ev.startAt && ev.endAt && (
+                    <div className="calendar-event-time">
+                      {formatTimeRange(ev.startAt, ev.endAt)}
+                    </div>
+                  )}
                 </div>
               </li>
             ))}
