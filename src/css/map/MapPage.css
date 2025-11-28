@@ -1,3 +1,5 @@
+/* src/css/map/MapPage.css */
+
 /* 전체 페이지 레이아웃 */
 .map-page {
   min-height: 100vh;
@@ -73,52 +75,5 @@
   color: #ffffff;
   background: linear-gradient(135deg, #c09ef1, #8c6ce8);
   box-shadow: 0 6px 16px rgba(140, 108, 232, 0.4);
-  cursor: pointer;
-}
-
-/* 추천 팝업 모달 */
-.map-recommend-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.35);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-}
-
-.map-recommend-modal {
-  width: 80%;
-  max-width: 320px;
-  background-color: #ffffff;
-  border-radius: 1.2rem;
-  padding: 1.1rem 1.1rem 0.9rem;
-  text-align: center;
-}
-
-.map-recommend-title {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #4b3bbf;
-  margin-bottom: 0.4rem;
-}
-
-.map-recommend-text {
-  font-size: 0.8rem;
-  color: #555555;
-  line-height: 1.5;
-  margin-bottom: 0.8rem;
-}
-
-.map-recommend-close-btn {
-  width: 100%;
-  border-radius: 0.8rem;
-  border: none;
-  outline: none;
-  padding: 0.45rem 0.7rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-  background-color: #f0e7ff;
-  color: #5e47d4;
   cursor: pointer;
 }

@@ -1,0 +1,190 @@
+/* src/css/map/RecommendModal.css */
+
+.map-recommend-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.map-recommend-modal {
+  width: 80%;
+  max-width: 320px;
+  background-color: #ffffff;
+  border-radius: 1.2rem;
+  padding: 1rem 1rem 0.9rem;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+}
+
+/* 헤더 */
+.map-recommend-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.4rem;
+}
+
+.map-recommend-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #333333;
+}
+
+.map-recommend-close {
+  border: none;
+  background: transparent;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #999999;
+}
+
+/* 메인 영역 */
+.map-recommend-main {
+  margin-top: 0.4rem;
+}
+
+/* 질문 섹션 */
+.map-recommend-section {
+  margin-bottom: 0.7rem;
+}
+
+.map-recommend-section-title {
+  font-size: 0.78rem;
+  color: #555555;
+  margin-bottom: 0.35rem;
+}
+
+.map-recommend-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.map-recommend-chip {
+  padding: 0.18rem 0.65rem;
+  border-radius: 999px;
+  border: none;
+  font-size: 0.78rem;
+  background-color: #f0f0f2;
+  color: #555555;
+  cursor: pointer;
+}
+
+.map-recommend-chip.active {
+  background-color: #c09ef1;
+  color: #ffffff;
+}
+
+/* 추천 결과 리스트 */
+.map-recommend-list {
+  list-style: none;
+  margin: 0.1rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.map-recommend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.4rem 0.45rem;
+  border-radius: 0.8rem;
+  cursor: pointer;
+}
+
+.map-recommend-item.selected {
+  background-color: #f4ecff;
+}
+
+.map-recommend-thumb-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.map-recommend-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.map-recommend-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.map-recommend-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #333333;
+}
+
+.map-recommend-category-pill {
+  align-self: flex-start;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background-color: #f0e7ff;
+  color: #7e5ee0;
+  font-size: 0.68rem;
+}
+
+.map-recommend-check {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid #c09ef1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: #c09ef1;
+}
+
+/* 헬퍼/에러 */
+.map-recommend-helper {
+  margin-top: 0.45rem;
+  font-size: 0.7rem;
+  color: #8a8a8a;
+  text-align: center;
+}
+
+.map-recommend-error {
+  margin-top: 0.35rem;
+  font-size: 0.7rem;
+  color: #e25b5b;
+  text-align: center;
+}
+
+/* 풋터 */
+.map-recommend-footer {
+  margin-top: 0.8rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid #f0f0f3;
+}
+
+.map-recommend-primary-btn {
+  width: 100%;
+  border-radius: 999px;
+  padding: 0.55rem 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: 1px solid #c09ef1;
+  background-color: #ffffff;
+  color: #c09ef1;
+  cursor: pointer;
+}
+
+.map-recommend-primary-btn.disabled {
+  opacity: 0.4;
+  cursor: default;
+}

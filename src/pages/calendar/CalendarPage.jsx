@@ -1,10 +1,11 @@
 // src/pages/calendar/CalendarPage.jsx
 import React, { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import "../../css/calendar/CalendarPage.css";
 import api from "../../api/axios";
 import CalendarAddBottomSheet from "../../components/calendar/CalendarAddBottomSheet";
 import CalendarMemoBottomSheet from "../../components/calendar/CalendarMemoBottomSheet";
-import { useLoading } from "../../context/LoadingContext.jsx"; // ✅ 전역 로더 훅
+import { useLoading } from "../../context/LoadingContext.jsx";
 
 const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
 const DAY_NAMES_LONG = [
@@ -42,18 +43,9 @@ function buildCalendarGrid(baseMonth) {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
   const cells = [];
-  // 앞쪽 빈 칸 (이전달)
-  for (let i = 0; i < firstWeekday; i++) {
-    cells.push(null);
-  }
-  // 1 ~ daysInMonth
-  for (let d = 1; d <= daysInMonth; d++) {
-    cells.push(d);
-  }
-  // 뒤쪽 빈 칸 (다음달)
-  while (cells.length % 7 !== 0) {
-    cells.push(null);
-  }
+  for (let i = 0; i < firstWeekday; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  while (cells.length % 7 !== 0) cells.push(null);
 
   const weeks = [];
   for (let i = 0; i < cells.length; i += 7) {
@@ -64,17 +56,9 @@ function buildCalendarGrid(baseMonth) {
 
 // 카테고리 라벨
 function getCategoryLabel(category, type, origin) {
-  // 1) 학교 일정 (학사)
-  if (type === "SCHOOL") {
-    return "학사";
-  }
+  if (type === "SCHOOL") return "학사";
+  if (origin === "TIMETABLE" || type === "LECTURE") return "강의";
 
-  // 2) 시간표/강의
-  if (origin === "TIMETABLE" || type === "LECTURE") {
-    return "강의";
-  }
-
-  // 3) 이미 한글로 온 경우는 그대로 사용
   const koreanLabels = [
     "강의",
     "시험",
@@ -87,13 +71,9 @@ function getCategoryLabel(category, type, origin) {
     "모임",
     "일정",
   ];
-  if (category && koreanLabels.includes(category)) {
-    return category;
-  }
-
+  if (category && koreanLabels.includes(category)) return category;
   if (!category) return "일정";
 
-  // 4) 영문 코드 → 한글 매핑 (PERSONAL 쪽)
   switch (category) {
     case "LECTURE":
       return "강의";
@@ -114,7 +94,6 @@ function getCategoryLabel(category, type, origin) {
     case "GATHERING":
       return "모임";
     default:
-      // 모르는 값이면 백엔드가 준 그대로 노출
       return category;
   }
 }
@@ -132,8 +111,12 @@ function formatTimeRange(startIso, endIso) {
 }
 
 export default function CalendarPage() {
-  const { showLoading, hideLoading } = useLoading(); // ✅ 전역 로더 제어
+  const { showLoading, hideLoading } = useLoading();
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const today = useMemo(() => new Date(), []);
+
   const [currentMonth, setCurrentMonth] = useState(() => {
     const t = new Date();
     return new Date(t.getFullYear(), t.getMonth(), 1);
@@ -141,9 +124,11 @@ export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState(() => new Date());
 
   const [monthEvents, setMonthEvents] = useState([]);
-  const [monthLoading, setMonthLoading] = useState(false); // 페이지 로딩 텍스트용
-
+  const [monthLoading, setMonthLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Map → Calendar로 넘어올 때 프리필 정보 저장
+  const [prefillFromPlace, setPrefillFromPlace] = useState(null);
 
   // 일정 추가 바텀시트
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
@@ -172,13 +157,25 @@ export default function CalendarPage() {
     [currentMonth]
   );
 
-  // ✅ 월 단위 이벤트 맵 (yyyy-MM-DD -> { hasTimetable: boolean, hasOther: boolean })
+  // 🔥 location.state에 fromPlaceRecommend 있으면 한 번만 처리
+  useEffect(() => {
+    const state = location.state;
+    if (state?.fromPlaceRecommend) {
+      setPrefillFromPlace(state.fromPlaceRecommend);
+      setIsAddSheetOpen(true);
+
+      // URL state 정리
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, navigate]);
+
+  // 월 단위 이벤트 맵 (달력 점)
   const eventDateMap = useMemo(() => {
     const map = {};
     if (!Array.isArray(monthEvents) || monthEvents.length === 0) return map;
 
     const year = currentMonth.getFullYear();
-    const month = currentMonth.getMonth(); // 0~11
+    const month = currentMonth.getMonth();
 
     const firstOfMonth = new Date(year, month, 1);
     const lastOfMonth = new Date(year, month + 1, 0);
@@ -209,7 +206,6 @@ export default function CalendarPage() {
       }
 
       let lastDateForDot;
-
       if (startDateOnly.getTime() === endDateOnly.getTime()) {
         lastDateForDot = new Date(startDateOnly);
       } else {
@@ -224,9 +220,7 @@ export default function CalendarPage() {
         Math.min(lastDateForDot.getTime(), lastOfMonth.getTime())
       );
 
-      if (rangeEnd.getTime() < rangeStart.getTime()) {
-        return;
-      }
+      if (rangeEnd.getTime() < rangeStart.getTime()) return;
 
       const isTimetable = ev.origin === "TIMETABLE";
 
@@ -241,18 +235,15 @@ export default function CalendarPage() {
           map[key] = { hasTimetable: false, hasOther: false };
         }
 
-        if (isTimetable) {
-          map[key].hasTimetable = true;
-        } else {
-          map[key].hasOther = true;
-        }
+        if (isTimetable) map[key].hasTimetable = true;
+        else map[key].hasOther = true;
       }
     });
 
     return map;
   }, [monthEvents, currentMonth]);
 
-  // ✅ 선택된 날짜에 해당하는 일정 리스트
+  // 선택 날짜의 일정 리스트
   const dayEvents = useMemo(() => {
     if (!Array.isArray(monthEvents) || monthEvents.length === 0) return [];
 
@@ -322,11 +313,11 @@ export default function CalendarPage() {
   /* ---------- 월 이벤트 로딩 ---------- */
   useEffect(() => {
     const ym = formatYearMonth(currentMonth);
-    let cancelled = false; // ✅ 언마운트 안전 처리
+    let cancelled = false;
 
     setMonthLoading(true);
     setError("");
-    showLoading(); // ✅ 전역 로더 시작
+    showLoading();
 
     api
       .get("/calendar/events", { params: { ym } })
@@ -344,17 +335,14 @@ export default function CalendarPage() {
         setError("달력 정보를 불러오는 중 오류가 발생했습니다.");
       })
       .finally(() => {
-        if (!cancelled) {
-          setMonthLoading(false);
-        }
-        hideLoading(); // ✅ 전역 로더 종료
+        if (!cancelled) setMonthLoading(false);
+        hideLoading();
       });
 
     return () => {
-      // 컴포넌트 언마운트 또는 currentMonth 변경 시
       cancelled = true;
     };
-  }, [currentMonth, monthReloadKey, showLoading, hideLoading]); // ✅ 의존성 추가
+  }, [currentMonth, monthReloadKey, showLoading, hideLoading]);
 
   const handleSelectDate = (day) => {
     if (!day) return;
@@ -371,15 +359,15 @@ export default function CalendarPage() {
 
   const handleAddSheetClose = () => {
     setIsAddSheetOpen(false);
+    setPrefillFromPlace(null);
   };
 
   const handleEventAdded = () => {
-    // 새 일정 추가 후 월 데이터 다시 불러오기
     setMonthReloadKey((v) => v + 1);
     setIsAddSheetOpen(false);
+    setPrefillFromPlace(null);
   };
 
-  // 메모 열기
   const handleOpenMemo = (event) => {
     setSelectedMemoEvent(event);
     setIsMemoOpen(true);
@@ -390,7 +378,6 @@ export default function CalendarPage() {
     setSelectedMemoEvent(null);
   };
 
-  // 메모 저장 (프론트에서만 처리, description도 같이 갱신)
   const handleMemoSaved = (memoText) => {
     if (!selectedMemoEvent) return;
     const id = selectedMemoEvent.id;
@@ -437,7 +424,6 @@ export default function CalendarPage() {
 
       {/* 달력 영역 */}
       <section className="calendar-card">
-        {/* 요일 헤더 */}
         <div className="calendar-weekdays">
           {DAY_NAMES.map((name, idx) => (
             <div
@@ -451,7 +437,6 @@ export default function CalendarPage() {
           ))}
         </div>
 
-        {/* 일자 그리드 */}
         <div className="calendar-days">
           {calendarWeeks.map((week, wi) =>
             week.map((day, di) => {
@@ -529,7 +514,6 @@ export default function CalendarPage() {
                     <span className="calendar-event-tag">
                       {getCategoryLabel(ev.category, ev.type, ev.origin)}
                     </span>
-                    {/* 메모 버튼 */}
                     <button
                       type="button"
                       className="calendar-event-memo-button"
@@ -556,7 +540,7 @@ export default function CalendarPage() {
         )}
       </section>
 
-      {/* 플로팅 + 버튼 (하단 우측 고정) */}
+      {/* 플로팅 + 버튼 */}
       <button
         type="button"
         className="calendar-fab"
@@ -572,6 +556,8 @@ export default function CalendarPage() {
         date={selectedDate}
         onClose={handleAddSheetClose}
         onAdded={handleEventAdded}
+        initialLocation={prefillFromPlace?.location || ""}
+        initialCategory={prefillFromPlace?.category || "LECTURE"}
       />
 
       {/* 메모 팝업 */}

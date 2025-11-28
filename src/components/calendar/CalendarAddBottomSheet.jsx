@@ -1,10 +1,10 @@
 // src/components/calendar/CalendarAddBottomSheet.jsx
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import "../../css/calendar/CalendarAddBottomSheet.css";
 import api from "../../api/axios";
 import CalendarTimePickerModal from "./CalendarTimePickerModal";
 
-// 카테고리 옵션 (백엔드 enum 값에 맞춰 value는 필요시 수정)
+// 카테고리 옵션
 const CATEGORY_OPTIONS = [
   { value: "LECTURE", label: "강의" },
   { value: "TEAM", label: "팀플" },
@@ -28,6 +28,8 @@ export default function CalendarAddBottomSheet({
   date,
   onClose,
   onAdded,
+  initialLocation,
+  initialCategory,
 }) {
   const [title, setTitle] = useState("");
   const [location, setLocation] = useState("");
@@ -40,9 +42,8 @@ export default function CalendarAddBottomSheet({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // 시간 선택 모달
   const [timePickerVisible, setTimePickerVisible] = useState(false);
-  const [timePickerTarget, setTimePickerTarget] = useState("start"); // 'start' | 'end'
+  const [timePickerTarget, setTimePickerTarget] = useState("start");
 
   const dateLabel = useMemo(() => {
     const y = date.getFullYear();
@@ -61,6 +62,21 @@ export default function CalendarAddBottomSheet({
     return `${y}년 ${m}월 ${d}일 ${weekday}`;
   }, [date]);
 
+  // 바텀시트 열릴 때마다 form 초기화 + 프리필 적용
+  useEffect(() => {
+    if (!visible) return;
+
+    setTitle("");
+    setMemo("");
+    setStartTime("10:00");
+    setEndTime("11:00");
+    setIsImportant(false);
+    setError("");
+
+    setLocation(initialLocation || "");
+    setCategory(initialCategory || "LECTURE");
+  }, [visible, initialLocation, initialCategory]);
+
   if (!visible) return null;
 
   const handleClickBackdrop = (e) => {
@@ -75,11 +91,8 @@ export default function CalendarAddBottomSheet({
   };
 
   const handleTimeConfirm = (timeStr) => {
-    if (timePickerTarget === "start") {
-      setStartTime(timeStr);
-    } else {
-      setEndTime(timeStr);
-    }
+    if (timePickerTarget === "start") setStartTime(timeStr);
+    else setEndTime(timeStr);
     setTimePickerVisible(false);
   };
 
@@ -92,7 +105,7 @@ export default function CalendarAddBottomSheet({
       return;
     }
 
-    const dateStr = formatDate(date); // yyyy-MM-DD
+    const dateStr = formatDate(date);
     const makeIso = (time) => `${dateStr}T${time}:00`;
 
     const startAt = makeIso(startTime);
@@ -107,22 +120,11 @@ export default function CalendarAddBottomSheet({
         startAt,
         endAt,
         location: location.trim() || null,
-        category,        // 예: "PRESENTATION" 등
-        important: isImportant, // GET 응답에 있는 필드라 같이 전송
+        category,
+        important: isImportant,
       });
 
-      // 성공
       onAdded && onAdded();
-
-      // 폼 초기화
-      setTitle("");
-      setLocation("");
-      setMemo("");
-      setStartTime("10:00");
-      setEndTime("11:00");
-      setCategory("LECTURE");
-      setIsImportant(false);
-      setError("");
     } catch (e) {
       console.error(e);
       const msg =
@@ -180,7 +182,7 @@ export default function CalendarAddBottomSheet({
 
             {/* 시간 */}
             <div className="calendar-add-field">
-              <label className="calendar-add-label">위치</label>
+              <label className="calendar-add-label">시간</label>
               <div className="calendar-add-time-row">
                 <div className="calendar-add-time-block">
                   <span className="calendar-add-time-label">시작시간</span>
@@ -256,14 +258,8 @@ export default function CalendarAddBottomSheet({
               </button>
             </div>
 
-            {/* 에러 메시지 */}
-            {error && (
-              <div className="calendar-add-error">
-                {error}
-              </div>
-            )}
+            {error && <div className="calendar-add-error">{error}</div>}
 
-            {/* 추가 버튼 */}
             <button
               type="submit"
               className="calendar-add-submit"
@@ -275,12 +271,9 @@ export default function CalendarAddBottomSheet({
         </div>
       </div>
 
-      {/* 시간 선택 모달 */}
       <CalendarTimePickerModal
         visible={timePickerVisible}
-        initialTime={
-          timePickerTarget === "start" ? startTime : endTime
-        }
+        initialTime={timePickerTarget === "start" ? startTime : endTime}
         onClose={() => setTimePickerVisible(false)}
         onConfirm={handleTimeConfirm}
       />

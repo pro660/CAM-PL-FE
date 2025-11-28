@@ -3,7 +3,7 @@ import React from "react";
 import "../../css/map/ScheduleList.css";
 
 export default function ScheduleList({ title, items = [], emptyText }) {
-  // 🔥 제목에 따라 pill 색상 클래스 분기
+  // 제목에 따라 pill 색상 분기
   const pillClassName =
     title === "지난 일정"
       ? "map-schedule-pill map-schedule-pill-prev"

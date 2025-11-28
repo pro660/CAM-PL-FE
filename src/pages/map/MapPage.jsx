@@ -1,15 +1,18 @@
 // src/pages/map/MapPage.jsx
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "../../css/map/MapPage.css";
 
 import NaverMap from "../../components/home/NaverMap";
 import TodayPlaces from "../../components/map/TodayPlacesList";
 import ScheduleList from "../../components/map/ScheduleList";
 import NearbyPlaces from "../../components/map/NearbyPlaces";
+import RecommendModal from "../../components/map/RecommendModal";
 
 import api from "../../api/axios";
 import { useLoading } from "../../context/LoadingContext";
 
+// ===== 날짜 유틸 =====
 // yyyy-MM-DD
 function formatDateKey(date) {
   const y = date.getFullYear();
@@ -24,7 +27,7 @@ function addDays(date, diff) {
   return d;
 }
 
-// 카테고리 라벨 (캘린더랑 맞춰서 사용)
+// 카테고리 라벨 (텍스트용)
 function getCategoryLabel(category) {
   if (!category) return "일정";
 
@@ -109,20 +112,21 @@ function normalizeDayResponse(res) {
 }
 
 export default function MapPage() {
+  const navigate = useNavigate();
+  const { showLoading, hideLoading } = useLoading();
+
   const [todayEvents, setTodayEvents] = useState([]);
   const [yesterdayEvents, setYesterdayEvents] = useState([]);
   const [tomorrowEvents, setTomorrowEvents] = useState([]);
 
-  // 🔥 summary/today에서 내려오는 주변 시설
+  // summary/today에서 내려오는 주변 시설
   const [nearbyPlaces, setNearbyPlaces] = useState([]);
 
-  const [loading, setLoading] = useState(false); // 섹션 내부용
+  const [loading, setLoading] = useState(false); // 리스트 섹션 로딩
   const [error, setError] = useState("");
 
+  // 추천 모달 열림 여부
   const [showRecommend, setShowRecommend] = useState(false);
-
-  // 🔥 전역 로더 제어 함수
-  const { showLoading, hideLoading } = useLoading();
 
   // 오늘 날짜(시분초 0으로 맞춤)
   const today = useMemo(() => {
@@ -130,7 +134,7 @@ export default function MapPage() {
     return new Date(now.getFullYear(), now.getMonth(), now.getDate());
   }, []);
 
-  // 어제 / 오늘 / 내일 일정 로딩
+  // 어제 / 오늘 요약 / 내일 일정 로딩
   useEffect(() => {
     const yesterday = addDays(today, -1);
     const tomorrow = addDays(today, 1);
@@ -139,33 +143,30 @@ export default function MapPage() {
       api.get("/calendar/day", { params: { date: formatDateKey(date) } });
 
     (async () => {
-      setLoading(true); // 리스트 섹션용
-      showLoading(); // 🔥 전역 로더 켜기
+      setLoading(true);
+      showLoading();
       setError("");
 
       try {
-        // 어제 / 오늘요약 / 내일
         const [resY, resTodaySummary, resN] = await Promise.all([
           fetchDay(yesterday),
           api.get("/calendar/summary/today"),
           fetchDay(tomorrow),
         ]);
 
-        // 어제 / 내일 일정
+        // 지난/다음 일정
         setYesterdayEvents(normalizeDayResponse(resY));
         setTomorrowEvents(normalizeDayResponse(resN));
 
-        // 🔥 summary/today 응답 구조 반영
+        // 오늘 요약
         const summary = resTodaySummary.data ?? {};
         const events = Array.isArray(summary.events) ? summary.events : [];
         const lectures = Array.isArray(summary.lectures)
           ? summary.lectures
           : [];
 
-        // 오늘 일정: 이벤트 + 강의 모두 포함해서 장소 카운트에 사용
         setTodayEvents([...events, ...lectures]);
 
-        // 주변 시설 리스트
         const studyPlaces = Array.isArray(summary.studyPlaces)
           ? summary.studyPlaces
           : [];
@@ -185,7 +186,7 @@ export default function MapPage() {
         setError("일정 정보를 불러오는 중 오류가 발생했습니다.");
       } finally {
         setLoading(false);
-        hideLoading(); // 🔥 전역 로더 끄기 (최소 노출시간 로직은 컨텍스트에서 처리)
+        hideLoading();
       }
     })();
   }, [today, showLoading, hideLoading]);
@@ -233,8 +234,24 @@ export default function MapPage() {
     setShowRecommend(false);
   };
 
+  // 모달에서 “일정에 추가하기” 눌렀을 때
+  const handleAddToScheduleFromModal = ({ place, category }) => {
+    if (!place) return;
+
+    navigate("/calendar", {
+      state: {
+        fromPlaceRecommend: {
+          location: place.name, // 위치 입력칸에 들어갈 값
+          category, // "TEAM", "MEAL" 같은 일정 카테고리 코드
+        },
+      },
+    });
+
+    setShowRecommend(false);
+  };
+
   const handleClickAddPlace = (place) => {
-    // 나중에 "즐겨찾기 추가" 같은 기능 붙이면 여기서 처리
+    // 나중에 즐겨찾기 등 붙이면 여기서 처리
     console.log("주변 시설 + 버튼 클릭:", place);
   };
 
@@ -284,32 +301,12 @@ export default function MapPage() {
         </div>
       </div>
 
-      {/* 추천 팝업 모달 */}
-      {showRecommend && (
-        <div
-          className="map-recommend-modal-overlay"
-          onClick={handleCloseRecommend}
-        >
-          <div
-            className="map-recommend-modal"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="map-recommend-title">장소 추천 준비 중이에요</h3>
-            <p className="map-recommend-text">
-              시간표와 일정을 기반으로
-              <br />
-              더 똑똑하게 추천해 줄게요.
-            </p>
-            <button
-              type="button"
-              className="map-recommend-close-btn"
-              onClick={handleCloseRecommend}
-            >
-              닫기
-            </button>
-          </div>
-        </div>
-      )}
+      {/* 추천 모달 */}
+      <RecommendModal
+        visible={showRecommend}
+        onClose={handleCloseRecommend}
+        onAddToSchedule={handleAddToScheduleFromModal}
+      />
     </div>
   );
 }
