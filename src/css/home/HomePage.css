@@ -56,7 +56,7 @@
   color: #7a51e7;
 }
 
-/* 일정용 Pill (카테고리) */
+/* 일정용 Pill (카테고리) - 기본값 */
 .home-pill-category {
   background-color: #ffe9f1;
   color: #e0529a;
@@ -202,7 +202,7 @@
   box-sizing: border-box;
   font-size: 0.7rem;
 
-  /* ✅ 시간칸(1시간) 높이 공통 변수 */
+  /* 시간칸(1시간) 높이 공통 변수 */
   --home-hour-row-height: 2.4rem;
 }
 
@@ -249,7 +249,7 @@
 }
 
 .home-timetable-time-slot {
-  height: var(--home-hour-row-height); /* ✅ 1시간 = 1칸 */
+  height: var(--home-hour-row-height); /* 1시간 = 1칸 */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -268,7 +268,7 @@
 /* 각 요일 칼럼 */
 .home-timetable-day-column {
   position: relative;
-  min-height: calc(var(--home-hour-row-height) * 10); /* ✅ 10칸 (9시~7시 경계) */
+  min-height: calc(var(--home-hour-row-height) * 10); /* 10칸 (9시~7시 경계) */
   background-color: white;
   border-left: 1px solid #f0e3ff;
 }
@@ -354,7 +354,7 @@
   color: #797979;
 }
 
-/* 시간 텍스트 (아이콘 자리는 나중에 넣어도 됨) */
+/* 시간 텍스트 */
 .home-lecture-card .home-card-time {
   font-size: 0.7rem;
   color: #a0a0a0;
@@ -369,57 +369,58 @@
 }
 
 /* 오늘의 일정 카드:
-   - 전체 높이 줄이고
-   - 왼쪽에 카테고리 pill, 오른쪽에 텍스트 묶음 */
+   - 왼쪽에 카테고리 pill
+   - 오른쪽에 텍스트 묶음 (제목 / 장소 / 시간)
+*/
 .home-schedule-card {
   display: flex;
-  align-items: center;
-  padding: 0.55rem 0.8rem; /* 기본 카드보다 살짝 낮은 높이 */
+  align-items: flex-start;
+  padding: 0.6rem 0.9rem;
 }
 
 /* 왼쪽 카테고리 pill 영역 */
 .home-schedule-card .home-card-header {
   margin: 0;
-  margin-right: 0.6rem;
+  margin-right: 0.8rem;
   flex-shrink: 0;
 }
 
-/* 카테고리 Pill (발표 / 팀플 등) */
+/* 카테고리 Pill (발표 / 팀플 등) - 사진 스타일 */
 .home-schedule-card .home-pill-category {
-  background: #d7c5ff;   /* 연보라 배경 */
-  color: #ffffff;        /* 흰 글씨 */
+  background: #d0b5ff;
+  color: #ffffff;
   font-size: 0.7rem;
-  font-weight: 600;
+  font-weight: 700;
   border-radius: 999px;
-  padding: 0.14rem 0.65rem;
+  padding: 0.2rem 0.9rem;
 }
 
 /* 오른쪽 텍스트 묶음 */
 .home-schedule-card .home-card-body {
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
+  gap: 0.12rem;
 }
 
-/* 제목 (굵고 살짝 컴팩트) */
+/* 제목 (인더렉티브디자인 기획서 발표) */
 .home-schedule-card .home-card-title {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   font-weight: 700;
-  color: #333333;
-  line-height: 1.25;
+  color: #4f4f4f;
+  line-height: 1.3;
 }
 
-/* 장소 ([H05] …, 세이커피 등) */
+/* 장소 ([H05] 건축토목공학관 509) */
 .home-schedule-card .home-card-subtext {
-  font-size: 0.7rem;
-  color: #797979;
+  font-size: 0.72rem;
+  color: #8a8a8a;
 }
 
-/* 시간 (14:00, 18:00) */
+/* 시간 (14:00) */
 .home-schedule-card .home-card-time {
-  font-size: 0.68rem;
-  color: #a0a0a0;
-  margin-top: 0.05rem;
+  font-size: 0.7rem;
+  color: #b5b5b5;
+  margin-top: 0.18rem;
 }
 
 /* =========================
