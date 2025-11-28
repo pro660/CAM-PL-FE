@@ -6,19 +6,19 @@ import { useLoading } from "../../context/LoadingContext";
 
 // 추천 받을 일정 종류
 const RECOMMEND_EVENT_CATEGORIES = [
-  { value: "TEAM", label: "팀플" },
+  { value: "TEAM",       label: "팀플" },
   { value: "ASSIGNMENT", label: "과제" },
-  { value: "MEAL", label: "식사" },
-  { value: "MEETING", label: "미팅" },
-  { value: "REST", label: "휴식" },
+  { value: "MEAL",       label: "식사" },
+  { value: "MEETING",    label: "미팅" },
+  { value: "REST",       label: "휴식" },
 ];
 
 // 누구와 함께?
 const RECOMMEND_COMPANIONS = [
-  { value: "ALONE", label: "혼자" },
-  { value: "FRIEND", label: "동기" },
-  { value: "SENIOR", label: "선배" },
-  { value: "JUNIOR", label: "후배" },
+  { value: "ALONE",     label: "혼자" },
+  { value: "FRIEND",    label: "동기" },
+  { value: "SENIOR",    label: "선배" },
+  { value: "JUNIOR",    label: "후배" },
   { value: "PROFESSOR", label: "교수님" },
 ];
 
@@ -46,9 +46,9 @@ export default function RecommendModal({
 }) {
   const { showLoading, hideLoading } = useLoading();
 
-  const [category, setCategory] = useState(null); // 일정 카테고리 (TEAM, MEAL...)
-  const [companion, setCompanion] = useState(null); // 동행 타입
-  const [places, setPlaces] = useState([]); // 추천 결과
+  const [category, setCategory] = useState(null);      // 일정 카테고리 코드 (TEAM, MEAL...)
+  const [companion, setCompanion] = useState(null);    // 동행 타입 코드 (SENIOR 등)
+  const [places, setPlaces] = useState([]);            // 추천 결과
   const [selectedPlaceId, setSelectedPlaceId] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -86,10 +86,17 @@ export default function RecommendModal({
     showLoading();
 
     try {
+      // 🔥 선택된 코드(category, companion)를 한글 label로 변환
+      const scheduleType =
+        RECOMMEND_EVENT_CATEGORIES.find((opt) => opt.value === category)
+          ?.label || "";
+      const withWhom =
+        RECOMMEND_COMPANIONS.find((opt) => opt.value === companion)
+          ?.label || "";
+
       const res = await api.post("/places/recommend", {
-        // 🔥 백엔드 스펙에 맞춰 키 이름만 필요하면 조정
-        category,
-        companionType: companion,
+        scheduleType, // 예: "식사"
+        withWhom,     // 예: "선배"
       });
 
       const body = res.data ?? [];
@@ -130,7 +137,7 @@ export default function RecommendModal({
       onAddToSchedule &&
         onAddToSchedule({
           place,
-          category, // 일정 카테고리 그대로 넘겨줌
+          category, // 일정 카테고리 코드(TEAM/MEAL...)는 그대로 넘겨서 일정추가 페이지에서 사용
         });
       return;
     }
