@@ -68,6 +68,7 @@
   position: relative;
   min-height: calc(2.4rem * 9); /* 9시~6시 정도 높이 */
   background-color: #FFFFFF;
+  border-right: 1px solid #e4d9ff;
 }
 
 .mypage-timetable-day-column:last-child {
