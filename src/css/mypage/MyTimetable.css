@@ -60,19 +60,38 @@
 .mypage-timetable-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  position: relative;
+  position: relative; /* ✅ 안내 문구 중앙 정렬용 기준 */
 }
 
 /* 각 요일 칼럼 */
 .mypage-timetable-day-column {
   position: relative;
-  min-height: calc(2.4rem * 9); /* 9시~6시 정도 높이 */
-  background-color: #FFFFFF;
-  border-right: 1px solid #e4d9ff;
+  min-height: calc(2.4rem * 10); /* 9~6까지 10칸 */
+  background-color: #ffffff;
+  border-right: 1px solid #e4d9ff; /* 기본: 요일 구분 세로줄 */
 }
 
 .mypage-timetable-day-column:last-child {
   border-right: none;
+}
+
+/* ✅ 강의가 없을 때: 요일 구분 세로줄 제거 */
+.mypage-timetable-grid-empty .mypage-timetable-day-column {
+  border-right: none;
+}
+
+/* ✅ 강의가 없을 때 중앙에 표시되는 문구 */
+.mypage-timetable-empty-text {
+  position: absolute;
+  inset: 0; /* top:0; right:0; bottom:0; left:0; */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #b0a0d5;
+  pointer-events: none; /* 클릭 막지 않도록 */
 }
 
 /* 강의 블록 */

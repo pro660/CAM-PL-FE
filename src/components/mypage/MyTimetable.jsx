@@ -9,7 +9,6 @@ const START_HOUR = 9;   // 9시
 const END_HOUR = 18;    // 18시(6시)
 
 // 🔥 화면에 보이는 시간칸은 9~6까지 "10칸"이라서 10시간 기준으로 스케일
-//   그래야 1시간당 높이가 왼쪽 시간축(2.4rem)과 딱 맞음
 const TOTAL_MINUTES = (END_HOUR - START_HOUR + 1) * 60; // 10 * 60 = 600
 
 // 왼쪽에 표시할 시간 라벨: 9 ~ 6
@@ -63,6 +62,12 @@ function buildDayColumns(courses = []) {
 export default function MyTimetable({ courses = [] }) {
   const dayColumns = useMemo(() => buildDayColumns(courses), [courses]);
 
+  // ✅ 강의가 하나라도 있는지 여부
+  const hasAnyLecture = useMemo(
+    () => dayColumns.some((blocks) => blocks.length > 0),
+    [dayColumns]
+  );
+
   return (
     <div className="mypage-timetable-card">
       <div className="mypage-timetable">
@@ -88,7 +93,12 @@ export default function MyTimetable({ courses = [] }) {
           </div>
 
           {/* 오른쪽 5일 그리드 */}
-          <div className="mypage-timetable-grid">
+          <div
+            className={
+              "mypage-timetable-grid" +
+              (hasAnyLecture ? "" : " mypage-timetable-grid-empty")
+            }
+          >
             {dayColumns.map((blocks, dayIdx) => (
               <div
                 key={DAY_ORDER[dayIdx]}
@@ -118,6 +128,13 @@ export default function MyTimetable({ courses = [] }) {
                 ))}
               </div>
             ))}
+
+            {/* ✅ 강의가 하나도 없을 때 표시되는 안내 문구 */}
+            {!hasAnyLecture && (
+              <div className="mypage-timetable-empty-text">
+                강의를 추가해 나만의 시간표를 만드세요.
+              </div>
+            )}
           </div>
         </div>
       </div>
