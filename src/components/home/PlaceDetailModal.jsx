@@ -5,7 +5,7 @@ import api from "../../api/axios";
 
 const formatPrice = (price) => {
   if (price == null) return "";
-  return `${price.toLocaleString()} \\`;
+  return `${price.toLocaleString()} ₩`;
 };
 
 const PlaceDetailModal = ({ placeId, onClose }) => {
