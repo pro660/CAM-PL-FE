@@ -58,40 +58,10 @@
 
 ---
 
-## 🧱 프로젝트 구조 (요약)
+## 🚀 실행 방법
 
-```bash
-src/
-  api/
-    axios.js              # Axios 인스턴스 및 공통 설정
-  components/
-    home/
-      NaverMap.jsx
-      TimetableMapSection.jsx
-      PlaceDetailModal.jsx
-    common/
-      Header.jsx
-      BottomSheet.jsx
-      FloatingButton.jsx
-  context/
-    LoadingContext.jsx    # 전역 로딩 상태 관리
-    AuthContext.jsx       # 인증 / 사용자 정보 관리
-  pages/
-    Home/
-    Calendar/
-    Timetable/
-    Login/
-  css/
-    home/
-    calendar/
-    common/
-  App.jsx
-  index.jsx
-🚀 실행 방법
-Node.js 18+ 권장
+> ⚙️ Node.js **18+** 권장
 
-bash
-코드 복사
 # 1. 레포지토리 클론
 git clone https://github.com/pro660/CAM-PL-FE.git
 cd CAM-PL-FE
@@ -104,58 +74,69 @@ npm start
 
 # 4. 프로덕션 빌드
 npm run build
-🌐 배포
+
+---
+
+**🌐 배포**
+
 서버 OS: Ubuntu 22.04 LTS
 
 웹 서버: Nginx
 
-campl.site 도메인에서 React 빌드 결과물 정적 서빙
+도메인: campl.site
 
-배포 자동화
+역할: React 빌드 결과물 정적 서빙
 
-재배포용 .sh 스크립트로 아래 과정을 한 번에 실행
+배포 자동화 (.sh 스크립트 내부에서 실행되는 명령)
 
 git pull
-
 npm install
-
 npm run build
-
 sudo systemctl reload nginx
 
-한 줄 명령으로 프론트엔드 재배포 가능하도록 구성
 
-🎯 이 프로젝트에서 신경 쓴 점
-실사용 시나리오 중심 설계
+위 명령들을 하나의 .sh 스크립트로 묶어
+한 줄 명령으로 프론트엔드 재배포가 가능하도록 구성
+
+---
+
+**🎯 이 프로젝트에서 신경 쓴 점**
+1. 실사용 시나리오 중심 설계
 
 “강의 끝나고 어디로 이동해야 하는지”
 
 “이번 주 과제/팀플 일정을 한 번에 보고 싶다”
 
-실제 캠퍼스 생활 상황을 기준으로 UX 설계
+실제 캠퍼스 생활에서 자주 겪는 상황을 기준으로 UX 및 화면 흐름 설계
 
-모바일 퍼스트
+2. 모바일 퍼스트
 
-실제 사용 환경을 고려해 모바일 화면(430px) 기준으로 레이아웃과 컴포넌트 구성
+실제 사용 환경을 고려해 모바일 화면(430px) 기준으로 레이아웃 구성
 
 바텀시트, 플로팅 버튼 등 모바일 친화적인 패턴 적극 활용
 
-확장 가능성
+손가락 터치 범위, 스크롤 동선 등을 고려한 UI 설계
 
-한서대학교에만 묶이지 않고,
+3. 확장 가능성
 
-다른 대학교의 캠퍼스/강의 데이터만 교체하면 재사용 가능한 구조를 목표로 설계
+특정 학교(한서대학교)에만 고정되지 않도록
 
-🙋‍♂️ Frontend Developer – 김형석 (Hyungseok Kim)
+캠퍼스/강의 데이터만 교체하면 다른 대학교에도 적용 가능한 구조를 목표로 설계
+
+---
+
+**🙋‍♂️ Frontend Developer – 김형석 (Hyungseok Kim)**
 Role
 
 CAM-PL 서비스의 Frontend Developer
 
-3인 팀(DE / FE / BE) 중 React 기반 화면 설계 및 구현 담당
+3인 팀(DE / FE / BE) 중
+React 기반 화면 설계 및 구현 담당
 
 Responsibilities
 
-전체 화면 구조 및 라우팅 설계 (Home / Calendar / Timetable / Login 등)
+**전체 화면 구조 및 라우팅 설계**
+(Home / Calendar / Timetable / Login 등)
 
 네이버 지도 연동 및 시간표–지도 연결 로직 구현
 
@@ -165,13 +146,13 @@ Axios를 활용한 API 연동 및 에러/로딩 상태 처리
 
 Nginx 기반 프론트엔드 배포 스크립트 작성 및 서버 협업
 
-Used Tools
+**Used Tools**
 
 개발: VS Code, Git, GitHub
 
 API 테스트: Postman
 
-UI/UX 작업 및 프로토타입: Figma
+UI/UX & 프로토타입: Figma
 
 “실제 캠퍼스에서 바로 쓸 수 있는 서비스”를 목표로
 기획부터 배포까지 전체 플로우를 경험한 프로젝트입니다.
