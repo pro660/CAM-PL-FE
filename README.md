@@ -118,13 +118,13 @@ CAM-PL 서비스의 **Frontend Developer**
 
 **Nginx 기반 프론트엔드 배포** 스크립트 작성 및 서버 협업
 
-## Used Tools
-
-개발: VS Code, Git, GitHub
-
-API 테스트: Postman
-
-UI/UX & 프로토타입: Figma
+## 🛠 Used Tools
+Development
+<p> <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vscode/vscode-original.svg" width="40" />&nbsp; <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg" width="40"/>&nbsp; <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" width="40"/> </p>
+API Testing
+<p> <img src="https://www.vectorlogo.zone/logos/getpostman/getpostman-icon.svg" width="40" /> </p>
+UI/UX & Prototype
+<p> <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/figma/figma-original.svg" width="40"/> </p>
 
 “실제 캠퍼스에서 바로 쓸 수 있는 서비스”를 목표로
 기획부터 배포까지 전체 플로우를 경험한 프로젝트입니다.
