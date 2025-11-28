@@ -1,3 +1,4 @@
+// src/components/mypage/MyPage.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../css/mypage/MyPage.css";
@@ -32,30 +33,27 @@ export default function MyPage() {
     return `오늘은 ${month}월 ${date}일 ${weekday}입니다.`;
   }, [today]);
 
-  // ✅ 로컬스토리지에서 사용자 정보(name) 로딩
+  // ✅ camp_auth 에서 name 꺼내오기
   useEffect(() => {
     try {
-      // 프로젝트에 실제로 쓰는 키 이름에 맞춰서 수정하면 됨
-      const stored =
-        localStorage.getItem("user") || localStorage.getItem("userInfo");
+      const raw = localStorage.getItem("camp_auth");
+      if (!raw) return;
 
-      if (!stored) return;
+      // camp_auth 는 JSON 문자열이라고 가정
+      const auth = JSON.parse(raw);
 
-      const parsed = JSON.parse(stored);
-
-      // name 필드 우선, 없으면 username/id 등으로 폴백
+      // name 이 우선, 없으면 loginId 등으로 폴백
       const name =
-        parsed?.name ||
-        parsed?.username ||
-        parsed?.id ||
-        parsed?.userId ||
+        auth?.name ||
+        auth?.loginId ||
+        auth?.email ||
         "";
 
       if (name) {
         setUserName(name);
       }
     } catch (err) {
-      console.error("사용자 정보 파싱 실패:", err);
+      console.error("camp_auth 파싱 실패:", err);
     }
   }, []);
 
@@ -103,6 +101,8 @@ export default function MyPage() {
       // 토큰 / 유저정보 정리 (키 이름은 프로젝트에 맞게 조정)
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
+      // camp_auth 를 여기서도 지울 거면 추가:
+      // localStorage.removeItem("camp_auth");
       navigate("/login", { replace: true });
     }
   };
