@@ -10,7 +10,12 @@ import api from "../../api/axios";
 import { useLoading } from "../../context/LoadingContext.jsx"; // ✅ 전역 로더 훅 추가
 
 // 카테고리 한글 라벨링 (캘린더랑 맞추기)
-function getCategoryLabel(category) {
+function getCategoryLabel(category, origin) {
+  // ✅ 학교 일정(origin = SCHOOL)은 무조건 "학사"로 표시
+  if (origin === "SCHOOL") {
+    return "학사";
+  }
+
   switch (category) {
     case "LECTURE":
       return "강의";
@@ -206,7 +211,11 @@ const HomePage = () => {
           id:
             item.id ??
             `${item.title || "schedule"}-${item.startAt || idx}`,
-          category: getCategoryLabel(item.category || item.type),
+          // ✅ origin도 함께 넘겨서 "학사" 처리
+          category: getCategoryLabel(
+            item.category || item.type,
+            item.origin
+          ),
           title: item.title || "",
           place: item.place || item.location || "",
           timeRange:
