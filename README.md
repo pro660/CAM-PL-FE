@@ -34,7 +34,7 @@
 - Gabia 서버 호스팅
 - 배포 자동화 쉘 스크립트
 
-**Tools**
+**🛠 Used Tools**
 
 ![VSCode](https://img.shields.io/badge/VSCode-Editor-007ACC?logo=visualstudiocode&logoColor=white)
 ![Git](https://img.shields.io/badge/Git-Version%20Control-F05032?logo=git&logoColor=white)
@@ -118,13 +118,6 @@ CAM-PL 서비스의 **Frontend Developer**
 
 **Nginx 기반 프론트엔드 배포** 스크립트 작성 및 서버 협업
 
-## 🛠 Used Tools
-Development
-<p> <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vscode/vscode-original.svg" width="40" />&nbsp; <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg" width="40"/>&nbsp; <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" width="40"/> </p>
-API Testing
-<p> <img src="https://www.vectorlogo.zone/logos/getpostman/getpostman-icon.svg" width="40" /> </p>
-UI/UX & Prototype
-<p> <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/figma/figma-original.svg" width="40"/> </p>
 
 “실제 캠퍼스에서 바로 쓸 수 있는 서비스”를 목표로
 기획부터 배포까지 전체 플로우를 경험한 프로젝트입니다.
