@@ -1,0 +1,93 @@
+/* 지도 하단 건물별 일정 바 전체 */
+.place-events-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.9rem;
+  padding: 0 1rem;
+  z-index: 5;
+}
+
+/* 상단 헤더 (건물명 + 닫기) */
+.place-events-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+  padding: 0 0.1rem;
+}
+
+.place-events-place {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #555555;
+}
+
+.place-events-close {
+  border: none;
+  outline: none;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 999px;
+  background-color: rgba(0, 0, 0, 0.06);
+  font-size: 0.8rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #666666;
+}
+
+/* 카드 슬라이더 영역 */
+.place-events-scroll {
+  display: flex;
+  gap: 0.6rem;
+  overflow-x: auto;
+  padding-bottom: 0.2rem;
+}
+
+.place-events-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+.place-events-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 999px;
+}
+
+/* 한 개의 일정 카드 */
+.place-event-card {
+  min-width: 220px;
+  max-width: 220px;
+  background-color: #ffffff;
+  border-radius: 1rem;
+  padding: 0.6rem 0.75rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  flex-shrink: 0;
+}
+
+/* 카드 안 카테고리 pill */
+.place-event-pill {
+  display: inline-block;
+  padding: 0.12rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #c09ef1;
+  margin-bottom: 0.25rem;
+}
+
+/* 일정 제목 */
+.place-event-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #333333;
+  margin-bottom: 0.15rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 요일 + 시간 */
+.place-event-time {
+  font-size: 0.74rem;
+  color: #777777;
+}

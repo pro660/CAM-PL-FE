@@ -19,14 +19,25 @@
   scrollbar-width: none;
 }
 
+/* 건물 chip 버튼 */
 .map-today-place-chip {
+  border: none;
+  outline: none;
   display: inline-flex;
   align-items: center;
-  padding: 0.18rem 0.6rem;
+  padding: 0.22rem 0.7rem;
   border-radius: 999px;
-  background-color: #D9D9D9;
-  color: #606060;
+  background-color: #d9d9d9;
+  color: #606060;          /* 요청한 텍스트 색 */
   font-size: 0.75rem;
-  font-weight: 500;
+  font-weight: 700;        /* 요청한 두께 */
   white-space: nowrap;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* 선택된 chip */
+.map-today-place-chip.active {
+  background-color: #e7ddff;
+  color: #5e47d4;
 }

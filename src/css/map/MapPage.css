@@ -10,6 +10,7 @@
 
 /* 상단 지도 영역 */
 .map-page-map-wrapper {
+  position: relative;   /* ✅ 슬라이더를 지도 위에 올리기 위해 추가 */
   width: 100%;
   height: 30rem;
   overflow: hidden;

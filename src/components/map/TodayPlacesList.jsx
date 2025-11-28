@@ -2,7 +2,12 @@
 import React from "react";
 import "../../css/map/TodayPlaces.css";
 
-export default function TodayPlaces({ items = [], loading }) {
+export default function TodayPlaces({
+  items = [],
+  loading,
+  selectedPlace,
+  onSelectPlace,
+}) {
   return (
     <section className="map-section map-today-section">
       <h2 className="map-section-title">오늘의 일정</h2>
@@ -18,9 +23,16 @@ export default function TodayPlaces({ items = [], loading }) {
       ) : (
         <div className="map-today-places-chips">
           {items.map((item) => (
-            <div key={item.place} className="map-today-place-chip">
+            <button
+              key={item.place}
+              type="button"
+              className={`map-today-place-chip ${
+                selectedPlace === item.place ? "active" : ""
+              }`}
+              onClick={() => onSelectPlace && onSelectPlace(item.place)}
+            >
               {item.place} ({item.count})
-            </div>
+            </button>
           ))}
         </div>
       )}

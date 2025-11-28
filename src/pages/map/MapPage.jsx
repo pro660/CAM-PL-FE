@@ -8,6 +8,7 @@ import TodayPlaces from "../../components/map/TodayPlacesList";
 import ScheduleList from "../../components/map/ScheduleList";
 import NearbyPlaces from "../../components/map/NearbyPlaces";
 import RecommendModal from "../../components/map/RecommendModal";
+import PlaceEventsBar from "../../components/map/PlaceEventsBar";
 
 import api from "../../api/axios";
 import { useLoading } from "../../context/LoadingContext";
@@ -27,7 +28,7 @@ function addDays(date, diff) {
   return d;
 }
 
-// 카테고리 라벨 (텍스트용)
+// ===== 카테고리/타입 유틸 =====
 function getCategoryLabel(category) {
   if (!category) return "일정";
 
@@ -111,6 +112,28 @@ function normalizeDayResponse(res) {
   return Array.isArray(body) ? body : body.events || body.items || [];
 }
 
+// 요일 + 시간 포맷 (슬라이더 카드용)
+const DAY_NAMES_SHORT = ["일", "월", "화", "수", "목", "금", "토"];
+
+function formatEventTimeRange(startIso, endIso) {
+  if (!startIso) return "";
+  const s = new Date(startIso);
+  if (Number.isNaN(s.getTime())) return "";
+
+  const e = endIso ? new Date(endIso) : null;
+
+  const toTime = (d) =>
+    `${String(d.getHours()).padStart(2, "0")}:${String(
+      d.getMinutes()
+    ).padStart(2, "0")}`;
+
+  const weekday = DAY_NAMES_SHORT[s.getDay()];
+  const startText = toTime(s);
+  const endText = e && !Number.isNaN(e.getTime()) ? toTime(e) : null;
+
+  return endText ? `${weekday} ${startText} ~ ${endText}` : `${weekday} ${startText}`;
+}
+
 export default function MapPage() {
   const navigate = useNavigate();
   const { showLoading, hideLoading } = useLoading();
@@ -127,6 +150,9 @@ export default function MapPage() {
 
   // 추천 모달 열림 여부
   const [showRecommend, setShowRecommend] = useState(false);
+
+  // 👉 오늘의 일정 칩에서 선택된 건물명
+  const [selectedPlace, setSelectedPlace] = useState(null);
 
   // 오늘 날짜(시분초 0으로 맞춤)
   const today = useMemo(() => {
@@ -191,7 +217,7 @@ export default function MapPage() {
     })();
   }, [today, showLoading, hideLoading]);
 
-  // 오늘 일정 → 장소별 카운트
+  // 오늘 일정 → 장소별 카운트 (칩용)
   const todayPlaceItems = useMemo(() => {
     const map = {};
     todayEvents.forEach((ev) => {
@@ -204,6 +230,30 @@ export default function MapPage() {
       .map(([place, count]) => ({ place, count }))
       .sort((a, b) => b.count - a.count);
   }, [todayEvents]);
+
+  // 오늘 일정 → 장소별 이벤트 배열 (슬라이더용)
+  const placeEventsMap = useMemo(() => {
+    const map = {};
+    todayEvents.forEach((ev) => {
+      if (!ev.location) return;
+      const key = extractPlaceLabel(ev.location);
+      if (!map[key]) map[key] = [];
+      map[key].push(ev);
+    });
+    return map;
+  }, [todayEvents]);
+
+  // 선택된 건물의 일정 카드들
+  const selectedPlaceItems = useMemo(() => {
+    if (!selectedPlace) return [];
+    const list = placeEventsMap[selectedPlace] || [];
+    return list.map((ev, idx) => ({
+      id: ev.id ?? `${ev.title || "event"}-${ev.startAt}-${idx}`,
+      category: getCategoryLabel(ev.category),
+      title: ev.title || "",
+      timeText: formatEventTimeRange(ev.startAt, ev.endAt),
+    }));
+  }, [selectedPlace, placeEventsMap]);
 
   // 지난 / 다음 일정용 리스트
   const prevItems = useMemo(
@@ -241,8 +291,8 @@ export default function MapPage() {
     navigate("/calendar", {
       state: {
         fromPlaceRecommend: {
-          location: place.name, // 위치 입력칸에 들어갈 값
-          category, // "TEAM", "MEAL" 같은 일정 카테고리 코드
+          location: place.name,
+          category,
         },
       },
     });
@@ -255,17 +305,33 @@ export default function MapPage() {
     console.log("주변 시설 + 버튼 클릭:", place);
   };
 
+  // 오늘의 일정 칩 클릭 핸들러
+  const handleSelectPlace = (placeName) => {
+    setSelectedPlace((prev) => (prev === placeName ? null : placeName));
+  };
+
   return (
     <div className="map-page">
-      {/* 상단 네이버 지도 */}
+      {/* 상단 네이버 지도 + 건물별 일정 슬라이더 */}
       <div className="map-page-map-wrapper">
         <NaverMap />
+
+        <PlaceEventsBar
+          place={selectedPlace}
+          items={selectedPlaceItems}
+          onClose={() => setSelectedPlace(null)}
+        />
       </div>
 
       {/* 아래 내용 영역 */}
       <div className="map-page-content">
         {/* 오늘의 일정 - 장소 요약 */}
-        <TodayPlaces items={todayPlaceItems} loading={loading} />
+        <TodayPlaces
+          items={todayPlaceItems}
+          loading={loading}
+          selectedPlace={selectedPlace}
+          onSelectPlace={handleSelectPlace}
+        />
 
         {/* 지난 일정 (어제) */}
         <ScheduleList
