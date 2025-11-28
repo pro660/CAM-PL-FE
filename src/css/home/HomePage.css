@@ -188,7 +188,6 @@
 /* 지도 / 시간표 박스 영역 */
 
 .home-timetable-map-content {
-  border-radius: 1rem;
   overflow: hidden;
   background-color: #ffffff;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
@@ -247,7 +246,7 @@
 }
 
 .home-timetable-time-slot {
-  height: 2.4rem; /* 1시간 칸 높이 */
+  height: 2.34rem; /* 1시간 칸 높이 */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -267,16 +266,7 @@
 .home-timetable-day-column {
   position: relative;
   min-height: calc(2.4rem * 9); /* 9시~6시 정도 높이 */
-
-  /* 얇은 가로 줄을 반복해서 그리드 느낌 */
-  background-image: repeating-linear-gradient(
-    to bottom,
-    #f6f0ff 0,
-    #f6f0ff calc(2.4rem - 1px),
-    #e4d9ff calc(2.4rem - 1px),
-    #e4d9ff 2.4rem
-  );
-  border-right: 1px solid #e2d4ff;
+  background-color: white;
 }
 
 .home-timetable-day-column:last-child {

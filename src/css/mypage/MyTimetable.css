@@ -1,100 +1,110 @@
-/* 시간표 전체 카드 */
-.mypage-timetable {
-  width: 100%;
-}
-
-.mypage-timetable-inner {
+/* 바깥 카드 (하얀 배경 + 그림자) */
+.mypage-timetable-card {
   background-color: #ffffff;
-  border-radius: 1rem;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
   overflow: hidden;
 }
 
-/* ----- 상단 요일 헤더 ----- */
+/* 실제 시간표 래퍼 */
+.mypage-timetable {
+  padding: 0;
+  box-sizing: border-box;
+  font-size: 0.7rem;
+}
+
+/* 상단 요일 헤더 줄 */
 .mypage-timetable-header-row {
   display: grid;
-  grid-template-columns: 40px repeat(5, 1fr); /* 시간칸 + 월~금 */
-  background-color: #c09ef1;
-  color: #ffffff;
-  font-size: 0.75rem;
-  font-weight: 600;
+  grid-template-columns: 2.4rem repeat(5, 1fr); /* 시간축 + 평일 5칸 */
+  column-gap: 0;
+  background-color: #c9a8ff; /* 상단 보라색 바 */
+}
+
+.mypage-timetable-header-cell {
+  padding: 0.4rem 0;
   text-align: center;
-  padding: 0.25rem 0.4rem 0.15rem;
-}
-
-.mypage-timetable-day-label {
-  padding: 0.15rem 0;
-}
-
-/* ----- 본문 영역 ----- */
-.mypage-timetable-main {
-  display: flex;
-  background-color: #f6f1ff;
-  padding: 0.3rem 0.4rem 0.4rem;
-}
-
-/* 왼쪽 시간 라벨 열 (보라색 띠) */
-.mypage-timetable-times {
-  width: 40px;
-  background-color: #c09ef1;
-  border-radius: 0 0 0 0.9rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.35rem 0 0.45rem;
-  font-size: 0.7rem;
-  color: #ffffff;
-}
-
-.mypage-timetable-time {
-  line-height: 1;
-}
-
-/* 오른쪽 강의 그리드 */
-.mypage-timetable-grid {
-  flex: 1;
-  margin-left: 4px;
-  background-color: #ffffff;
-  border-radius: 0 0 0.9rem 0.9rem;
-  position: relative;
-  display: grid;
-  grid-template-columns: repeat(5, 1fr); /* 월~금 */
-  column-gap: 3px;
-  row-gap: 3px;
-  padding: 0.35rem 0.4rem 0.4rem;
-  /* 얇은 가로줄 느낌 (시간 칸) */
-  background-image: linear-gradient(
-    to bottom,
-    #f0f0f0 1px,
-    transparent 1px
-  );
-  background-size: 100% calc(100% / 9);
-}
-
-/* 수업 블록 */
-.mypage-timetable-block {
-  background-color: #c09ef1;
-  border-radius: 4px;
-  padding: 0.2rem 0.35rem;
-  font-size: 0.7rem;
-  color: #ffffff;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.mypage-timetable-block-title {
   font-weight: 600;
-  line-height: 1.3;
-  max-height: 2.6em;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 0.72rem;
+  color: #ffffff;
+  border-right: 1px solid rgba(255, 255, 255, 0.4);
 }
 
-.mypage-timetable-block-room {
-  margin-top: 0.1rem;
-  font-size: 0.65rem;
+.mypage-timetable-header-cell-time {
+  border-right: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* 본문 영역: 왼쪽 시간축 + 오른쪽 그리드 */
+.mypage-timetable-body {
+  display: grid;
+  grid-template-columns: 2.4rem 1fr; /* 시간축 + 나머지 */
+  column-gap: 0;
+  background-color: #f6f0ff; /* 전체 연보라 배경 */
+}
+
+/* 왼쪽 시간축 */
+.mypage-timetable-time-col {
+  background-color: #f0e3ff;
+  border-right: 1px solid #e2d4ff;
+}
+
+.mypage-timetable-time-slot {
+  height: 2.4rem; /* 1시간 칸 높이 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: #9b8ac8;
+  border-bottom: 1px solid #e4d9ff;
+}
+
+/* 오른쪽 요일 그리드 전체 */
+.mypage-timetable-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  position: relative;
+}
+
+/* 각 요일 칼럼 */
+.mypage-timetable-day-column {
+  position: relative;
+  min-height: calc(2.4rem * 9); /* 9시~6시 정도 높이 */
+  background-color: #FFFFFF;
+}
+
+.mypage-timetable-day-column:last-child {
+  border-right: none;
+}
+
+/* 강의 블록 */
+.mypage-timetable-class-block {
+  position: absolute;
+  left: 0.25rem;
+  right: 0.25rem;
+
+  background-color: #c9a8ff;
+  border-radius: 0.3rem;
+  padding: 0.25rem 0.3rem;
+
+  color: #ffffff;
+  box-shadow: 0 3px 6px rgba(171, 132, 245, 0.6);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* 블록 안 텍스트 */
+.mypage-timetable-class-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.2;
+  margin-bottom: 0.12rem;
+}
+
+.mypage-timetable-class-location {
+  font-size: 0.64rem;
+  opacity: 0.95;
+}
+
+.mypage-timetable-class-time {
+  font-size: 0.62rem;
   opacity: 0.9;
+  margin-top: 0.05rem;
 }

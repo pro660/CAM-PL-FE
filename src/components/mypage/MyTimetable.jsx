@@ -1,22 +1,24 @@
 import React, { useMemo } from "react";
 import "../../css/mypage/MyTimetable.css";
 
-const DAYS = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"];
+const DAY_ORDER = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"];
 const DAY_LABELS = ["월", "화", "수", "목", "금"];
 
 const START_HOUR = 9;   // 9시
-const END_HOUR = 18;    // 6시
-const SLOT_MINUTES = 30; // 30분 단위
-const TOTAL_SLOTS = ((END_HOUR - START_HOUR) * 60) / SLOT_MINUTES; // 18칸
+const END_HOUR = 18;    // 18시(6시)
+const TOTAL_MINUTES = (END_HOUR - START_HOUR) * 60;
 
-function buildBlocks(courses = []) {
-  const blocks = [];
+// 왼쪽에 표시할 시간 라벨: 9 ~ 6
+const TIME_LABELS = [9, 10, 11, 12, 1, 2, 3, 4, 5, 6];
+
+function buildDayColumns(courses = []) {
+  const columns = DAY_ORDER.map(() => []);
 
   courses.forEach((course) => {
     if (!Array.isArray(course.times)) return;
 
     course.times.forEach((t, idx) => {
-      const dayIndex = DAYS.indexOf(t.dayOfWeek);
+      const dayIndex = DAY_ORDER.indexOf(t.dayOfWeek);
       if (dayIndex === -1) return;
 
       const [sh, sm] = t.startTime.split(":").map(Number);
@@ -25,91 +27,99 @@ function buildBlocks(courses = []) {
 
       const startMinutes = sh * 60 + sm;
       const endMinutes = eh * 60 + em;
-      const duration = Math.max(endMinutes - startMinutes, SLOT_MINUTES);
-      const startOffset = Math.max(startMinutes - START_HOUR * 60, 0);
 
-      const startSlot = Math.floor(startOffset / SLOT_MINUTES);
-      const spanSlots = Math.ceil(duration / SLOT_MINUTES);
+      const minMinutes = START_HOUR * 60;
+      const maxMinutes = END_HOUR * 60;
 
-      blocks.push({
-        id: `${course.id}-${idx}`,
+      // 9~18시 범위 안으로 클램프
+      const clampedStart = Math.max(startMinutes, minMinutes);
+      const clampedEnd = Math.min(endMinutes, maxMinutes);
+      if (clampedEnd <= clampedStart) return;
+
+      const topPercent =
+        ((clampedStart - minMinutes) / TOTAL_MINUTES) * 100;
+      const heightPercent =
+        ((clampedEnd - clampedStart) / TOTAL_MINUTES) * 100;
+
+      columns[dayIndex].push({
+        id: `${course.id}-${idx}-${t.dayOfWeek}-${t.startTime}`,
         title: course.name,
         room: t.room,
-        dayIndex,
-        startRow: startSlot + 1,
-        rowSpan: spanSlots,
+        timeLabel: `${t.startTime.slice(0, 5)} ~ ${t.endTime.slice(0, 5)}`,
+        topPercent,
+        heightPercent,
       });
     });
   });
 
-  return blocks;
+  return columns;
 }
 
 export default function MyTimetable({ courses = [] }) {
-  const blocks = useMemo(() => buildBlocks(courses), [courses]);
-
-  // 9, 10, 11, 12, 1, 2, 3, 4, 5, 6
-  const timeLabels = useMemo(() => {
-    const arr = [];
-    for (let h = START_HOUR; h <= END_HOUR; h++) {
-      const display = h <= 12 ? h : h - 12;
-      arr.push(display);
-    }
-    return arr;
-  }, []);
+  const dayColumns = useMemo(
+    () => buildDayColumns(courses),
+    [courses]
+  );
 
   return (
-    <div className="mypage-timetable">
-      <div className="mypage-timetable-inner">
-        {/* 요일 헤더 */}
+    <div className="mypage-timetable-card">
+      <div className="mypage-timetable">
+        {/* 상단 요일 헤더 줄 */}
         <div className="mypage-timetable-header-row">
-          <div className="mypage-timetable-header-time-empty" />
+          <div className="mypage-timetable-header-cell mypage-timetable-header-cell-time" />
           {DAY_LABELS.map((label) => (
             <div
               key={label}
-              className="mypage-timetable-day-label"
+              className="mypage-timetable-header-cell"
             >
               {label}
             </div>
           ))}
         </div>
 
-        {/* 본문: 왼쪽 시간 / 오른쪽 강의 그리드 */}
-        <div className="mypage-timetable-main">
-          <div className="mypage-timetable-times">
-            {timeLabels.map((t) => (
+        {/* 본문: 왼쪽 시간축 + 오른쪽 요일 그리드 */}
+        <div className="mypage-timetable-body">
+          {/* 왼쪽 시간축 */}
+          <div className="mypage-timetable-time-col">
+            {TIME_LABELS.map((t) => (
               <div
                 key={t}
-                className="mypage-timetable-time"
+                className="mypage-timetable-time-slot"
               >
                 {t}
               </div>
             ))}
           </div>
 
-          <div
-            className="mypage-timetable-grid"
-            style={{
-              gridTemplateRows: `repeat(${TOTAL_SLOTS}, minmax(0, 1fr))`,
-            }}
-          >
-            {blocks.map((block) => (
+          {/* 오른쪽 5일 그리드 */}
+          <div className="mypage-timetable-grid">
+            {dayColumns.map((blocks, dayIdx) => (
               <div
-                key={block.id}
-                className="mypage-timetable-block"
-                style={{
-                  gridColumn: block.dayIndex + 1,
-                  gridRow: `${block.startRow} / span ${block.rowSpan}`,
-                }}
+                key={DAY_ORDER[dayIdx]}
+                className="mypage-timetable-day-column"
               >
-                <div className="mypage-timetable-block-title">
-                  {block.title}
-                </div>
-                {block.room && (
-                  <div className="mypage-timetable-block-room">
-                    {block.room}
+                {blocks.map((block) => (
+                  <div
+                    key={block.id}
+                    className="mypage-timetable-class-block"
+                    style={{
+                      top: `${block.topPercent}%`,
+                      height: `${block.heightPercent}%`,
+                    }}
+                  >
+                    <div className="mypage-timetable-class-title">
+                      {block.title}
+                    </div>
+                    {block.room && (
+                      <div className="mypage-timetable-class-location">
+                        {block.room}
+                      </div>
+                    )}
+                    <div className="mypage-timetable-class-time">
+                      {block.timeLabel}
+                    </div>
                   </div>
-                )}
+                ))}
               </div>
             ))}
           </div>

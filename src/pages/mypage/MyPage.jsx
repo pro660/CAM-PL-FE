@@ -6,6 +6,8 @@ import api from "../../api/axios";
 import { useLoading } from "../../context/LoadingContext.jsx";
 import MyTimetable from "../../components/mypage/MyTimetable.jsx";
 
+import PenImg from "../../images/mypage/pen.svg"
+
 const WEEKDAY_KR_LONG = [
   "일요일",
   "월요일",
@@ -37,7 +39,7 @@ export default function MyPage() {
     let cancelled = false;
 
     const fetchTimetable = async () => {
-      showLoading();
+      // showLoading();
       try {
         const res = await api.get("/timetable");
         if (cancelled) return;
@@ -49,7 +51,7 @@ export default function MyPage() {
         console.error(e);
       } finally {
         if (!cancelled) {
-          hideLoading();
+          // hideLoading();
         }
       }
     };
@@ -127,7 +129,7 @@ export default function MyPage() {
           onClick={handleEditProfile}
         >
           <div className="mypage-profile-icon">
-            {/* 펜 SVG 아이콘 자리 */}
+            <img src={PenImg} alt="개인정보 수정 아이콘"/>
           </div>
           <span className="mypage-profile-text">개인정보 수정</span>
         </button>
