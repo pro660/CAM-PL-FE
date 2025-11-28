@@ -6,7 +6,7 @@ import api from "../../api/axios";
 import { useLoading } from "../../context/LoadingContext.jsx";
 import MyTimetable from "../../components/mypage/MyTimetable.jsx";
 
-import PenImg from "../../images/mypage/pen.svg"
+import PenImg from "../../images/mypage/pen.svg";
 
 const WEEKDAY_KR_LONG = [
   "일요일",
@@ -20,11 +20,9 @@ const WEEKDAY_KR_LONG = [
 
 export default function MyPage() {
   const [courses, setCourses] = useState([]);
+  const [userName, setUserName] = useState(""); // ✅ 사용자 이름 상태
   const { showLoading, hideLoading } = useLoading();
   const navigate = useNavigate();
-
-  // ★ 사용자 아이디 (추후 AuthContext 연동용)
-  const userId = "아이디";
 
   const today = useMemo(() => new Date(), []);
   const todayText = useMemo(() => {
@@ -33,6 +31,33 @@ export default function MyPage() {
     const weekday = WEEKDAY_KR_LONG[today.getDay()];
     return `오늘은 ${month}월 ${date}일 ${weekday}입니다.`;
   }, [today]);
+
+  // ✅ 로컬스토리지에서 사용자 정보(name) 로딩
+  useEffect(() => {
+    try {
+      // 프로젝트에 실제로 쓰는 키 이름에 맞춰서 수정하면 됨
+      const stored =
+        localStorage.getItem("user") || localStorage.getItem("userInfo");
+
+      if (!stored) return;
+
+      const parsed = JSON.parse(stored);
+
+      // name 필드 우선, 없으면 username/id 등으로 폴백
+      const name =
+        parsed?.name ||
+        parsed?.username ||
+        parsed?.id ||
+        parsed?.userId ||
+        "";
+
+      if (name) {
+        setUserName(name);
+      }
+    } catch (err) {
+      console.error("사용자 정보 파싱 실패:", err);
+    }
+  }, []);
 
   // 시간표 로딩
   useEffect(() => {
@@ -101,7 +126,8 @@ export default function MyPage() {
       <section className="mypage-header-row">
         <div className="mypage-greeting">
           <p className="mypage-greeting-line1">
-            안녕하세요, {userId}님!
+            안녕하세요,{" "}
+            {userName ? `${userName}님!` : "CAM-PL 사용자님!"}
           </p>
           <p className="mypage-greeting-line2">{todayText}</p>
         </div>
@@ -111,7 +137,6 @@ export default function MyPage() {
           className="mypage-add-button"
           aria-label="일정 추가"
         >
-          {/* 여기에 나중에 + SVG 아이콘 넣으면 됨 */}
           +
         </button>
       </section>
@@ -129,7 +154,7 @@ export default function MyPage() {
           onClick={handleEditProfile}
         >
           <div className="mypage-profile-icon">
-            <img src={PenImg} alt="개인정보 수정 아이콘"/>
+            <img src={PenImg} alt="개인정보 수정 아이콘" />
           </div>
           <span className="mypage-profile-text">개인정보 수정</span>
         </button>
