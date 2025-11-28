@@ -268,7 +268,7 @@
 /* 각 요일 칼럼 */
 .home-timetable-day-column {
   position: relative;
-  min-height: calc(var(--home-hour-row-height) * 9); /* ✅ 9시간(9칸)과 일치 */
+  min-height: calc(var(--home-hour-row-height) * 10); /* ✅ 10칸 (9시~7시 경계) */
   background-color: white;
   border-left: 1px solid #f0e3ff;
 }
@@ -289,7 +289,6 @@
   color: #ffffff;
   box-sizing: border-box;
   overflow: hidden;
-  border-radius: 0.5rem;
 }
 
 /* 블록 안 텍스트 */

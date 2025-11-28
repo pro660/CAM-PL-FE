@@ -7,13 +7,14 @@ import { useLoading } from "../../context/LoadingContext.jsx"; // ✅ 전역 로
 // 요일(표시용)
 const weekdayLabels = ["월", "화", "수", "목", "금"];
 
-// 시간축: 9시 ~ 18시(6시) → 9시간 구간
+// 시간축: 9시 ~ 19시(7시) → 10시간 구간
 const START_HOUR = 9;
-const END_HOUR = 18;
-const HOUR_SPAN = END_HOUR - START_HOUR; // 9 (9~10, 10~11, ... 17~18 총 9구간)
-const TOTAL_MINUTES = HOUR_SPAN * 60;
+const END_HOUR = 19; // 7시까지 경계
+const HOUR_SPAN = END_HOUR - START_HOUR; // 10
+const TOTAL_MINUTES = HOUR_SPAN * 60; // 600분
 
-// 왼쪽에 찍을 시간 숫자들 (9,10,11,12,13,14,15,16,17 → 9칸 기준)
+// 왼쪽에 찍을 시간 숫자들 (9,10,11,12,13,14,15,16,17,18 → 10개)
+// 13~18은 화면에서 1~6으로 표시
 const TIME_LABELS = Array.from({ length: HOUR_SPAN }, (_, i) => START_HOUR + i);
 
 // 24시간 → 화면에 찍을 숫자(13 ⇒ 1, 14 ⇒ 2 ...)
@@ -207,10 +208,7 @@ const TimetableMapSection = ({ onTodayLecturesChange }) => {
                   {/* 오른쪽 요일별 칸 */}
                   <div className="home-timetable-grid">
                     {weekdayLabels.map((day) => (
-                      <div
-                        key={day}
-                        className="home-timetable-day-column"
-                      >
+                      <div key={day} className="home-timetable-day-column">
                         {timetable
                           .filter((cls) => cls.day === day)
                           .map((cls) => {
@@ -218,9 +216,9 @@ const TimetableMapSection = ({ onTodayLecturesChange }) => {
                             const endMin = timeToMinutes(cls.endTime);
 
                             const minMinutes = START_HOUR * 60; // 9:00
-                            const maxMinutes = END_HOUR * 60; // 18:00
+                            const maxMinutes = END_HOUR * 60; // 19:00
 
-                            // 9~18 범위로 클램프
+                            // 9~19 범위로 클램프
                             const clampedStart = Math.max(
                               startMin,
                               minMinutes
@@ -228,7 +226,7 @@ const TimetableMapSection = ({ onTodayLecturesChange }) => {
                             const clampedEnd = Math.min(endMin, maxMinutes);
                             if (clampedEnd <= clampedStart) return null;
 
-                            // 전체 높이(9시간)를 100%로 보고, 퍼센트로 위치 계산
+                            // 전체 높이(10시간)를 100%로 보고, 퍼센트로 위치 계산
                             const topPercent =
                               ((clampedStart - minMinutes) / TOTAL_MINUTES) *
                               100;
