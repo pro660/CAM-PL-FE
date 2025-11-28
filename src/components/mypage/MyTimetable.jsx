@@ -1,3 +1,4 @@
+// src/components/mypage/MyTimetable.jsx
 import React, { useMemo } from "react";
 import "../../css/mypage/MyTimetable.css";
 
@@ -6,7 +7,10 @@ const DAY_LABELS = ["월", "화", "수", "목", "금"];
 
 const START_HOUR = 9;   // 9시
 const END_HOUR = 18;    // 18시(6시)
-const TOTAL_MINUTES = (END_HOUR - START_HOUR) * 60;
+
+// 🔥 화면에 보이는 시간칸은 9~6까지 "10칸"이라서 10시간 기준으로 스케일
+//   그래야 1시간당 높이가 왼쪽 시간축(2.4rem)과 딱 맞음
+const TOTAL_MINUTES = (END_HOUR - START_HOUR + 1) * 60; // 10 * 60 = 600
 
 // 왼쪽에 표시할 시간 라벨: 9 ~ 6
 const TIME_LABELS = [9, 10, 11, 12, 1, 2, 3, 4, 5, 6];
@@ -36,6 +40,7 @@ function buildDayColumns(courses = []) {
       const clampedEnd = Math.min(endMinutes, maxMinutes);
       if (clampedEnd <= clampedStart) return;
 
+      // 🔥 세로 길이 비율(9~6 = 10칸 기준)
       const topPercent =
         ((clampedStart - minMinutes) / TOTAL_MINUTES) * 100;
       const heightPercent =
@@ -56,10 +61,7 @@ function buildDayColumns(courses = []) {
 }
 
 export default function MyTimetable({ courses = [] }) {
-  const dayColumns = useMemo(
-    () => buildDayColumns(courses),
-    [courses]
-  );
+  const dayColumns = useMemo(() => buildDayColumns(courses), [courses]);
 
   return (
     <div className="mypage-timetable-card">
@@ -68,10 +70,7 @@ export default function MyTimetable({ courses = [] }) {
         <div className="mypage-timetable-header-row">
           <div className="mypage-timetable-header-cell mypage-timetable-header-cell-time" />
           {DAY_LABELS.map((label) => (
-            <div
-              key={label}
-              className="mypage-timetable-header-cell"
-            >
+            <div key={label} className="mypage-timetable-header-cell">
               {label}
             </div>
           ))}
@@ -82,10 +81,7 @@ export default function MyTimetable({ courses = [] }) {
           {/* 왼쪽 시간축 */}
           <div className="mypage-timetable-time-col">
             {TIME_LABELS.map((t) => (
-              <div
-                key={t}
-                className="mypage-timetable-time-slot"
-              >
+              <div key={t} className="mypage-timetable-time-slot">
                 {t}
               </div>
             ))}
