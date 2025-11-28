@@ -201,6 +201,9 @@
   padding: 0;
   box-sizing: border-box;
   font-size: 0.7rem;
+
+  /* ✅ 시간칸(1시간) 높이 공통 변수 */
+  --home-hour-row-height: 2.4rem;
 }
 
 /* 로딩 텍스트 */
@@ -246,7 +249,7 @@
 }
 
 .home-timetable-time-slot {
-  height: 2.34rem; /* 1시간 칸 높이 */
+  height: var(--home-hour-row-height); /* ✅ 1시간 = 1칸 */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -265,8 +268,9 @@
 /* 각 요일 칼럼 */
 .home-timetable-day-column {
   position: relative;
-  min-height: calc(2.4rem * 9); /* 9시~6시 정도 높이 */
+  min-height: calc(var(--home-hour-row-height) * 9); /* ✅ 9시간(9칸)과 일치 */
   background-color: white;
+  border-left: 1px solid #f0e3ff;
 }
 
 .home-timetable-day-column:last-child {
@@ -285,6 +289,7 @@
   color: #ffffff;
   box-sizing: border-box;
   overflow: hidden;
+  border-radius: 0.5rem;
 }
 
 /* 블록 안 텍스트 */

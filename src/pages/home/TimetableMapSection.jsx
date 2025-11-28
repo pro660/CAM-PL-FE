@@ -7,14 +7,14 @@ import { useLoading } from "../../context/LoadingContext.jsx"; // ✅ 전역 로
 // 요일(표시용)
 const weekdayLabels = ["월", "화", "수", "목", "금"];
 
-// 시간축: 9시 ~ 18시(6시) → 9칸
+// 시간축: 9시 ~ 18시(6시) → 9시간 구간
 const START_HOUR = 9;
 const END_HOUR = 18;
-const HOUR_SPAN = END_HOUR - START_HOUR; // 9
+const HOUR_SPAN = END_HOUR - START_HOUR; // 9 (9~10, 10~11, ... 17~18 총 9구간)
 const TOTAL_MINUTES = HOUR_SPAN * 60;
 
-// 왼쪽에 찍을 시간 숫자들(9,10,11,12,13,14,15,16,17)
-const TIME_LABELS = Array.from({ length: HOUR_SPAN + 1}, (_, i) => START_HOUR + i);
+// 왼쪽에 찍을 시간 숫자들 (9,10,11,12,13,14,15,16,17 → 9칸 기준)
+const TIME_LABELS = Array.from({ length: HOUR_SPAN }, (_, i) => START_HOUR + i);
 
 // 24시간 → 화면에 찍을 숫자(13 ⇒ 1, 14 ⇒ 2 ...)
 const formatHourLabel = (hour24) => {
@@ -187,10 +187,7 @@ const TimetableMapSection = ({ onTodayLecturesChange }) => {
                 <div className="home-timetable-header-row">
                   <div className="home-timetable-header-cell time-col" />
                   {weekdayLabels.map((day) => (
-                    <div
-                      key={day}
-                      className="home-timetable-header-cell"
-                    >
+                    <div key={day} className="home-timetable-header-cell">
                       {day}
                     </div>
                   ))}
@@ -198,13 +195,10 @@ const TimetableMapSection = ({ onTodayLecturesChange }) => {
 
                 {/* 시간축 + 그리드 영역 */}
                 <div className="home-timetable-body">
-                  {/* 왼쪽 시간축 (숫자 9~6) */}
+                  {/* 왼쪽 시간축 */}
                   <div className="home-timetable-time-col">
                     {TIME_LABELS.map((h) => (
-                      <div
-                        key={h}
-                        className="home-timetable-time-slot"
-                      >
+                      <div key={h} className="home-timetable-time-slot">
                         {formatHourLabel(h)}
                       </div>
                     ))}
@@ -224,7 +218,7 @@ const TimetableMapSection = ({ onTodayLecturesChange }) => {
                             const endMin = timeToMinutes(cls.endTime);
 
                             const minMinutes = START_HOUR * 60; // 9:00
-                            const maxMinutes = END_HOUR * 60;   // 18:00
+                            const maxMinutes = END_HOUR * 60; // 18:00
 
                             // 9~18 범위로 클램프
                             const clampedStart = Math.max(
@@ -239,8 +233,7 @@ const TimetableMapSection = ({ onTodayLecturesChange }) => {
                               ((clampedStart - minMinutes) / TOTAL_MINUTES) *
                               100;
                             const heightPercent =
-                              ((clampedEnd - clampedStart) /
-                                TOTAL_MINUTES) *
+                              ((clampedEnd - clampedStart) / TOTAL_MINUTES) *
                               100;
 
                             return (
