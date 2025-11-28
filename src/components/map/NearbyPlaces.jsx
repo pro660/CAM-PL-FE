@@ -31,13 +31,7 @@ export default function NearbyPlaces({ places = [], onClickAdd }) {
                     {place.category}
                   </div>
                 </div>
-                <button
-                  type="button"
-                  className="map-nearby-add-btn"
-                  onClick={() => onClickAdd && onClickAdd(place)}
-                >
                   <img src={PlusPlaceIcon} alt="장소 추가 아이콘"/>
-                </button>
               </li>
             ))}
           </ul>

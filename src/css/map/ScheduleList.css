@@ -31,3 +31,15 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* 🔥 지난 일정 pill */
+.map-schedule-pill-prev {
+  background-color: #d9d9d9;
+  color: #ffffff;
+}
+
+/* 🔥 다음 일정 pill */
+.map-schedule-pill-next {
+  background-color: #c09ef1;
+  color: #ffffff;
+}

@@ -20,7 +20,7 @@ export default function TodayPlaces({ items = [], loading }) {
           {items.map((item) => (
             <div key={item.place} className="map-today-place-chip">
               <span className="map-today-place-text">
-                {item.place}({item.count})
+                {item.place} ({item.count})
               </span>
             </div>
           ))}
