@@ -66,7 +66,7 @@
 
 .map-page-recommend-button {
   width: 100%;
-  max-width: 18rem;
+  max-width: 24rem;
   border-radius: 999px;
   border: none;
   outline: none;
@@ -75,6 +75,5 @@
   font-weight: 700;
   color: #ffffff;
   background: linear-gradient(135deg, #c09ef1, #8c6ce8);
-  box-shadow: 0 6px 16px rgba(140, 108, 232, 0.4);
   cursor: pointer;
 }
