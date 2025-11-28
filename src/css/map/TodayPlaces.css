@@ -1,24 +1,49 @@
-/* src/css/map/TodayPlaces.css */
-
 .map-today-section {
-  margin-top: 1.2rem;
+  margin-bottom: 1.1rem;
 }
 
+/* 칩 스크롤 영역 */
 .map-today-places-chips {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 0.4rem;
+  padding-bottom: 0.1rem;
+}
+
+.map-today-places-chips::-webkit-scrollbar {
+  display: none;
+}
+.map-today-places-chips {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .map-today-place-chip {
-  padding: 0.3rem 0.6rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem 0.6rem;
   border-radius: 999px;
-  background-color: #f5f5f7;
+  background-color: #f0ebff;
+  color: #6a54d8;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
-/* 🔥 텍스트 스타일: 진한 회색 + 굵게 */
-.map-today-place-text {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #606060;
+.map-today-place-name {
+  margin-right: 0.35rem;
+}
+
+.map-today-place-count {
+  min-width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 999px;
+  background-color: #6a54d8;
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

@@ -1,6 +1,7 @@
-/* src/css/map/ScheduleList.css */
-
 .map-schedule-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -9,33 +10,24 @@
 .map-schedule-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: #333333;
 }
 
 .map-schedule-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 3rem;
-  padding: 0.15rem 0.6rem;
+  padding: 0.1rem 0.55rem;
   border-radius: 999px;
+  background-color: #e4d9ff;
+  color: #6e4ee4;
   font-size: 0.7rem;
   font-weight: 600;
-}
-
-/* 🔥 지난 일정 pill 스타일 */
-.map-schedule-pill-prev {
-  background-color: #d9d9d9;
-  color: #ffffff;
-}
-
-/* 🔥 다음 일정 pill 스타일 */
-.map-schedule-pill-next {
-  background-color: #c09ef1;
-  color: #ffffff;
+  flex-shrink: 0;
 }
 
 .map-schedule-title {
-  font-size: 0.8rem;
-  color: #555555;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
