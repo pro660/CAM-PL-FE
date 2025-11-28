@@ -1,3 +1,4 @@
+// src/components/map/ScheduleList.jsx
 import React from "react";
 import "../../css/map/ScheduleList.css";
 

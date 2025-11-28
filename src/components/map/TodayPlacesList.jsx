@@ -1,3 +1,4 @@
+// src/components/map/TodayPlacesList.jsx
 import React from "react";
 import "../../css/map/TodayPlaces.css";
 

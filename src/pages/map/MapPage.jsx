@@ -1,12 +1,14 @@
+// src/pages/map/MapPage.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import "../css/map/MapPage.css";
+import "../../css/map/MapPage.css";
 
-import NaverMap from "../components/home/NaverMap";
-import TodayPlaces from "../components/map/TodayPlaces";
-import ScheduleList from "../components/map/ScheduleList";
-import NearbyPlaces from "../components/map/NearbyPlaces";
+import NaverMap from "../../components/home/NaverMap";
+import TodayPlaces from "../../components/map/TodayPlacesList";
+import ScheduleList from "../../components/map/ScheduleList";
+import NearbyPlaces from "../../components/map/NearbyPlaces";
 
-import api from "../api/axios";
+import api from "../../api/axios";
+import { useLoading } from "../../context/LoadingContext";
 
 // yyyy-MM-DD
 function formatDateKey(date) {
@@ -64,6 +66,23 @@ function getCategoryLabel(category) {
   }
 }
 
+// 주변 시설 타입 → 한글 라벨
+function getPlaceTypeLabel(type) {
+  if (!type) return "";
+  switch (type) {
+    case "CAFE":
+      return "카페";
+    case "RESTAURANT":
+      return "식당";
+    case "STUDY_CAFE":
+      return "스터디카페";
+    case "ETC":
+      return "기타";
+    default:
+      return type;
+  }
+}
+
 // 위치 문자열에서 "건물" 이름 비슷한 부분만 추출
 function extractPlaceLabel(location) {
   if (!location) return "기타";
@@ -94,41 +113,22 @@ export default function MapPage() {
   const [yesterdayEvents, setYesterdayEvents] = useState([]);
   const [tomorrowEvents, setTomorrowEvents] = useState([]);
 
-  const [loading, setLoading] = useState(false);
+  // 🔥 summary/today에서 내려오는 주변 시설
+  const [nearbyPlaces, setNearbyPlaces] = useState([]);
+
+  const [loading, setLoading] = useState(false); // 섹션 내부용
   const [error, setError] = useState("");
 
   const [showRecommend, setShowRecommend] = useState(false);
+
+  // 🔥 전역 로더 제어 함수
+  const { showLoading, hideLoading } = useLoading();
 
   // 오늘 날짜(시분초 0으로 맞춤)
   const today = useMemo(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), now.getDate());
   }, []);
-
-  // 주변 시설 (임시 더미 데이터)
-  const nearbyPlaces = useMemo(
-    () => [
-      {
-        id: 1,
-        name: "토프코스페셜티",
-        category: "카페",
-        imageUrl: "/images/map/nearby-1.jpg",
-      },
-      {
-        id: 2,
-        name: "먹거리존",
-        category: "식당",
-        imageUrl: "/images/map/nearby-2.jpg",
-      },
-      {
-        id: 3,
-        name: "카이용스터디라운지",
-        category: "스터디카페",
-        imageUrl: "/images/map/nearby-3.jpg",
-      },
-    ],
-    []
-  );
 
   // 어제 / 오늘 / 내일 일정 로딩
   useEffect(() => {
@@ -139,26 +139,56 @@ export default function MapPage() {
       api.get("/calendar/day", { params: { date: formatDateKey(date) } });
 
     (async () => {
-      setLoading(true);
+      setLoading(true); // 리스트 섹션용
+      showLoading(); // 🔥 전역 로더 켜기
       setError("");
+
       try {
-        const [resY, resT, resN] = await Promise.all([
+        // 어제 / 오늘요약 / 내일
+        const [resY, resTodaySummary, resN] = await Promise.all([
           fetchDay(yesterday),
-          fetchDay(today),
+          api.get("/calendar/summary/today"),
           fetchDay(tomorrow),
         ]);
 
+        // 어제 / 내일 일정
         setYesterdayEvents(normalizeDayResponse(resY));
-        setTodayEvents(normalizeDayResponse(resT));
         setTomorrowEvents(normalizeDayResponse(resN));
+
+        // 🔥 summary/today 응답 구조 반영
+        const summary = resTodaySummary.data ?? {};
+        const events = Array.isArray(summary.events) ? summary.events : [];
+        const lectures = Array.isArray(summary.lectures)
+          ? summary.lectures
+          : [];
+
+        // 오늘 일정: 이벤트 + 강의 모두 포함해서 장소 카운트에 사용
+        setTodayEvents([...events, ...lectures]);
+
+        // 주변 시설 리스트
+        const studyPlaces = Array.isArray(summary.studyPlaces)
+          ? summary.studyPlaces
+          : [];
+
+        setNearbyPlaces(
+          studyPlaces.map((p) => ({
+            id: p.id,
+            name: p.name,
+            category: getPlaceTypeLabel(p.type),
+            imageUrl: p.imageUrl,
+            address: p.address,
+            distanceMeters: p.distanceMeters,
+          }))
+        );
       } catch (e) {
         console.error(e);
         setError("일정 정보를 불러오는 중 오류가 발생했습니다.");
       } finally {
         setLoading(false);
+        hideLoading(); // 🔥 전역 로더 끄기 (최소 노출시간 로직은 컨텍스트에서 처리)
       }
     })();
-  }, [today]);
+  }, [today, showLoading, hideLoading]);
 
   // 오늘 일정 → 장소별 카운트
   const todayPlaceItems = useMemo(() => {
@@ -235,7 +265,10 @@ export default function MapPage() {
         />
 
         {/* 주변 시설 */}
-        <NearbyPlaces places={nearbyPlaces} onClickAdd={handleClickAddPlace} />
+        <NearbyPlaces
+          places={nearbyPlaces}
+          onClickAdd={handleClickAddPlace}
+        />
 
         {error && <div className="map-page-error">{error}</div>}
 

@@ -1,3 +1,4 @@
+// src/components/map/NearbyPlaces.jsx
 import React from "react";
 import "../../css/map/NearbyPlaces.css";
 

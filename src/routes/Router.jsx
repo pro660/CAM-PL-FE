@@ -14,6 +14,7 @@ import ResetPasswordPage from "../pages/login/ResetPasswordPage";
 import ResetPasswordDonePage from "../pages/login/ResetPasswordDonePage";
 import KakaoCallbackPage from "../pages/login/KakaoCallbackPage";
 import CalendarPage from "../pages/calendar/CalendarPage";
+import MapPage from "../pages/map/MapPage";             // ✅ 맵 페이지 추가
 
 import Loader from "../components/common/Loader";            // ✅ 로더
 import { useLoading } from "../context/LoadingContext.jsx";  // ✅ 로딩 컨텍스트
@@ -94,11 +95,22 @@ function AppRouter() {
               // </ProtectedRoute>
             }
           />
+
           <Route
             path="/calendar"
             element={
               // <ProtectedRoute>
               <CalendarPage />
+              // </ProtectedRoute>
+            }
+          />
+
+          {/* ✅ 새로 추가된 맵 페이지 라우트 */}
+          <Route
+            path="/map"
+            element={
+              // <ProtectedRoute>
+              <MapPage />
               // </ProtectedRoute>
             }
           />
