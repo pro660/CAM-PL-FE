@@ -8,6 +8,7 @@ import StudyPlaceList from "./StudyPlaceList";
 import "../../css/home/HomePage.css";
 import api from "../../api/axios";
 import { useLoading } from "../../context/LoadingContext.jsx"; // ✅ 전역 로더 훅 추가
+import PlaceDetailModal from "../../components/home/PlaceDetailModal.jsx";
 
 // 카테고리 한글 라벨링 (캘린더랑 맞추기)
 function getCategoryLabel(category, origin) {
@@ -70,9 +71,12 @@ const HomePage = () => {
   });
   const [ddayLoading, setDdayLoading] = useState(true);
 
-  // ✅ 과제하기 좋은 장소 추천 리스트 + 로딩 상태
+  // 과제하기 좋은 장소 추천 리스트 + 로딩 상태
   const [studyPlaces, setStudyPlaces] = useState([]);
   const [studyPlacesLoading, setStudyPlacesLoading] = useState(true);
+
+  // ✅ 선택된 장소 (팝업용)
+  const [selectedPlaceId, setSelectedPlaceId] = useState(null);
 
   // 오늘 날짜/요일 계산
   const today = new Date();
@@ -238,7 +242,7 @@ const HomePage = () => {
       try {
         const res = await api.post("/places/recommend", {
           scheduleType: "TEAM_PROJECT", // 일단 팀플 기준
-          withWhom: "FRIEND",            // 친구와 함께
+          withWhom: "FRIEND",           // 친구와 함께
         });
 
         const list = Array.isArray(res.data) ? res.data : [];
@@ -254,6 +258,14 @@ const HomePage = () => {
 
     fetchStudyPlaces();
   }, [showLoading, hideLoading]);
+
+  const handlePlaceClick = (placeId) => {
+    setSelectedPlaceId(placeId);
+  };
+
+  const handleClosePlaceModal = () => {
+    setSelectedPlaceId(null);
+  };
 
   return (
     <div className="home-page">
@@ -291,7 +303,19 @@ const HomePage = () => {
       />
 
       {/* 과제하기 좋은 장소 추천 리스트 */}
-      <StudyPlaceList places={studyPlaces} loading={studyPlacesLoading} />
+      <StudyPlaceList
+        places={studyPlaces}
+        loading={studyPlacesLoading}
+        onPlaceClick={handlePlaceClick}
+      />
+
+      {/* 장소 상세 팝업 */}
+      {selectedPlaceId && (
+        <PlaceDetailModal
+          placeId={selectedPlaceId}
+          onClose={handleClosePlaceModal}
+        />
+      )}
     </div>
   );
 };

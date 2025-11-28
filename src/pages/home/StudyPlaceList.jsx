@@ -7,7 +7,6 @@ function formatDistance(distanceMeters) {
   }
 
   if (distanceMeters < 1000) {
-    // 999m 까지는 m로
     return `약 ${distanceMeters}m`;
   }
 
@@ -15,7 +14,7 @@ function formatDistance(distanceMeters) {
   return `약 ${km.toFixed(1)}km`;
 }
 
-const StudyPlaceList = ({ places = [], loading }) => {
+const StudyPlaceList = ({ places = [], loading, onPlaceClick }) => {
   const hasPlaces = places.length > 0;
 
   return (
@@ -33,7 +32,11 @@ const StudyPlaceList = ({ places = [], loading }) => {
       ) : (
         <div className="home-studyplace-scroll">
           {places.map((place) => (
-            <article key={place.id} className="home-studyplace-card">
+            <article
+              key={place.id}
+              className="home-studyplace-card"
+              onClick={() => onPlaceClick?.(place.id)}
+            >
               <div className="home-studyplace-image-wrap">
                 <img
                   src={place.imageUrl}
@@ -44,10 +47,6 @@ const StudyPlaceList = ({ places = [], loading }) => {
               <div className="home-studyplace-info">
                 <h3 className="home-studyplace-name">{place.name}</h3>
                 <div className="home-studyplace-meta">
-                  {/* 주소를 보여주고 싶으면 아래 주석 풀기 */}
-                  {/* <span className="home-studyplace-address">
-                    {place.address}
-                  </span> */}
                   <span className="home-studyplace-distance">
                     {formatDistance(place.distanceMeters)}
                   </span>

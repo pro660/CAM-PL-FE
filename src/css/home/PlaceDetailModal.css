@@ -1,0 +1,139 @@
+/* 전체 어두운 배경 */
+.place-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+/* 팝업 카드 */
+.place-modal {
+  background-color: #ffffff;
+  border-radius: 1rem;
+  width: 90%;
+  max-width: 22rem;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+
+/* 상단 타이틀 & 닫기 버튼 */
+.place-modal-header {
+  position: relative;
+  padding: 0.8rem 1rem 0.6rem;
+  text-align: center;
+}
+
+.place-modal-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #333333;
+}
+
+.place-modal-close-btn {
+  position: absolute;
+  right: 0.6rem;
+  top: 0.5rem;
+  border: none;
+  background: transparent;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #999999;
+}
+
+/* 이미지 영역 */
+.place-modal-image-wrap {
+  width: 100%;
+  height: 9rem;
+  overflow: hidden;
+}
+
+.place-modal-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 본문 내용 래퍼 */
+.place-modal-content {
+  padding: 0.75rem 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  flex: 1;
+  min-height: 0; /* 메뉴 영역 스크롤용 */
+}
+
+.place-modal-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* "주소:", "메뉴:" 라벨 */
+.place-modal-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #7b56e9; /* 보라색 라벨 */
+}
+
+/* 주소 텍스트 */
+.place-modal-address {
+  font-size: 0.78rem;
+  color: #555555;
+  line-height: 1.4;
+}
+
+/* 메뉴 영역 */
+.place-modal-menu-section {
+  flex: 1;
+  min-height: 0;
+}
+
+/* 메뉴 로딩/빈 상태 */
+.place-modal-menu-loading,
+.place-modal-menu-empty {
+  font-size: 0.76rem;
+  color: #999999;
+  margin-top: 0.2rem;
+}
+
+/* 메뉴 리스트: 여기만 스크롤 */
+.place-modal-menu-list {
+  margin-top: 0.35rem;
+  max-height: 100%;
+  overflow-y: auto;
+  padding-right: 0.2rem;
+}
+
+/* 메뉴 한 줄 */
+.place-modal-menu-item {
+  display: flex;
+  align-items: center;
+  font-size: 0.78rem;
+  color: #444444;
+  margin-bottom: 0.15rem;
+}
+
+.place-modal-menu-name {
+  white-space: nowrap;
+}
+
+/* 점선 부분 */
+.place-modal-menu-dots {
+  flex: 1;
+  border-bottom: 1px dotted #cccccc;
+  margin: 0 0.25rem;
+}
+
+.place-modal-menu-price {
+  white-space: nowrap;
+  font-size: 0.78rem;
+}
