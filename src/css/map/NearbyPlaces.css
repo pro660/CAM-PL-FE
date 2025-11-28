@@ -1,0 +1,74 @@
+.map-nearby-section {
+  margin-top: 0.4rem;
+}
+
+.map-nearby-card {
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  padding: 0.7rem 0.75rem;
+}
+
+.map-nearby-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.map-nearby-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.map-nearby-thumb-wrap {
+  width: 2.8rem;
+  height: 2.8rem;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.map-nearby-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.map-nearby-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.map-nearby-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #333333;
+}
+
+.map-nearby-category {
+  font-size: 0.7rem;
+  color: #9a9a9a;
+}
+
+.map-nearby-add-btn {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  border: none;
+  outline: none;
+  background-color: #f0e7ff;
+  color: #7451e4;
+  font-size: 1.1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+}

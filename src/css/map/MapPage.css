@@ -1,0 +1,125 @@
+/* 전체 페이지 레이아웃 */
+.map-page {
+  min-height: 100vh;
+  background-color: #f5f5f7;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 상단 지도 영역 */
+.map-page-map-wrapper {
+  width: 100%;
+  height: 14rem;
+  overflow: hidden;
+}
+
+/* NaverMap 내부 */
+.map-page-map-wrapper .home-naver-map,
+.map-page-map-wrapper #map {
+  width: 100%;
+  height: 100%;
+}
+
+/* 지도 아래 카드 영역 */
+.map-page-content {
+  margin-top: -0.75rem;
+  background-color: #f7f7f9;
+  border-top-left-radius: 1.5rem;
+  border-top-right-radius: 1.5rem;
+  padding: 1.2rem 1.1rem 5rem;
+  box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.06);
+}
+
+/* 공통 섹션 스타일 */
+.map-section {
+  margin-bottom: 1.2rem;
+}
+
+.map-section-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #555555;
+  margin-bottom: 0.45rem;
+}
+
+.map-section-description {
+  font-size: 0.75rem;
+  color: #9c9c9c;
+}
+
+/* 에러 메시지 */
+.map-page-error {
+  margin-top: 0.4rem;
+  font-size: 0.72rem;
+  color: #e25b5b;
+}
+
+/* 장소 추천받기 버튼 */
+.map-page-recommend-wrapper {
+  margin-top: 1.4rem;
+  display: flex;
+  justify-content: center;
+}
+
+.map-page-recommend-button {
+  width: 100%;
+  max-width: 18rem;
+  border-radius: 999px;
+  border: none;
+  outline: none;
+  padding: 0.65rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(135deg, #c09ef1, #8c6ce8);
+  box-shadow: 0 6px 16px rgba(140, 108, 232, 0.4);
+  cursor: pointer;
+}
+
+/* 추천 팝업 모달 */
+.map-recommend-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.map-recommend-modal {
+  width: 80%;
+  max-width: 320px;
+  background-color: #ffffff;
+  border-radius: 1.2rem;
+  padding: 1.1rem 1.1rem 0.9rem;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  text-align: center;
+}
+
+.map-recommend-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #4b3bbf;
+  margin-bottom: 0.4rem;
+}
+
+.map-recommend-text {
+  font-size: 0.8rem;
+  color: #555555;
+  line-height: 1.5;
+  margin-bottom: 0.8rem;
+}
+
+.map-recommend-close-btn {
+  width: 100%;
+  border-radius: 0.8rem;
+  border: none;
+  outline: none;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background-color: #f0e7ff;
+  color: #5e47d4;
+  cursor: pointer;
+}

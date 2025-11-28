@@ -1,0 +1,49 @@
+.map-today-section {
+  margin-bottom: 1.1rem;
+}
+
+/* 칩 스크롤 영역 */
+.map-today-places-chips {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 0.4rem;
+  padding-bottom: 0.1rem;
+}
+
+.map-today-places-chips::-webkit-scrollbar {
+  display: none;
+}
+.map-today-places-chips {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.map-today-place-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem 0.6rem;
+  border-radius: 999px;
+  background-color: #f0ebff;
+  color: #6a54d8;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.map-today-place-name {
+  margin-right: 0.35rem;
+}
+
+.map-today-place-count {
+  min-width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 999px;
+  background-color: #6a54d8;
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
