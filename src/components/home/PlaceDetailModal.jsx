@@ -12,6 +12,16 @@ const PlaceDetailModal = ({ placeId, onClose }) => {
   const [place, setPlace] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // ✅ 배경 스크롤 막기
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, []);
+
   useEffect(() => {
     if (!placeId) return;
 
@@ -98,13 +108,8 @@ const PlaceDetailModal = ({ placeId, onClose }) => {
             ) : place?.menus && place.menus.length > 0 ? (
               <div className="place-modal-menu-list">
                 {place.menus.map((menu) => (
-                  <div
-                    key={menu.id}
-                    className="place-modal-menu-item"
-                  >
-                    <span className="place-modal-menu-name">
-                      {menu.name}
-                    </span>
+                  <div key={menu.id} className="place-modal-menu-item">
+                    <span className="place-modal-menu-name">{menu.name}</span>
                     <span className="place-modal-menu-dots" />
                     <span className="place-modal-menu-price">
                       {formatPrice(menu.price)}
