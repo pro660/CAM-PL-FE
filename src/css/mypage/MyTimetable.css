@@ -1,0 +1,100 @@
+/* 시간표 전체 카드 */
+.mypage-timetable {
+  width: 100%;
+}
+
+.mypage-timetable-inner {
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+/* ----- 상단 요일 헤더 ----- */
+.mypage-timetable-header-row {
+  display: grid;
+  grid-template-columns: 40px repeat(5, 1fr); /* 시간칸 + 월~금 */
+  background-color: #c09ef1;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 0.25rem 0.4rem 0.15rem;
+}
+
+.mypage-timetable-day-label {
+  padding: 0.15rem 0;
+}
+
+/* ----- 본문 영역 ----- */
+.mypage-timetable-main {
+  display: flex;
+  background-color: #f6f1ff;
+  padding: 0.3rem 0.4rem 0.4rem;
+}
+
+/* 왼쪽 시간 라벨 열 (보라색 띠) */
+.mypage-timetable-times {
+  width: 40px;
+  background-color: #c09ef1;
+  border-radius: 0 0 0 0.9rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 0 0.45rem;
+  font-size: 0.7rem;
+  color: #ffffff;
+}
+
+.mypage-timetable-time {
+  line-height: 1;
+}
+
+/* 오른쪽 강의 그리드 */
+.mypage-timetable-grid {
+  flex: 1;
+  margin-left: 4px;
+  background-color: #ffffff;
+  border-radius: 0 0 0.9rem 0.9rem;
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr); /* 월~금 */
+  column-gap: 3px;
+  row-gap: 3px;
+  padding: 0.35rem 0.4rem 0.4rem;
+  /* 얇은 가로줄 느낌 (시간 칸) */
+  background-image: linear-gradient(
+    to bottom,
+    #f0f0f0 1px,
+    transparent 1px
+  );
+  background-size: 100% calc(100% / 9);
+}
+
+/* 수업 블록 */
+.mypage-timetable-block {
+  background-color: #c09ef1;
+  border-radius: 4px;
+  padding: 0.2rem 0.35rem;
+  font-size: 0.7rem;
+  color: #ffffff;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.mypage-timetable-block-title {
+  font-weight: 600;
+  line-height: 1.3;
+  max-height: 2.6em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mypage-timetable-block-room {
+  margin-top: 0.1rem;
+  font-size: 0.65rem;
+  opacity: 0.9;
+}

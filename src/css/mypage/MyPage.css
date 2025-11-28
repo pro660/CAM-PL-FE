@@ -1,0 +1,99 @@
+/* 전체 마이페이지 래퍼 – 헤더랑 안 겹치게 위쪽 여백 */
+.mypage-page {
+  padding-top: 0.75rem;
+}
+
+/* 상단 인사 영역 */
+.mypage-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.mypage-greeting-line1 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #333333;
+}
+
+.mypage-greeting-line2 {
+  margin-top: 0.2rem;
+  font-size: 0.82rem;
+  color: #777777;
+}
+
+/* 오른쪽 + 버튼 (SVG 들어갈 자리) */
+.mypage-add-button {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 1.7rem;
+  line-height: 1;
+  color: #c09ef1;
+  cursor: pointer;
+}
+
+/* 시간표 섹션 */
+.mypage-timetable-section {
+  margin-bottom: 1.2rem;
+}
+
+/* 개인정보 수정 카드 */
+.mypage-profile-card-wrapper {
+  margin-top: 1rem;
+  margin-bottom: 0.8rem;
+}
+
+.mypage-profile-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 0.9rem;
+  border: none;
+  outline: none;
+  background-color: #ffffff;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+}
+
+.mypage-profile-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background-color: #f4ecff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* 여기에 SVG 아이콘 넣을 예정 */
+}
+
+.mypage-profile-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333333;
+}
+
+/* 아래 로그아웃 / 탈퇴하기 */
+.mypage-bottom-links {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.6rem;
+  font-size: 0.82rem;
+}
+
+.mypage-link-button {
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  color: #555555;
+}
+
+.mypage-link-danger {
+  color: #b8b8b8;
+}

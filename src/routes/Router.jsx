@@ -14,10 +14,11 @@ import ResetPasswordPage from "../pages/login/ResetPasswordPage";
 import ResetPasswordDonePage from "../pages/login/ResetPasswordDonePage";
 import KakaoCallbackPage from "../pages/login/KakaoCallbackPage";
 import CalendarPage from "../pages/calendar/CalendarPage";
-import MapPage from "../pages/map/MapPage";             // ✅ 맵 페이지 추가
+import MapPage from "../pages/map/MapPage";               // ✅ 맵 페이지
+import MyPage from "../pages/mypage/MyPage";              // ✅ 마이페이지 추가
 
-import Loader from "../components/common/Loader";            // ✅ 로더
-import { useLoading } from "../context/LoadingContext.jsx";  // ✅ 로딩 컨텍스트
+import Loader from "../components/common/Loader";          // ✅ 로더
+import { useLoading } from "../context/LoadingContext.jsx"; // ✅ 로딩 컨텍스트
 
 function Layout({ children }) {
   const location = useLocation();
@@ -105,12 +106,22 @@ function AppRouter() {
             }
           />
 
-          {/* ✅ 새로 추가된 맵 페이지 라우트 */}
+          {/* ✅ 맵 페이지 라우트 */}
           <Route
             path="/map"
             element={
               // <ProtectedRoute>
               <MapPage />
+              // </ProtectedRoute>
+            }
+          />
+
+          {/* ✅ 마이페이지 라우트 */}
+          <Route
+            path="/mypage"
+            element={
+              // <ProtectedRoute>
+              <MyPage />
               // </ProtectedRoute>
             }
           />
