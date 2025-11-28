@@ -1,34 +1,62 @@
+// src/pages/StudyPlaceList.jsx
 import React from "react";
 
-const StudyPlaceList = ({ places }) => {
+function formatDistance(distanceMeters) {
+  if (distanceMeters == null) {
+    return "거리 정보 없음";
+  }
+
+  if (distanceMeters < 1000) {
+    // 999m 까지는 m로
+    return `약 ${distanceMeters}m`;
+  }
+
+  const km = distanceMeters / 1000;
+  return `약 ${km.toFixed(1)}km`;
+}
+
+const StudyPlaceList = ({ places = [], loading }) => {
+  const hasPlaces = places.length > 0;
+
   return (
     <section className="home-section home-studyplace-section">
       <h2 className="home-section-title">과제하기 좋아요!</h2>
 
-      <div className="home-studyplace-scroll">
-        {places.map((place) => (
-          <article key={place.id} className="home-studyplace-card">
-            <div className="home-studyplace-image-wrap">
-              <img
-                src={place.imageUrl}
-                alt={place.name}
-                className="home-studyplace-image"
-              />
-            </div>
-            <div className="home-studyplace-info">
-              <h3 className="home-studyplace-name">{place.name}</h3>
-              <div className="home-studyplace-meta">
-                <span className="home-studyplace-rating">
-                  ⭐ {place.rating.toFixed(1)}
-                </span>
-                <span className="home-studyplace-distance">
-                  {place.distanceText}
-                </span>
+      {loading ? (
+        <p className="home-card-time" style={{ marginTop: "0.3rem" }}>
+          추천 장소를 불러오는 중이에요...
+        </p>
+      ) : !hasPlaces ? (
+        <p className="home-card-time" style={{ marginTop: "0.3rem" }}>
+          아직 추천할 만한 장소를 찾지 못했어요.
+        </p>
+      ) : (
+        <div className="home-studyplace-scroll">
+          {places.map((place) => (
+            <article key={place.id} className="home-studyplace-card">
+              <div className="home-studyplace-image-wrap">
+                <img
+                  src={place.imageUrl}
+                  alt={place.name}
+                  className="home-studyplace-image"
+                />
               </div>
-            </div>
-          </article>
-        ))}
-      </div>
+              <div className="home-studyplace-info">
+                <h3 className="home-studyplace-name">{place.name}</h3>
+                <div className="home-studyplace-meta">
+                  {/* 주소를 보여주고 싶으면 아래 주석 풀기 */}
+                  {/* <span className="home-studyplace-address">
+                    {place.address}
+                  </span> */}
+                  <span className="home-studyplace-distance">
+                    {formatDistance(place.distanceMeters)}
+                  </span>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
     </section>
   );
 };

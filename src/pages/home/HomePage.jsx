@@ -70,23 +70,9 @@ const HomePage = () => {
   });
   const [ddayLoading, setDdayLoading] = useState(true);
 
-  // 과제하기 좋은 장소 (프론트 상수)
-  const studyPlaces = [
-    {
-      id: 1,
-      name: "프로포즈스페셜티",
-      imageUrl: "/images/home/place-1.jpg",
-      rating: 4.6,
-      distanceText: "도보 5분 (약 340m)",
-    },
-    {
-      id: 2,
-      name: "새아기카페",
-      imageUrl: "/images/home/place-2.jpg",
-      rating: 4.5,
-      distanceText: "도보 8분 (약 620m)",
-    },
-  ];
+  // ✅ 과제하기 좋은 장소 추천 리스트 + 로딩 상태
+  const [studyPlaces, setStudyPlaces] = useState([]);
+  const [studyPlacesLoading, setStudyPlacesLoading] = useState(true);
 
   // 오늘 날짜/요일 계산
   const today = new Date();
@@ -242,6 +228,33 @@ const HomePage = () => {
     fetchTodaySchedules();
   }, [showLoading, hideLoading]);
 
+  /* =========================
+     3. 과제하기 좋은 장소 추천 API 호출
+        POST /places/recommend
+     ========================= */
+  useEffect(() => {
+    const fetchStudyPlaces = async () => {
+      showLoading(); // ✅ 전역 로더 +1
+      try {
+        const res = await api.post("/places/recommend", {
+          scheduleType: "TEAM_PROJECT", // 일단 팀플 기준
+          withWhom: "FRIEND",            // 친구와 함께
+        });
+
+        const list = Array.isArray(res.data) ? res.data : [];
+        setStudyPlaces(list);
+      } catch (error) {
+        console.error("장소 추천 조회 실패:", error);
+        setStudyPlaces([]);
+      } finally {
+        setStudyPlacesLoading(false);
+        hideLoading(); // ✅ 전역 로더 -1
+      }
+    };
+
+    fetchStudyPlaces();
+  }, [showLoading, hideLoading]);
+
   return (
     <div className="home-page">
       {/* 상단 날짜 + D-Day 카드 */}
@@ -278,7 +291,7 @@ const HomePage = () => {
       />
 
       {/* 과제하기 좋은 장소 추천 리스트 */}
-      <StudyPlaceList places={studyPlaces} />
+      <StudyPlaceList places={studyPlaces} loading={studyPlacesLoading} />
     </div>
   );
 };
