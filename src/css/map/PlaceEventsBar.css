@@ -8,32 +8,10 @@
   z-index: 5;
 }
 
-/* 상단 헤더 (건물명 + 닫기) */
-.place-events-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.35rem;
-  padding: 0 0.1rem;
-}
-
 .place-events-place {
   font-size: 0.8rem;
   font-weight: 600;
   color: #555555;
-}
-
-.place-events-close {
-  border: none;
-  outline: none;
-  width: 1.4rem;
-  height: 1.4rem;
-  border-radius: 999px;
-  background-color: rgba(0, 0, 0, 0.06);
-  font-size: 0.8rem;
-  line-height: 1;
-  cursor: pointer;
-  color: #666666;
 }
 
 /* 카드 슬라이더 영역 */

@@ -12,17 +12,6 @@ export default function PlaceEventsBar({ place, items = [], onClose }) {
 
   return (
     <div className="place-events-bar">
-      <div className="place-events-header">
-        <span className="place-events-place">{place} 일정</span>
-        <button
-          type="button"
-          className="place-events-close"
-          onClick={onClose}
-        >
-          ✕
-        </button>
-      </div>
-
       <div className="place-events-scroll">
         {items.map((item) => (
           <div key={item.id} className="place-event-card">
