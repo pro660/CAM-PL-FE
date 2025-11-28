@@ -55,20 +55,3 @@
   font-size: 0.7rem;
   color: #9a9a9a;
 }
-
-.map-nearby-add-btn {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 999px;
-  border: none;
-  outline: none;
-  background-color: #f0e7ff;
-  color: #7451e4;
-  font-size: 1.1rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  cursor: pointer;
-}

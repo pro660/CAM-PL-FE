@@ -2,6 +2,8 @@
 import React from "react";
 import "../../css/map/NearbyPlaces.css";
 
+import PlusPlaceIcon from "../../images/map/pulsplace-icon.svg"
+
 export default function NearbyPlaces({ places = [], onClickAdd }) {
   return (
     <section className="map-section map-nearby-section">
@@ -34,7 +36,7 @@ export default function NearbyPlaces({ places = [], onClickAdd }) {
                   className="map-nearby-add-btn"
                   onClick={() => onClickAdd && onClickAdd(place)}
                 >
-                  +
+                  <img src={PlusPlaceIcon} alt="장소 추가 아이콘"/>
                 </button>
               </li>
             ))}

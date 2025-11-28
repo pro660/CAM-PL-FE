@@ -19,8 +19,9 @@ export default function TodayPlaces({ items = [], loading }) {
         <div className="map-today-places-chips">
           {items.map((item) => (
             <div key={item.place} className="map-today-place-chip">
-              <span className="map-today-place-name">{item.place}</span>
-              <span className="map-today-place-count">{item.count}</span>
+              <span className="map-today-place-text">
+                {item.place}({item.count})
+              </span>
             </div>
           ))}
         </div>
