@@ -1,3 +1,5 @@
+// src/router/AppRouter.jsx (혹은 실제 경로에 맞게)
+
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import ProtectedRoute from "../ProtectedRoute";
 
@@ -17,6 +19,7 @@ import MapPage from "../pages/map/MapPage";
 import MyPage from "../pages/mypage/MyPage";
 import CourseAreaSelectPage from "../pages/mypage/CourseSelectPage";
 import CourseYearSelectPage from "../pages/mypage/YearSelectPage"; // ✅ 학년 선택 페이지
+import CourseCreditSelectPage from "../pages/mypage/CreditSelectPage"; // ✅ 학점 선택 페이지 추가
 
 import Loader from "../components/common/Loader";
 import { useLoading } from "../context/LoadingContext.jsx";
@@ -31,7 +34,8 @@ function Layout({ children }) {
     "/signup",
     "/oauth/signed-in",
     "/course-area",
-    "/course-year", // ✅ 학년 선택 페이지
+    "/course-year",    // 학년 선택 페이지
+    "/course-credit",  // ✅ 학점 선택 페이지
   ];
 
   const shouldHide = hiddenPaths.some((path) =>
@@ -142,6 +146,16 @@ function AppRouter() {
             element={
               <ProtectedRoute>
                 <CourseYearSelectPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ✅ 학점 선택 */}
+          <Route
+            path="/course-credit"
+            element={
+              <ProtectedRoute>
+                <CourseCreditSelectPage />
               </ProtectedRoute>
             }
           />
