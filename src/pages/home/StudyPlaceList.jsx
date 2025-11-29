@@ -9,12 +9,12 @@ function formatDistance(distanceMeters) {
   // 1km 미만 → m 단위
   if (distanceMeters < 1000) {
     const rounded = Math.round(distanceMeters);
-    return `약 ${rounded}m`;
+    return `약 ${rounded}m 떨어져있습니다.`;
   }
 
   // 1km 이상 → 소수점 1자리 km
   const km = distanceMeters / 1000;
-  return `약 ${km.toFixed(1)}km`;
+  return `약 ${km.toFixed(1)}km 떨어져있습니다.`;
 }
 
 const StudyPlaceList = ({ places = [], loading, onPlaceClick }) => {
