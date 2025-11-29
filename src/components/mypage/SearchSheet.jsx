@@ -65,7 +65,6 @@ const FILTER_CONFIG = [
 ];
 
 const CourseSearchBottomSheet = ({ onClose }) => {
-  const [query, setQuery] = useState("");
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
@@ -126,12 +125,6 @@ const CourseSearchBottomSheet = ({ onClose }) => {
     }
   };
 
-  // 검색바 submit (기존 검색)
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    fetchCourses(query);
-  };
-
   // 필터 pill 클릭 시
   const handleFilterClick = (key) => {
     if (activeFilter === key) {
@@ -148,7 +141,7 @@ const CourseSearchBottomSheet = ({ onClose }) => {
     const currentValue = filterValues[key];
     // 기본값이면 입력칸은 비워두기
     setFilterInput(
-      currentValue === config.defaultValue ? "" : (currentValue || "")
+      currentValue === config.defaultValue ? "" : currentValue || ""
     );
   };
 
@@ -167,7 +160,6 @@ const CourseSearchBottomSheet = ({ onClose }) => {
 
     // 검색어 필터는 실제 검색도 수행
     if (key === "keyword") {
-      setQuery(trimmed);
       fetchCourses(trimmed);
     }
 
@@ -187,7 +179,6 @@ const CourseSearchBottomSheet = ({ onClose }) => {
     }));
 
     if (key === "keyword") {
-      setQuery("");
       fetchCourses("");
     }
 
@@ -244,7 +235,7 @@ const CourseSearchBottomSheet = ({ onClose }) => {
             ))}
           </div>
 
-          {/* ✅ 필터 클릭 시 뜨는 검색/입력 칸 */}
+          {/* ✅ 필터 클릭 시 뜨는 검색/입력 칸 (검색어 필터 포함) */}
           {activeFilterConfig && (
             <div className="mypage-bottomsheet-filter-input-row">
               <div className="mypage-bottomsheet-filter-input-box">
@@ -282,25 +273,7 @@ const CourseSearchBottomSheet = ({ onClose }) => {
             </div>
           )}
 
-          {/* 기존 검색 바 (그냥 유지) */}
-          <form
-            className="mypage-bottomsheet-search-row"
-            onSubmit={handleSubmit}
-          >
-            <input
-              className="mypage-bottomsheet-search-input"
-              type="text"
-              placeholder="검색어를 입력하세요 (예: 객체)"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-            <button
-              type="submit"
-              className="mypage-bottomsheet-search-btn"
-            >
-              검색
-            </button>
-          </form>
+          {/* ⬇️ 항상 떠 있던 검색바는 제거 */}
 
           {/* 강의 리스트 */}
           <div className="mypage-bottomsheet-course-list">
