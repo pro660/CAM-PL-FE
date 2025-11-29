@@ -1,4 +1,3 @@
-// src/routes/Router.jsx
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import ProtectedRoute from "../ProtectedRoute";
 
@@ -14,9 +13,10 @@ import ResetPasswordPage from "../pages/login/ResetPasswordPage";
 import ResetPasswordDonePage from "../pages/login/ResetPasswordDonePage";
 import KakaoCallbackPage from "../pages/login/KakaoCallbackPage";
 import CalendarPage from "../pages/calendar/CalendarPage";
-import MapPage from "../pages/map/MapPage"; // 맵 페이지
-import MyPage from "../pages/mypage/MyPage"; // 마이페이지
-import CourseAreaSelectPage from "../pages/mypage/CourseSelectPage"; // 전공/영역 선택 페이지
+import MapPage from "../pages/map/MapPage";
+import MyPage from "../pages/mypage/MyPage";
+import CourseAreaSelectPage from "../pages/mypage/CourseSelectPage";
+import CourseYearSelectPage from "../pages/mypage/YearSelectPage"; // ✅ 학년 선택 페이지
 
 import Loader from "../components/common/Loader";
 import { useLoading } from "../context/LoadingContext.jsx";
@@ -25,12 +25,13 @@ function Layout({ children }) {
   const location = useLocation();
   const { isLoading } = useLoading();
 
-  // Header / Menu 숨길 경로
+  // ✅ Header / Menu 숨길 경로들
   const hiddenPaths = [
     "/login",
     "/signup",
     "/oauth/signed-in",
     "/course-area",
+    "/course-year", // ✅ 학년 선택 페이지
   ];
 
   const shouldHide = hiddenPaths.some((path) =>
@@ -58,7 +59,6 @@ function Layout({ children }) {
       )}
 
       {!shouldHide && <Header />}
-
       <main
         style={{
           minHeight: "100vh",
@@ -69,7 +69,6 @@ function Layout({ children }) {
       >
         {children}
       </main>
-
       {!shouldHide && <Menu />}
     </>
   );
@@ -81,10 +80,7 @@ function AppRouter() {
       <Layout>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
-
-          {/* 카카오 콜백 */}
           <Route path="/oauth/signed-in" element={<KakaoCallbackPage />} />
-
           <Route path="/login/form" element={<LoginFormPage />} />
           <Route path="/login/find" element={<FindAccountPage />} />
           <Route path="/login/reset-password" element={<ResetPasswordPage />} />
@@ -112,7 +108,6 @@ function AppRouter() {
             }
           />
 
-          {/* 맵 페이지 */}
           <Route
             path="/map"
             element={
@@ -122,7 +117,6 @@ function AppRouter() {
             }
           />
 
-          {/* 마이페이지 */}
           <Route
             path="/mypage"
             element={
@@ -132,12 +126,22 @@ function AppRouter() {
             }
           />
 
-          {/* 전공/영역 선택 페이지 */}
+          {/* 전공/영역 선택 */}
           <Route
             path="/course-area"
             element={
               <ProtectedRoute>
                 <CourseAreaSelectPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* 학년 선택 */}
+          <Route
+            path="/course-year"
+            element={
+              <ProtectedRoute>
+                <CourseYearSelectPage />
               </ProtectedRoute>
             }
           />

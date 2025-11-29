@@ -1,5 +1,3 @@
-/* src/css/mypage/SearchSheet.css */
-
 /* 배경 (살짝 어둡게) */
 .mypage-bottomsheet-backdrop {
   position: fixed;
@@ -34,12 +32,10 @@
   animation: mypage-bottomsheet-slide-up 0.2s ease-out forwards;
 }
 
-/* 닫힐 때 아래로 내려가는 애니메이션 */
 .mypage-bottomsheet.closing {
   animation: mypage-bottomsheet-slide-down 0.2s ease-out forwards;
 }
 
-/* 슬라이드 업 애니메이션 */
 @keyframes mypage-bottomsheet-slide-up {
   from {
     transform: translateY(100%);
@@ -49,7 +45,6 @@
   }
 }
 
-/* 슬라이드 다운 애니메이션 */
 @keyframes mypage-bottomsheet-slide-down {
   from {
     transform: translateY(0%);
@@ -59,7 +54,6 @@
   }
 }
 
-/* 배경 페이드 인/아웃 */
 @keyframes mypage-bottomsheet-backdrop-fade-in {
   from {
     opacity: 0;
@@ -124,7 +118,6 @@
   margin-bottom: 0.4rem;
 }
 
-/* 회색 배경 + 둥근 박스 */
 .mypage-bottomsheet-filter-pill {
   flex: 0 0 auto;
   border: none;
@@ -141,12 +134,10 @@
   font-size: 0.74rem;
 }
 
-/* 활성화된 필터 pill 하이라이트 */
 .mypage-bottomsheet-filter-pill.active {
   background-color: #d2d2d2;
 }
 
-/* "전공/교양" 부분 – 진한 회색 */
 .mypage-bottomsheet-filter-label {
   font-weight: 600;
   color: #333333;
@@ -159,14 +150,13 @@
   font-weight: 400;
 }
 
-/* "전체"/"없음" 부분 – 연한 회색 */
 .mypage-bottomsheet-filter-value {
   font-size: 0.74rem;
   color: #888888;
   font-weight: 400;
 }
 
-/* 강의 리스트 영역 */
+/* 리스트 영역 */
 .mypage-bottomsheet-course-list {
   flex: 1;
   min-height: 0;
@@ -245,7 +235,6 @@
   gap: 0.35rem;
 }
 
-/* 흰 배경 + border */
 .mypage-bottomsheet-filter-input-box {
   display: flex;
   align-items: center;
@@ -276,7 +265,6 @@
   color: #aaaaaa;
 }
 
-/* 적용 / 초기화 버튼 영역 */
 .mypage-bottomsheet-filter-input-actions {
   display: flex;
   justify-content: flex-end;

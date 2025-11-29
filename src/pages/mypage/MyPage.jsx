@@ -1,6 +1,5 @@
-// src/pages/mypage/MyPage.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "../../css/mypage/MyPage.css";
 
 import api from "../../api/axios";
@@ -24,14 +23,11 @@ export default function MyPage() {
   const [courses, setCourses] = useState([]);
   const { showLoading, hideLoading } = useLoading();
   const navigate = useNavigate();
-  const location = useLocation();
 
-  // 강의 추가 바텀시트 열림 여부
   const [isCourseSheetOpen, setIsCourseSheetOpen] = useState(false);
-
-  // 사용자 이름
   const [userName, setUserName] = useState("CAM-PL 사용자");
 
+  // camp_auth에서 사용자 이름 로드
   useEffect(() => {
     try {
       const raw = localStorage.getItem("camp_auth");
@@ -43,6 +39,15 @@ export default function MyPage() {
       }
     } catch (e) {
       console.error("camp_auth 파싱 실패:", e);
+    }
+  }, []);
+
+  // ⬇️ 전공/영역 / 학년 선택 후 돌아왔을 때 바텀시트 자동 오픈
+  useEffect(() => {
+    const flag = localStorage.getItem("mypage_open_course_sheet");
+    if (flag === "1") {
+      setIsCourseSheetOpen(true);
+      localStorage.removeItem("mypage_open_course_sheet");
     }
   }, []);
 
@@ -59,7 +64,6 @@ export default function MyPage() {
     let cancelled = false;
 
     const fetchTimetable = async () => {
-      // showLoading();
       try {
         const res = await api.get("/timetable");
         if (cancelled) return;
@@ -71,7 +75,7 @@ export default function MyPage() {
         console.error(e);
       } finally {
         if (!cancelled) {
-          // hideLoading();
+          // 필요하면 showLoading/hideLoading 다시 활성화
         }
       }
     };
@@ -81,15 +85,6 @@ export default function MyPage() {
       cancelled = true;
     };
   }, [showLoading, hideLoading]);
-
-  // 전공/영역 페이지에서 돌아온 경우: 바텀시트 자동 오픈
-  useEffect(() => {
-    if (location.state?.fromCourseArea) {
-      setIsCourseSheetOpen(true);
-      // state 제거
-      navigate(location.pathname, { replace: true });
-    }
-  }, [location, navigate]);
 
   const handleEditProfile = () => {
     console.log("개인정보 수정 클릭");
@@ -128,7 +123,6 @@ export default function MyPage() {
 
   return (
     <div className="mypage-page">
-      {/* 상단 인사 영역 */}
       <section className="mypage-header-row">
         <div className="mypage-greeting">
           <p className="mypage-greeting-line1">
@@ -149,12 +143,10 @@ export default function MyPage() {
         </button>
       </section>
 
-      {/* 시간표 카드 */}
       <section className="mypage-timetable-section">
         <MyTimetable courses={courses} />
       </section>
 
-      {/* 개인정보 수정 카드 */}
       <section className="mypage-profile-card-wrapper">
         <button
           type="button"
@@ -168,7 +160,6 @@ export default function MyPage() {
         </button>
       </section>
 
-      {/* 로그아웃 / 탈퇴하기 */}
       <section className="mypage-bottom-links">
         <button
           type="button"
@@ -186,7 +177,6 @@ export default function MyPage() {
         </button>
       </section>
 
-      {/* 강의 검색 바텀시트 */}
       {isCourseSheetOpen && (
         <CourseSearchBottomSheet onClose={handleToggleCourseSheet} />
       )}
