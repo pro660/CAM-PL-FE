@@ -1,4 +1,4 @@
-// src/components/mypage/MyPage.jsx
+// src/pages/mypage/MyPage.jsx 
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../css/mypage/MyPage.css";
@@ -6,6 +6,7 @@ import "../../css/mypage/MyPage.css";
 import api from "../../api/axios";
 import { useLoading } from "../../context/LoadingContext.jsx";
 import MyTimetable from "../../components/mypage/MyTimetable.jsx";
+import CourseSearchBottomSheet from "../../components/mypage/CourseSearchBottomSheet.jsx";
 
 import PenImg from "../../images/mypage/pen.svg";
 
@@ -21,9 +22,28 @@ const WEEKDAY_KR_LONG = [
 
 export default function MyPage() {
   const [courses, setCourses] = useState([]);
-  const [userName, setUserName] = useState(""); // ✅ 사용자 이름 상태
   const { showLoading, hideLoading } = useLoading();
   const navigate = useNavigate();
+
+  // ✅ 강의 추가 바텀시트 열림 여부
+  const [isCourseSheetOpen, setIsCourseSheetOpen] = useState(false);
+
+  // ★ 사용자 아이디 (추후 AuthContext 연동용) → camp_auth.name 사용
+  const [userName, setUserName] = useState("CAM-PL 사용자");
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("camp_auth");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.name) {
+          setUserName(parsed.name);
+        }
+      }
+    } catch (e) {
+      console.error("camp_auth 파싱 실패:", e);
+    }
+  }, []);
 
   const today = useMemo(() => new Date(), []);
   const todayText = useMemo(() => {
@@ -32,30 +52,6 @@ export default function MyPage() {
     const weekday = WEEKDAY_KR_LONG[today.getDay()];
     return `오늘은 ${month}월 ${date}일 ${weekday}입니다.`;
   }, [today]);
-
-  // ✅ camp_auth 에서 name 꺼내오기
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem("camp_auth");
-      if (!raw) return;
-
-      // camp_auth 는 JSON 문자열이라고 가정
-      const auth = JSON.parse(raw);
-
-      // name 이 우선, 없으면 loginId 등으로 폴백
-      const name =
-        auth?.name ||
-        auth?.loginId ||
-        auth?.email ||
-        "";
-
-      if (name) {
-        setUserName(name);
-      }
-    } catch (err) {
-      console.error("camp_auth 파싱 실패:", err);
-    }
-  }, []);
 
   // 시간표 로딩
   useEffect(() => {
@@ -101,8 +97,6 @@ export default function MyPage() {
       // 토큰 / 유저정보 정리 (키 이름은 프로젝트에 맞게 조정)
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
-      // camp_auth 를 여기서도 지울 거면 추가:
-      // localStorage.removeItem("camp_auth");
       navigate("/login", { replace: true });
     }
   };
@@ -120,22 +114,28 @@ export default function MyPage() {
     }
   };
 
+  const handleToggleCourseSheet = () => {
+    setIsCourseSheetOpen((prev) => !prev);
+  };
+
   return (
     <div className="mypage-page">
       {/* 상단 인사 영역 */}
       <section className="mypage-header-row">
         <div className="mypage-greeting">
           <p className="mypage-greeting-line1">
-            안녕하세요,{" "}
-            {userName ? `${userName}님!` : "CAM-PL 사용자님!"}
+            안녕하세요, {userName}님!
           </p>
           <p className="mypage-greeting-line2">{todayText}</p>
         </div>
 
         <button
           type="button"
-          className="mypage-add-button"
-          aria-label="일정 추가"
+          className={`mypage-add-button ${
+            isCourseSheetOpen ? "open" : ""
+          }`}
+          aria-label="시간표 강의 추가"
+          onClick={handleToggleCourseSheet}
         >
           +
         </button>
@@ -177,6 +177,11 @@ export default function MyPage() {
           탈퇴하기
         </button>
       </section>
+
+      {/* ✅ 강의 검색 바텀시트 */}
+      {isCourseSheetOpen && (
+        <CourseSearchBottomSheet onClose={handleToggleCourseSheet} />
+      )}
     </div>
   );
 }

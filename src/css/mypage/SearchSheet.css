@@ -1,0 +1,214 @@
+/* 배경 (살짝 어둡게) */
+.mypage-bottomsheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.25);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  z-index: 900;
+}
+
+/* 바텀시트 본체 */
+.mypage-bottomsheet {
+  width: 100%;
+  max-width: 480px;
+  background-color: #ffffff;
+  border-radius: 1.2rem 1.2rem 0 0;
+  padding: 0.8rem 1rem 1.1rem;
+  box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.14);
+
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 4rem); /* 상단 헤더는 보이게 */
+  animation: mypage-bottomsheet-slide-up 0.2s ease-out forwards;
+}
+
+/* 슬라이드 업 애니메이션 */
+@keyframes mypage-bottomsheet-slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0%);
+  }
+}
+
+/* 상단 핸들 + 제목 */
+.mypage-bottomsheet-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}
+
+.mypage-bottomsheet-handle {
+  width: 2.5rem;
+  height: 0.24rem;
+  border-radius: 999px;
+  background-color: #d6d6e3;
+  margin-bottom: 0.5rem;
+}
+
+.mypage-bottomsheet-title-row {
+  width: 100%;
+  text-align: left;
+}
+
+.mypage-bottomsheet-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #333333;
+}
+
+/* 본문 */
+.mypage-bottomsheet-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 필터 pill들 */
+.mypage-bottomsheet-filter-row {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  padding-bottom: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+
+.mypage-bottomsheet-filter-row::-webkit-scrollbar {
+  display: none;
+}
+
+.mypage-bottomsheet-filter-pill {
+  flex: 0 0 auto;
+  border: none;
+  outline: none;
+  border-radius: 999px;
+  padding: 0.28rem 0.7rem;
+  background-color: #f3f0ff;
+  cursor: pointer;
+
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+
+  font-size: 0.7rem;
+}
+
+.mypage-bottomsheet-filter-label {
+  font-weight: 600;
+  color: #7a61c5;
+}
+
+.mypage-bottomsheet-filter-value {
+  font-size: 0.68rem;
+  color: #9a8fba;
+}
+
+/* 검색 바 */
+.mypage-bottomsheet-search-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+}
+
+.mypage-bottomsheet-search-input {
+  flex: 1;
+  border-radius: 999px;
+  border: 1px solid #e0ddf5;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.78rem;
+  outline: none;
+}
+
+.mypage-bottomsheet-search-input::placeholder {
+  color: #b4b0cc;
+}
+
+.mypage-bottomsheet-search-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background-color: #c09ef1;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+/* 강의 리스트 영역 */
+.mypage-bottomsheet-course-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 0.3rem;
+}
+
+.mypage-bottomsheet-info-text {
+  font-size: 0.76rem;
+  color: #9b9b9b;
+}
+
+/* 강의 카드 */
+.mypage-bottomsheet-course-card {
+  background-color: #ffffff;
+  border-radius: 0.9rem;
+  padding: 0.75rem 0.9rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  margin-bottom: 0.6rem;
+}
+
+.mypage-bottomsheet-course-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.4rem;
+}
+
+.mypage-bottomsheet-course-name {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #333333;
+  line-height: 1.3;
+}
+
+.mypage-bottomsheet-review-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 0.18rem 0.7rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background-color: #f3e7ff;
+  color: #7b56e9;
+  cursor: pointer;
+}
+
+.mypage-bottomsheet-course-meta {
+  font-size: 0.72rem;
+  color: #555555;
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+
+.mypage-bottomsheet-course-prof {
+  margin: 0 0 0.15rem;
+}
+
+.mypage-bottomsheet-course-line {
+  display: flex;
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.mypage-bottomsheet-course-label {
+  min-width: 3.1rem;
+  color: #9a8fba;
+}

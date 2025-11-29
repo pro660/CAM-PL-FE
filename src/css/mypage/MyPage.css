@@ -35,6 +35,12 @@
   color: #c09ef1;
   cursor: pointer;
   margin-top: 2.5rem;
+  transition: transform 0.2s ease;
+  transform-origin: center;
+}
+
+.mypage-add-button.open {
+  transform: rotate(45deg);
 }
 
 /* 시간표 섹션 */
