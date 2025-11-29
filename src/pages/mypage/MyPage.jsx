@@ -21,7 +21,7 @@ const WEEKDAY_KR_LONG = [
 
 export default function MyPage() {
   const [courses, setCourses] = useState([]);
-  const { showLoading, hideLoading } = useLoading();
+  const { showLoading, hideLoading } = useLoading(); // ✅ 전역 로더 훅 사용
   const navigate = useNavigate();
 
   const [isCourseSheetOpen, setIsCourseSheetOpen] = useState(false);
@@ -64,6 +64,7 @@ export default function MyPage() {
     let cancelled = false;
 
     const fetchTimetable = async () => {
+      showLoading(); // ✅ 로더 ON
       try {
         const res = await api.get("/timetable");
         if (cancelled) return;
@@ -74,9 +75,7 @@ export default function MyPage() {
       } catch (e) {
         console.error(e);
       } finally {
-        if (!cancelled) {
-          // 필요하면 showLoading/hideLoading 다시 활성화
-        }
+        hideLoading(); // ✅ 로더 OFF (언마운트 여부와 상관없이)
       }
     };
 
