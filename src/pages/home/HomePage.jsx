@@ -1,4 +1,4 @@
-// src/pages/HomePage.jsx
+// src/pages/home/HomePage.jsx
 import React, { useState, useEffect } from "react";
 
 import TimetableMapSection from "./TimetableMapSection";
@@ -9,6 +9,10 @@ import "../../css/home/HomePage.css";
 import api from "../../api/axios";
 import { useLoading } from "../../context/LoadingContext.jsx"; // ✅ 전역 로더 훅 추가
 import PlaceDetailModal from "../../components/home/PlaceDetailModal.jsx";
+
+// ✅ 사용자 기준 위치 기본값 (캠퍼스 좌표, 위치 권한 거부 시 사용)
+const DEFAULT_LAT = 36.691274;
+const DEFAULT_LON = 126.584492;
 
 // 카테고리 한글 라벨링 (캘린더랑 맞추기)
 function getCategoryLabel(category, origin) {
@@ -78,6 +82,12 @@ const HomePage = () => {
   // ✅ 선택된 장소 (팝업용)
   const [selectedPlaceId, setSelectedPlaceId] = useState(null);
 
+  // ✅ 사용자 좌표 (기본값은 캠퍼스)
+  const [coords, setCoords] = useState({
+    lat: DEFAULT_LAT,
+    lon: DEFAULT_LON,
+  });
+
   // 오늘 날짜/요일 계산
   const today = new Date();
   const year = today.getFullYear();
@@ -93,6 +103,37 @@ const HomePage = () => {
     "토요일",
   ];
   const weekday = weekdayNamesFull[today.getDay()];
+
+  /* =========================
+     0. 브라우저에서 현재 위치 가져오기
+        - 성공: 사용자 좌표로 업데이트
+        - 실패/거부/미지원: 기본 캠퍼스 좌표 그대로 사용
+     ========================= */
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      console.warn("Geolocation not supported; using default coords.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setCoords({
+          lat: latitude,
+          lon: longitude,
+        });
+      },
+      (error) => {
+        console.warn("Geolocation error; using default coords.", error);
+        // 실패해도 DEFAULT_LAT / DEFAULT_LON 그대로 사용
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 1000 * 60 * 10,
+      }
+    );
+  }, []);
 
   /* =========================
      1. D-Day용 주요 일정 API 호출
@@ -150,10 +191,7 @@ const HomePage = () => {
 
           setDdayInfo({
             label:
-              item.ddayLabel ||
-              item.title ||
-              item.name ||
-              "주요 일정까지",
+              item.ddayLabel || item.title || item.name || "주요 일정까지",
             sub:
               item.description ||
               item.memo ||
@@ -183,25 +221,46 @@ const HomePage = () => {
   }, []); // ✅ 날짜 변하게 되면 그때 로직 따로 잡는 게 좋고, 지금은 첫 진입 기준
 
   /* =========================
-     2. 오늘의 일정 API 호출
-        GET /calendar/summary/today
+     2. 오늘의 일정 + 과제하기 좋은 장소 추천
+        GET /calendar/summary/today?lat=&lon=
+        - coords(lat, lon)이 바뀔 때마다 호출
+        - 초기: 캠퍼스 좌표로 한 번
+        - 위치 허용 시: 사용자 좌표로 한 번 더
      ========================= */
   useEffect(() => {
-    const fetchTodaySchedules = async () => {
+    const fetchTodaySummary = async () => {
       showLoading(); // ✅ 전역 로더 +1
+      setScheduleLoading(true);
+      setStudyPlacesLoading(true);
+
       try {
-        const res = await api.get("/calendar/summary/today");
+        const res = await api.get("/calendar/summary/today", {
+          params: {
+            lat: coords.lat,
+            lon: coords.lon,
+          },
+        });
+
         const body = res.data ?? {};
 
-        // ✅ 응답 구조에 맞게 events 사용
-        const rawData = Array.isArray(body) ? body : body.events || [];
+        // ===== 오늘의 일정 목록 파싱 =====
+        const rawEvents = Array.isArray(body)
+          ? body
+          : Array.isArray(body.events)
+          ? body.events
+          : Array.isArray(body.schedules)
+          ? body.schedules
+          : Array.isArray(body.todaySchedules)
+          ? body.todaySchedules
+          : [];
 
-        const mapped = rawData.map((item, idx) => ({
-          // 해당 API에 id가 없으면 title+time 조합으로 key 대체
+        const mappedSchedules = rawEvents.map((item, idx) => ({
+          // id 없으면 title+time 조합으로 대체
           id:
             item.id ??
-            `${item.title || "schedule"}-${item.startAt || idx}`,
-          // ✅ origin도 함께 넘겨서 "학사" 처리
+            `${item.title || "schedule"}-${
+              item.startAt || item.startTime || idx
+            }`,
           category: getCategoryLabel(
             item.category || item.type,
             item.origin
@@ -218,46 +277,32 @@ const HomePage = () => {
               : ""),
         }));
 
-        setTodaySchedules(mapped);
+        setTodaySchedules(mappedSchedules);
+
+        // ===== 과제하기 좋은 장소 추천 리스트 파싱 =====
+        const rawPlaces = Array.isArray(body.studyPlaces)
+          ? body.studyPlaces
+          : Array.isArray(body.places)
+          ? body.places
+          : Array.isArray(body.recommendedPlaces)
+          ? body.recommendedPlaces
+          : [];
+
+        setStudyPlaces(rawPlaces);
       } catch (error) {
-        console.error("오늘의 일정 조회 실패:", error);
+        console.error("오늘 요약(일정/장소) 조회 실패:", error);
         setTodaySchedules([]);
-      } finally {
-        setScheduleLoading(false);
-        hideLoading(); // ✅ 전역 로더 -1
-      }
-    };
-
-    // 마운트 시 한 번만 호출
-    fetchTodaySchedules();
-  }, [showLoading, hideLoading]);
-
-  /* =========================
-     3. 과제하기 좋은 장소 추천 API 호출
-        POST /places/recommend
-     ========================= */
-  useEffect(() => {
-    const fetchStudyPlaces = async () => {
-      showLoading(); // ✅ 전역 로더 +1
-      try {
-        const res = await api.post("/places/recommend", {
-          scheduleType: "TEAM_PROJECT", // 일단 팀플 기준
-          withWhom: "FRIEND",           // 친구와 함께
-        });
-
-        const list = Array.isArray(res.data) ? res.data : [];
-        setStudyPlaces(list);
-      } catch (error) {
-        console.error("장소 추천 조회 실패:", error);
         setStudyPlaces([]);
       } finally {
+        setScheduleLoading(false);
         setStudyPlacesLoading(false);
         hideLoading(); // ✅ 전역 로더 -1
       }
     };
 
-    fetchStudyPlaces();
-  }, [showLoading, hideLoading]);
+    // coords(lat/lon)가 준비될 때마다 호출
+    fetchTodaySummary();
+  }, [coords.lat, coords.lon, showLoading, hideLoading]);
 
   const handlePlaceClick = (placeId) => {
     setSelectedPlaceId(placeId);
@@ -293,16 +338,16 @@ const HomePage = () => {
       {/* 지도 / 시간표 */}
       <TimetableMapSection onTodayLecturesChange={setTodayLectures} />
 
-      {/* 오늘의 강의 리스트 */}
+      {/* 오늘의 강의 리스트 (시간표에서 내려주는 것 그대로 사용) */}
       <TodayLectureList lectures={todayLectures} />
 
-      {/* 오늘의 일정 리스트 */}
+      {/* 오늘의 일정 리스트 (요약 API 결과) */}
       <TodayScheduleList
         schedules={todaySchedules}
         loading={scheduleLoading}
       />
 
-      {/* 과제하기 좋은 장소 추천 리스트 */}
+      {/* 과제하기 좋은 장소 추천 리스트 (요약 API 결과) */}
       <StudyPlaceList
         places={studyPlaces}
         loading={studyPlacesLoading}

@@ -1,4 +1,4 @@
-// src/pages/StudyPlaceList.jsx
+// src/pages/home/StudyPlaceList.jsx
 import React from "react";
 
 function formatDistance(distanceMeters) {
@@ -6,10 +6,13 @@ function formatDistance(distanceMeters) {
     return "거리 정보 없음";
   }
 
+  // 1km 미만 → m 단위
   if (distanceMeters < 1000) {
-    return `약 ${distanceMeters}m`;
+    const rounded = Math.round(distanceMeters);
+    return `약 ${rounded}m`;
   }
 
+  // 1km 이상 → 소수점 1자리 km
   const km = distanceMeters / 1000;
   return `약 ${km.toFixed(1)}km`;
 }
