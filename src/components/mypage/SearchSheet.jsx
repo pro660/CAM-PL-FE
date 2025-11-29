@@ -65,21 +65,76 @@ const FILTER_CONFIG = [
   { key: "keyword", label: "검색어", defaultValue: "없음" },
 ];
 
-const readSavedAreaFilterLabel = () => {
+// localStorage에 저장된 영역필터 { categoryId, categoryName } 사용
+const readSavedAreaFilter = () => {
   try {
     const raw = localStorage.getItem("course_area_filter");
-    if (!raw) return "전체";
+    if (!raw) return { categoryId: null, categoryName: "전체" };
     const parsed = JSON.parse(raw);
-    return parsed?.categoryName || "전체";
+    return {
+      categoryId: parsed?.categoryId ?? null,
+      categoryName: parsed?.categoryName ?? "전체",
+    };
   } catch (e) {
-    return "전체";
+    return { categoryId: null, categoryName: "전체" };
   }
+};
+
+// 백엔드 /api/courses 에 넘길 쿼리 파라미터 빌드
+// - categoryId → 카테고리
+// - year      → 단일 학년
+// - credit    → 단일 학점
+// - q         → 검색어
+const buildApiParams = (filters, categoryId) => {
+  const params = {};
+
+  if (categoryId) {
+    params.categoryId = categoryId;
+  }
+
+  if (filters.year && filters.year !== "전체") {
+    params.year = filters.year.trim();
+  }
+
+  if (filters.credit && filters.credit !== "전체") {
+    params.credit = filters.credit.trim();
+  }
+
+  if (filters.keyword && filters.keyword !== "없음") {
+    const q = filters.keyword.trim();
+    if (q) {
+      params.q = q;
+    }
+  }
+
+  // 필요하면 days/ranges/windows 등 추가 가능
+  return params;
+};
+
+// 서버 필터 후, 클라이언트에서 time(시간 문자열)만 추가 필터
+const applyClientSideFilters = (base, filters) => {
+  if (!base || base.length === 0) return [];
+
+  return base.filter((course) => {
+    // 시간 필터: 문자열 포함 여부로 처리
+    if (filters.time && filters.time !== "전체") {
+      const timesText = formatTimes(course.times || []);
+      if (!timesText.includes(filters.time)) {
+        return false;
+      }
+    }
+
+    // type(전공/교양)은 categoryId로 서버 필터를 거는 것이 우선이므로,
+    // 여기서는 별도 필터하지 않거나, categoryName이 필요한 경우만 사용 가능
+    return true;
+  });
 };
 
 const CourseSearchBottomSheet = ({ onClose }) => {
   const navigate = useNavigate();
 
-  const [allCourses, setAllCourses] = useState([]);
+  const savedArea = readSavedAreaFilter();
+
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
@@ -90,7 +145,7 @@ const CourseSearchBottomSheet = ({ onClose }) => {
   const [filterValues, setFilterValues] = useState(() =>
     FILTER_CONFIG.reduce((acc, f) => {
       if (f.key === "type") {
-        acc[f.key] = readSavedAreaFilterLabel();
+        acc[f.key] = savedArea.categoryName; // 표시용: 전공/교양 라벨
       } else {
         acc[f.key] = f.defaultValue;
       }
@@ -98,6 +153,9 @@ const CourseSearchBottomSheet = ({ onClose }) => {
     }, {})
   );
   const [filterInput, setFilterInput] = useState("");
+
+  // 서버로 넘길 선택된 카테고리 ID
+  const [selectedCategoryId] = useState(savedArea.categoryId);
 
   const activeFilterConfig = useMemo(
     () => FILTER_CONFIG.find((f) => f.key === activeFilter) || null,
@@ -113,23 +171,27 @@ const CourseSearchBottomSheet = ({ onClose }) => {
     };
   }, []);
 
-  // 전체 강의 한번만 로딩
+  // filterValues / selectedCategoryId 변경 시마다 서버에 쿼리파라미터 붙여서 조회
   useEffect(() => {
     let cancelled = false;
 
-    const fetchAllCourses = async () => {
+    const fetchCourses = async () => {
       setLoading(true);
       try {
-        // ✅ 백엔드 CourseController(@RequestMapping("/api/courses")) 에 맞게 경로 수정
-        const res = await api.get("/courses");
+        const params = buildApiParams(filterValues, selectedCategoryId);
+
+        const res = await api.get("/courses", { params });
         if (cancelled) return;
+
         const list = Array.isArray(res.data) ? res.data : [];
-        setAllCourses(list);
+        const filtered = applyClientSideFilters(list, filterValues);
+
+        setCourses(filtered);
         setHasLoadedOnce(true);
       } catch (err) {
         console.error("강의 목록 조회 실패:", err);
         if (!cancelled) {
-          setAllCourses([]);
+          setCourses([]);
         }
       } finally {
         if (!cancelled) {
@@ -138,75 +200,11 @@ const CourseSearchBottomSheet = ({ onClose }) => {
       }
     };
 
-    fetchAllCourses();
+    fetchCourses();
     return () => {
       cancelled = true;
     };
-  }, []);
-
-  // 필터 적용 함수
-  const buildFilteredCourses = (base, filters) => {
-    if (!base || base.length === 0) return [];
-
-    return base.filter((course) => {
-      // 전공/교양(카테고리) 필터
-      if (filters.type && filters.type !== "전체") {
-        if ((course.categoryName || "") !== filters.type) {
-          return false;
-        }
-      }
-
-      // 학년 필터
-      if (filters.year && filters.year !== "전체") {
-        if (String(course.year || "") !== String(filters.year)) {
-          return false;
-        }
-      }
-
-      // 학점 필터
-      if (filters.credit && filters.credit !== "전체") {
-        if (String(course.credit || "") !== String(filters.credit)) {
-          return false;
-        }
-      }
-
-      // 시간 필터: 문자열 포함 여부로만 처리
-      if (filters.time && filters.time !== "전체") {
-        const timesText = formatTimes(course.times || []);
-        if (!timesText.includes(filters.time)) {
-          return false;
-        }
-      }
-
-      // 검색어 필터
-      const kw =
-        filters.keyword && filters.keyword !== "없음"
-          ? filters.keyword.trim().toLowerCase()
-          : "";
-      if (kw) {
-        const haystack = (
-          (course.name || "") +
-          " " +
-          (course.professor || "") +
-          " " +
-          (course.courseCode || "")
-        )
-          .toLowerCase()
-          .replace(/\s+/g, " ");
-        if (!haystack.includes(kw)) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-  };
-
-  // allCourses / filterValues 변경 시마다 재필터링
-  useEffect(() => {
-    const next = buildFilteredCourses(allCourses, filterValues);
-    setCourses(next);
-  }, [allCourses, filterValues]);
+  }, [filterValues, selectedCategoryId]);
 
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -223,7 +221,7 @@ const CourseSearchBottomSheet = ({ onClose }) => {
   // 필터 pill 클릭
   const handleFilterClick = (key) => {
     if (key === "type") {
-      // 전공/교양 페이지로 이동
+      // 전공/교양 페이지로 이동 (카테고리 선택은 별도 화면에서 처리, localStorage에 저장)
       onClose?.();
       navigate("/course-area");
       return;
