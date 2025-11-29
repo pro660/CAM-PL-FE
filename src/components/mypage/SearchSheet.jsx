@@ -121,7 +121,7 @@ const CourseSearchBottomSheet = ({ onClose }) => {
       setLoading(true);
       try {
         // ✅ 백엔드 CourseController(@RequestMapping("/api/courses")) 에 맞게 경로 수정
-        const res = await api.get("/api/courses");
+        const res = await api.get("/courses");
         if (cancelled) return;
         const list = Array.isArray(res.data) ? res.data : [];
         setAllCourses(list);
