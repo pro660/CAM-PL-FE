@@ -36,10 +36,11 @@ const buildYearLabel = (years) => {
 
 const YearSelectPage = () => {
   const navigate = useNavigate();
-  const hasSelection = selectedYears.length > 0;
   const initial = useMemo(readYearFilter, []);
   const [selectedYears, setSelectedYears] = useState(initial.years || []);
 
+  const hasSelection = selectedYears.length > 0;
+  
   const isSelected = (key) => selectedYears.includes(key);
 
   const toggleYear = (key) => {

@@ -38,11 +38,12 @@ const buildCreditLabel = (credits) => {
 
 const CreditSelectPage = () => {
   const navigate = useNavigate();
-  const hasSelection = selectedCredits.length > 0;
   const initial = useMemo(readCreditFilter, []);
   const [selectedCredits, setSelectedCredits] = useState(
     initial.credits || []
   );
+
+  const hasSelection = selectedCredits.length > 0;
 
   const isSelected = (key) => selectedCredits.includes(key);
 
