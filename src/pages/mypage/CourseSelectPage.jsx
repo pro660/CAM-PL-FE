@@ -123,9 +123,7 @@ const CourseAreaSelectPage = () => {
         ? liberalCategories
         : [];
     if (!q) return base;
-    return base.filter((c) =>
-      c.name.toLowerCase().includes(q)
-    );
+    return base.filter((c) => c.name.toLowerCase().includes(q));
   }, [step, searchText, majorCategories, liberalCategories]);
 
   // 헤더 왼쪽 화살표 동작
@@ -164,15 +162,14 @@ const CourseAreaSelectPage = () => {
         "course_area_filter",
         JSON.stringify(payload)
       );
+      // ✅ 마이페이지로 돌아갔을 때 바텀시트 다시 열리도록 플래그 설정
+      localStorage.setItem("mypage_open_course_sheet", "1");
     } catch (e) {
-      console.warn("course_area_filter 저장 실패:", e);
+      console.warn("course_area_filter / mypage_open_course_sheet 저장 실패:", e);
     }
 
-    // 마이페이지로 돌아가면서 바텀시트 다시 열리도록 state 전달
-    navigate("/mypage", {
-      replace: true,
-      state: { fromCourseArea: true },
-    });
+    // ✅ 마이페이지로 이동
+    navigate("/mypage", { replace: true });
   };
 
   return (
@@ -236,8 +233,7 @@ const CourseAreaSelectPage = () => {
             ) : (
               currentList.map((cat) => {
                 const isSelected =
-                  selectedKind === "MAJOR" &&
-                  selectedId === cat.id;
+                  selectedKind === "MAJOR" && selectedId === cat.id;
 
                 return (
                   <button
@@ -254,9 +250,7 @@ const CourseAreaSelectPage = () => {
                       {cat.name}
                     </span>
                     {isSelected && (
-                      <span className="area-list-item-check">
-                        ✓
-                      </span>
+                      <span className="area-list-item-check">✓</span>
                     )}
                   </button>
                 );
