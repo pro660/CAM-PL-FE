@@ -108,3 +108,9 @@
   font-weight: 600;
   cursor: pointer;
 }
+
+/* ✅ 하나라도 선택됐을 때 */
+.year-apply-btn.enabled {
+  background-color: #c09ef1;
+  color: #ffffff;
+}

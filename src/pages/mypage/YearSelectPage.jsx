@@ -36,6 +36,7 @@ const buildYearLabel = (years) => {
 
 const YearSelectPage = () => {
   const navigate = useNavigate();
+  const hasSelection = selectedYears.length > 0;
   const initial = useMemo(readYearFilter, []);
   const [selectedYears, setSelectedYears] = useState(initial.years || []);
 
@@ -137,7 +138,7 @@ const YearSelectPage = () => {
         {/* 적용 버튼 */}
         <button
           type="button"
-          className="year-apply-btn"
+          className={`year-apply-btn ${hasSelection ? "enabled" : ""}`}
           onClick={handleApply}
         >
           적용

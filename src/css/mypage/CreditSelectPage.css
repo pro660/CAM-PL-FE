@@ -110,3 +110,9 @@
   font-weight: 600;
   cursor: pointer;
 }
+
+/* ✅ 학점 하나라도 선택됐을 때 */
+.credit-apply-btn.enabled {
+  background-color: #c09ef1;
+  color: #ffffff;
+}

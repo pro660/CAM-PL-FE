@@ -38,6 +38,7 @@ const buildCreditLabel = (credits) => {
 
 const CreditSelectPage = () => {
   const navigate = useNavigate();
+  const hasSelection = selectedCredits.length > 0;
   const initial = useMemo(readCreditFilter, []);
   const [selectedCredits, setSelectedCredits] = useState(
     initial.credits || []
@@ -142,7 +143,7 @@ const CreditSelectPage = () => {
         {/* 적용 버튼 */}
         <button
           type="button"
-          className="credit-apply-btn"
+          className={`credit-apply-btn ${hasSelection ? "enabled" : ""}`}
           onClick={handleApply}
         >
           적용
