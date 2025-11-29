@@ -277,6 +277,23 @@
   border-right: none;
 }
 
+/* ✅ 강의가 하나도 없을 때 스타일 */
+.home-timetable-grid.no-lectures {
+  display: flex; /* grid 대신 중앙 정렬용 flex */
+  align-items: center;
+  justify-content: center;
+  min-height: calc(var(--home-hour-row-height) * 10); /* 10칸 높이 */
+  background-color: #ffffff; /* 흰색 배경 */
+}
+
+/* 빈 시간표 안내 텍스트 */
+.home-timetable-empty-message {
+  font-size: 0.78rem;
+  color: #9b8ac8;
+  text-align: center;
+  padding: 0 1rem;
+}
+
 /* 강의 블록 */
 .home-timetable-class-block {
   position: absolute;

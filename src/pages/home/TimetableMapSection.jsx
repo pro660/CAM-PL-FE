@@ -14,7 +14,6 @@ const HOUR_SPAN = END_HOUR - START_HOUR; // 10
 const TOTAL_MINUTES = HOUR_SPAN * 60; // 600분
 
 // 왼쪽에 찍을 시간 숫자들 (9,10,11,12,13,14,15,16,17,18 → 10개)
-// 13~18은 화면에서 1~6으로 표시
 const TIME_LABELS = Array.from({ length: HOUR_SPAN }, (_, i) => START_HOUR + i);
 
 // 24시간 → 화면에 찍을 숫자(13 ⇒ 1, 14 ⇒ 2 ...)
@@ -74,6 +73,9 @@ const TimetableMapSection = ({ onTodayLecturesChange }) => {
   const today = new Date();
   const weekdayNamesOne = ["일", "월", "화", "수", "목", "금", "토"];
   const todayLabel = weekdayNamesOne[today.getDay()]; // "월" ~ "일"
+
+  // ✅ 전체 강의 유무
+  const hasLectures = timetable.length > 0;
 
   // 시간표 API 호출 + 데이터 정규화
   useEffect(() => {
@@ -188,7 +190,10 @@ const TimetableMapSection = ({ onTodayLecturesChange }) => {
                 <div className="home-timetable-header-row">
                   <div className="home-timetable-header-cell time-col" />
                   {weekdayLabels.map((day) => (
-                    <div key={day} className="home-timetable-header-cell">
+                    <div
+                      key={day}
+                      className="home-timetable-header-cell"
+                    >
                       {day}
                     </div>
                   ))}
@@ -199,64 +204,85 @@ const TimetableMapSection = ({ onTodayLecturesChange }) => {
                   {/* 왼쪽 시간축 */}
                   <div className="home-timetable-time-col">
                     {TIME_LABELS.map((h) => (
-                      <div key={h} className="home-timetable-time-slot">
+                      <div
+                        key={h}
+                        className="home-timetable-time-slot"
+                      >
                         {formatHourLabel(h)}
                       </div>
                     ))}
                   </div>
 
-                  {/* 오른쪽 요일별 칸 */}
-                  <div className="home-timetable-grid">
-                    {weekdayLabels.map((day) => (
-                      <div key={day} className="home-timetable-day-column">
-                        {timetable
-                          .filter((cls) => cls.day === day)
-                          .map((cls) => {
-                            const startMin = timeToMinutes(cls.startTime);
-                            const endMin = timeToMinutes(cls.endTime);
+                  {/* 오른쪽 요일별 칸 / 또는 빈 메시지 */}
+                  <div
+                    className={`home-timetable-grid ${
+                      !hasLectures ? "no-lectures" : ""
+                    }`}
+                  >
+                    {hasLectures ? (
+                      weekdayLabels.map((day) => (
+                        <div
+                          key={day}
+                          className="home-timetable-day-column"
+                        >
+                          {timetable
+                            .filter((cls) => cls.day === day)
+                            .map((cls) => {
+                              const startMin = timeToMinutes(cls.startTime);
+                              const endMin = timeToMinutes(cls.endTime);
 
-                            const minMinutes = START_HOUR * 60; // 9:00
-                            const maxMinutes = END_HOUR * 60; // 19:00
+                              const minMinutes = START_HOUR * 60; // 9:00
+                              const maxMinutes = END_HOUR * 60; // 19:00
 
-                            // 9~19 범위로 클램프
-                            const clampedStart = Math.max(
-                              startMin,
-                              minMinutes
-                            );
-                            const clampedEnd = Math.min(endMin, maxMinutes);
-                            if (clampedEnd <= clampedStart) return null;
+                              // 9~19 범위로 클램프
+                              const clampedStart = Math.max(
+                                startMin,
+                                minMinutes
+                              );
+                              const clampedEnd = Math.min(
+                                endMin,
+                                maxMinutes
+                              );
+                              if (clampedEnd <= clampedStart) return null;
 
-                            // 전체 높이(10시간)를 100%로 보고, 퍼센트로 위치 계산
-                            const topPercent =
-                              ((clampedStart - minMinutes) / TOTAL_MINUTES) *
-                              100;
-                            const heightPercent =
-                              ((clampedEnd - clampedStart) / TOTAL_MINUTES) *
-                              100;
+                              // 전체 높이(10시간)를 100%로 보고, 퍼센트로 위치 계산
+                              const topPercent =
+                                ((clampedStart - minMinutes) /
+                                  TOTAL_MINUTES) *
+                                100;
+                              const heightPercent =
+                                ((clampedEnd - clampedStart) /
+                                  TOTAL_MINUTES) *
+                                100;
 
-                            return (
-                              <div
-                                key={cls.id}
-                                className="home-timetable-class-block"
-                                style={{
-                                  top: `${topPercent}%`,
-                                  height: `${heightPercent}%`,
-                                }}
-                              >
-                                <div className="home-timetable-class-title">
-                                  {cls.title}
+                              return (
+                                <div
+                                  key={cls.id}
+                                  className="home-timetable-class-block"
+                                  style={{
+                                    top: `${topPercent}%`,
+                                    height: `${heightPercent}%`,
+                                  }}
+                                >
+                                  <div className="home-timetable-class-title">
+                                    {cls.title}
+                                  </div>
+                                  <div className="home-timetable-class-location">
+                                    {cls.location}
+                                  </div>
+                                  <div className="home-timetable-class-time">
+                                    {cls.startTime} ~ {cls.endTime}
+                                  </div>
                                 </div>
-                                <div className="home-timetable-class-location">
-                                  {cls.location}
-                                </div>
-                                <div className="home-timetable-class-time">
-                                  {cls.startTime} ~ {cls.endTime}
-                                </div>
-                              </div>
-                            );
-                          })}
+                              );
+                            })}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="home-timetable-empty-message">
+                        강의를 추가해 나만의 시간표를 만드세요.
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
               </>
