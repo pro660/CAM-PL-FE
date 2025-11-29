@@ -59,7 +59,8 @@ const CourseSearchBottomSheet = ({ onClose }) => {
   const [query, setQuery] = useState("");
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+  const [closing, setClosing] = useState(false); // ✅ 닫힘 애니메이션 상태
 
   // ✅ 바텀시트 열려 있는 동안 배경 스크롤 막기
   useEffect(() => {
@@ -70,25 +71,14 @@ const CourseSearchBottomSheet = ({ onClose }) => {
     };
   }, []);
 
-  const handleBackdropClick = (e) => {
-    if (e.target === e.currentTarget) {
-      onClose?.();
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const q = query.trim();
-    setHasSearched(true);
-
-    if (!q) {
-      setCourses([]);
-      return;
-    }
-
+  // ✅ 공통 강의 조회 함수 (q가 없으면 전체)
+  const fetchCourses = async (keyword = "") => {
+    const q = keyword.trim();
     setLoading(true);
     try {
-      const res = await api.get("/courses", { params: { q } });
+      const res = await api.get("/courses", {
+        params: q ? { q } : {}, // q가 있으면 검색, 없으면 전체
+      });
       const list = Array.isArray(res.data) ? res.data : [];
       setCourses(list);
     } catch (err) {
@@ -96,17 +86,46 @@ const CourseSearchBottomSheet = ({ onClose }) => {
       setCourses([]);
     } finally {
       setLoading(false);
+      setHasLoadedOnce(true);
+    }
+  };
+
+  // ✅ 처음 열릴 때 전체 강의 불러오기
+  useEffect(() => {
+    fetchCourses("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleBackdropClick = (e) => {
+    if (e.target === e.currentTarget) {
+      // 바깥쪽 클릭 시 닫힘 애니메이션 시작
+      setClosing(true);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    fetchCourses(query);
+  };
+
+  // ✅ 애니메이션 종료 후 실제 onClose 호출
+  const handleSheetAnimationEnd = () => {
+    if (closing) {
+      onClose?.();
     }
   };
 
   return (
     <div
-      className="mypage-bottomsheet-backdrop"
+      className={`mypage-bottomsheet-backdrop ${
+        closing ? "closing" : ""
+      }`}
       onClick={handleBackdropClick}
     >
       <div
-        className="mypage-bottomsheet"
+        className={`mypage-bottomsheet ${closing ? "closing" : ""}`}
         onClick={(e) => e.stopPropagation()}
+        onAnimationEnd={handleSheetAnimationEnd}
       >
         {/* 상단 드래그 핸들 + 제목 줄 */}
         <div className="mypage-bottomsheet-header">
@@ -163,9 +182,9 @@ const CourseSearchBottomSheet = ({ onClose }) => {
               <p className="mypage-bottomsheet-info-text">
                 강의를 불러오는 중이에요...
               </p>
-            ) : !hasSearched ? (
+            ) : !hasLoadedOnce ? (
               <p className="mypage-bottomsheet-info-text">
-                검색어를 입력해 강의를 찾아보세요.
+                강의를 불러오는 중이에요...
               </p>
             ) : courses.length === 0 ? (
               <p className="mypage-bottomsheet-info-text">

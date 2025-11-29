@@ -7,6 +7,11 @@
   justify-content: center;
   align-items: flex-end;
   z-index: 900;
+  animation: mypage-bottomsheet-backdrop-fade-in 0.2s ease-out forwards;
+}
+
+.mypage-bottomsheet-backdrop.closing {
+  animation: mypage-bottomsheet-backdrop-fade-out 0.2s ease-out forwards;
 }
 
 /* 바텀시트 본체 */
@@ -20,8 +25,17 @@
 
   display: flex;
   flex-direction: column;
-  max-height: calc(100vh - 4rem); /* 상단 헤더는 보이게 */
+
+  /* ✅ 화면의 절반 정도 높이 */
+  height: 50vh;
+  max-height: 50vh;
+
   animation: mypage-bottomsheet-slide-up 0.2s ease-out forwards;
+}
+
+/* 닫힐 때 아래로 내려가는 애니메이션 */
+.mypage-bottomsheet.closing {
+  animation: mypage-bottomsheet-slide-down 0.2s ease-out forwards;
 }
 
 /* 슬라이드 업 애니메이션 */
@@ -31,6 +45,35 @@
   }
   to {
     transform: translateY(0%);
+  }
+}
+
+/* 슬라이드 다운 애니메이션 */
+@keyframes mypage-bottomsheet-slide-down {
+  from {
+    transform: translateY(0%);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+/* 배경 페이드 인/아웃 */
+@keyframes mypage-bottomsheet-backdrop-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes mypage-bottomsheet-backdrop-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
   }
 }
 
