@@ -113,16 +113,15 @@ function formatEventTimeRange(startIso, endIso) {
   return endText ? `${weekday} ${startText} ~ ${endText}` : `${weekday} ${startText}`;
 }
 
-// ✅ 맵용 고정 좌표 (캠퍼스 기준)
-const MAP_LAT = 36.690711;
-const MAP_LON = 126.581783;
-
 export default function MapPage() {
   const navigate = useNavigate();
   const { showLoading, hideLoading } = useLoading();
 
+  // 오늘 일정(events + lectures)
   const [todayEvents, setTodayEvents] = useState([]);
+  // 지난 일정(pastEvents)
   const [yesterdayEvents, setYesterdayEvents] = useState([]);
+  // 다음 일정(upcomingEvents)
   const [tomorrowEvents, setTomorrowEvents] = useState([]);
 
   // /calendar/map 에서 내려오는 주변 시설
@@ -137,18 +136,7 @@ export default function MapPage() {
   // 👉 오늘의 일정 칩에서 선택된 건물명
   const [selectedPlace, setSelectedPlace] = useState(null);
 
-  // 오늘 날짜(시분초 0으로 맞춤) - 필요 시 UI에 활용 가능
-  const today = useMemo(() => {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  }, []);
-
-  // /calendar/map/{lat}/{lon} 한 번만 호출해서
-  // - 오늘 일정
-  // - 어제 일정
-  // - 내일 일정
-  // - 주변 시설
-  // 모두 가져오기
+  // 최초 진입 시 /calendar/map 호출
   useEffect(() => {
     (async () => {
       setLoading(true);
@@ -156,50 +144,32 @@ export default function MapPage() {
       setError("");
 
       try {
-        const res = await api.get(
-          `/calendar/map/${MAP_LAT}/${MAP_LON}`
-        );
-
+        // ✅ lat/lon path 기반 API
+        const res = await api.get("/calendar/map/36.690711/126.581783");
         const data = res.data ?? {};
 
-        // ===== 오늘 일정 =====
-        const todayList = Array.isArray(data.todayEvents)
-          ? data.todayEvents
-          : Array.isArray(data.today)
-          ? data.today
-          : Array.isArray(data.events)
-          ? data.events
+        // 오늘 일정: events + lectures
+        const events = Array.isArray(data.events) ? data.events : [];
+        const lectures = Array.isArray(data.lectures) ? data.lectures : [];
+        setTodayEvents([...events, ...lectures]);
+
+        // 지난 일정
+        const past = Array.isArray(data.pastEvents) ? data.pastEvents : [];
+        setYesterdayEvents(past);
+
+        // 다가오는 일정
+        const upcoming = Array.isArray(data.upcomingEvents)
+          ? data.upcomingEvents
           : [];
+        setTomorrowEvents(upcoming);
 
-        // ===== 어제 일정 =====
-        const yesterdayList = Array.isArray(data.yesterdayEvents)
-          ? data.yesterdayEvents
-          : Array.isArray(data.yesterday)
-          ? data.yesterday
-          : [];
-
-        // ===== 내일 일정 =====
-        const tomorrowList = Array.isArray(data.tomorrowEvents)
-          ? data.tomorrowEvents
-          : Array.isArray(data.tomorrow)
-          ? data.tomorrow
-          : [];
-
-        setTodayEvents(todayList);
-        setYesterdayEvents(yesterdayList);
-        setTomorrowEvents(tomorrowList);
-
-        // ===== 주변 시설 =====
-        const rawPlaces = Array.isArray(data.nearbyPlaces)
+        // 주변 시설
+        const nearby = Array.isArray(data.nearbyPlaces)
           ? data.nearbyPlaces
-          : Array.isArray(data.studyPlaces)
-          ? data.studyPlaces
-          : Array.isArray(data.places)
-          ? data.places
           : [];
 
         setNearbyPlaces(
-          rawPlaces.map((p) => ({
+          nearby.map((p) => ({
             id: p.id,
             name: p.name,
             category: getPlaceTypeLabel(p.type),
@@ -211,10 +181,6 @@ export default function MapPage() {
       } catch (e) {
         console.error(e);
         setError("일정 정보를 불러오는 중 오류가 발생했습니다.");
-        setTodayEvents([]);
-        setYesterdayEvents([]);
-        setTomorrowEvents([]);
-        setNearbyPlaces([]);
       } finally {
         setLoading(false);
         hideLoading();
@@ -226,8 +192,9 @@ export default function MapPage() {
   const todayPlaceItems = useMemo(() => {
     const map = {};
     todayEvents.forEach((ev) => {
-      if (!ev.location) return;
-      const key = extractPlaceLabel(ev.location);
+      const location = ev.location || ev.place || ev.room;
+      if (!location) return;
+      const key = extractPlaceLabel(location);
       map[key] = (map[key] || 0) + 1;
     });
 
@@ -240,8 +207,9 @@ export default function MapPage() {
   const placeEventsMap = useMemo(() => {
     const map = {};
     todayEvents.forEach((ev) => {
-      if (!ev.location) return;
-      const key = extractPlaceLabel(ev.location);
+      const location = ev.location || ev.place || ev.room;
+      if (!location) return;
+      const key = extractPlaceLabel(location);
       if (!map[key]) map[key] = [];
       map[key].push(ev);
     });
@@ -264,7 +232,7 @@ export default function MapPage() {
   const prevItems = useMemo(
     () =>
       yesterdayEvents.map((ev, idx) => ({
-        id: ev.id ?? `y-${idx}`,
+        id: ev.id ?? `${ev.title || "past"}-${idx}`,
         category: getCategoryLabel(ev.category),
         title: ev.title || "",
       })),
@@ -274,7 +242,7 @@ export default function MapPage() {
   const nextItems = useMemo(
     () =>
       tomorrowEvents.map((ev, idx) => ({
-        id: ev.id ?? `t-${idx}`,
+        id: ev.id ?? `${ev.title || "upcoming"}-${idx}`,
         category: getCategoryLabel(ev.category),
         title: ev.title || "",
       })),
@@ -338,18 +306,18 @@ export default function MapPage() {
           onSelectPlace={handleSelectPlace}
         />
 
-        {/* 지난 일정 (어제) */}
+        {/* 지난 일정 */}
         <ScheduleList
           title="지난 일정"
           items={prevItems}
-          emptyText="어제는 등록된 일정이 없어요."
+          emptyText="지난 일정이 없어요."
         />
 
-        {/* 다음 일정 (내일) */}
+        {/* 다음 일정 */}
         <ScheduleList
           title="다음 일정"
           items={nextItems}
-          emptyText="내일 등록된 일정이 없어요."
+          emptyText="다가오는 일정이 없어요."
         />
 
         {/* 주변 시설 */}
