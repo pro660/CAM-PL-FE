@@ -1,3 +1,5 @@
+/* src/css/mypage/CourseSelectPage.css */
+
 .area-page {
   min-height: 100vh;
   background-color: #f3f3f5;
@@ -32,7 +34,7 @@
 }
 
 .area-header-right {
-  width: 1.5rem; /* back 버튼과 균형 맞추기용 */
+  width: 1.5rem;
 }
 
 /* 공통 body 레이아웃 */

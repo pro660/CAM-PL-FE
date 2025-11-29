@@ -1,3 +1,4 @@
+// src/components/mypage/SearchSheet.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../css/mypage/SearchSheet.css";
@@ -112,7 +113,7 @@ const CourseSearchBottomSheet = ({ onClose }) => {
     };
   }, []);
 
-  // 전체 강의 1번만 로딩
+  // 전체 강의 한번만 로딩
   useEffect(() => {
     let cancelled = false;
 
@@ -223,7 +224,7 @@ const CourseSearchBottomSheet = ({ onClose }) => {
     if (key === "type") {
       // 전공/교양 페이지로 이동
       onClose?.();
-      navigate("/course-area"); // 라우터에서 이 경로에 CourseAreaSelectPage 연결
+      navigate("/course-area");
       return;
     }
 
@@ -316,7 +317,7 @@ const CourseSearchBottomSheet = ({ onClose }) => {
             ))}
           </div>
 
-          {/* 전공/교양 제외한 필터 입력 박스 */}
+          {/* 전공/교양 제외 필터 입력 박스 */}
           {activeFilterConfig && activeFilterConfig.key !== "type" && (
             <div className="mypage-bottomsheet-filter-input-row">
               <div className="mypage-bottomsheet-filter-input-box">
@@ -332,9 +333,7 @@ const CourseSearchBottomSheet = ({ onClose }) => {
                       : "값을 입력하세요"
                   }
                   value={filterInput}
-                  onChange={(e) =>
-                    setFilterInput(e.target.value)
-                  }
+                  onChange={(e) => setFilterInput(e.target.value)}
                 />
               </div>
               <div className="mypage-bottomsheet-filter-input-actions">
@@ -424,9 +423,7 @@ const CourseSearchBottomSheet = ({ onClose }) => {
                       </span>
                       <span>
                         {course.courseCode}
-                        {course.section
-                          ? `-${course.section}`
-                          : ""}
+                        {course.section ? `-${course.section}` : ""}
                       </span>
                     </p>
                   </div>

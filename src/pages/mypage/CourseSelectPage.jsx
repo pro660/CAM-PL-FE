@@ -1,8 +1,32 @@
-//src/pages/mypage/CourseSelectPage.jsx
+// src/pages/mypage/CourseSelectPage.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../css/mypage/CourseSelectPage.css";
 import api from "../../api/axios";
+
+// 교양 3영역 아래에 붙일 이러닝 5개
+const LIBERAL_SPECIAL_NAMES = [
+  "본교사이버강좌",
+  "OCU컨소시엄사이버강좌",
+  "대전충남이러닝강좌",
+  "SDU(서울디지털대학)이러닝강좌",
+  "차세대디스플레이(COSS)이러닝강좌",
+];
+
+// 교양 영역 정렬 우선순위
+const LIBERAL_PRIMARY_ORDER = [
+  "교양필수",
+  "교양선택1영역(탐구)",
+  "교양선택2영역(상생)",
+  "교양선택3영역(진취)",
+  ...LIBERAL_SPECIAL_NAMES,
+];
+
+const isLiberalName = (name = "") => {
+  if (!name) return false;
+  if (name.startsWith("교양")) return true;
+  return LIBERAL_SPECIAL_NAMES.includes(name);
+};
 
 const CourseAreaSelectPage = () => {
   const navigate = useNavigate();
@@ -67,19 +91,25 @@ const CourseAreaSelectPage = () => {
     };
   }, []);
 
-  // 아주 단순한 분류: 이름이 "교양"으로 시작하면 교양, 아니면 전공
+  const liberalCategories = useMemo(() => {
+    const libs = categories.filter((c) => isLiberalName(c.name));
+    const sorted = [...libs].sort((a, b) => {
+      const ai = LIBERAL_PRIMARY_ORDER.indexOf(a.name);
+      const bi = LIBERAL_PRIMARY_ORDER.indexOf(b.name);
+
+      if (ai !== -1 || bi !== -1) {
+        if (ai === -1) return 1;
+        if (bi === -1) return -1;
+        return ai - bi;
+      }
+
+      return a.name.localeCompare(b.name, "ko-KR");
+    });
+    return sorted;
+  }, [categories]);
+
   const majorCategories = useMemo(
-    () =>
-      categories.filter(
-        (c) => c.name && !c.name.startsWith("교양")
-      ),
-    [categories]
-  );
-  const liberalCategories = useMemo(
-    () =>
-      categories.filter(
-        (c) => c.name && c.name.startsWith("교양")
-      ),
+    () => categories.filter((c) => !isLiberalName(c.name)),
     [categories]
   );
 
@@ -101,10 +131,8 @@ const CourseAreaSelectPage = () => {
   // 헤더 왼쪽 화살표 동작
   const handleBack = () => {
     if (step === "TYPE") {
-      // 가장 처음 화면에서는 그냥 이전 페이지(마이페이지)로
       navigate(-1);
     } else {
-      // 전공/교양 리스트 화면에서는 1단계로만 돌아감
       setStep("TYPE");
       setSearchText("");
     }
@@ -140,8 +168,11 @@ const CourseAreaSelectPage = () => {
       console.warn("course_area_filter 저장 실패:", e);
     }
 
-    // 선택 끝났으면 바로 마이페이지(바텀시트 있는 곳)로 복귀
-    navigate(-1);
+    // 마이페이지로 돌아가면서 바텀시트 다시 열리도록 state 전달
+    navigate("/mypage", {
+      replace: true,
+      state: { fromCourseArea: true },
+    });
   };
 
   return (
@@ -156,7 +187,6 @@ const CourseAreaSelectPage = () => {
           ←
         </button>
         <h1 className="area-header-title">전공/영역</h1>
-        {/* 가운데 정렬용 더미 */}
         <div className="area-header-right" />
       </header>
 
@@ -202,9 +232,7 @@ const CourseAreaSelectPage = () => {
                 전공 목록을 불러오는 중이에요...
               </p>
             ) : currentList.length === 0 ? (
-              <p className="area-list-info">
-                전공이 없습니다.
-              </p>
+              <p className="area-list-info">전공이 없습니다.</p>
             ) : (
               currentList.map((cat) => {
                 const isSelected =
@@ -258,9 +286,7 @@ const CourseAreaSelectPage = () => {
                 교양 영역을 불러오는 중이에요...
               </p>
             ) : currentList.length === 0 ? (
-              <p className="area-list-info">
-                교양 영역이 없습니다.
-              </p>
+              <p className="area-list-info">교양 영역이 없습니다.</p>
             ) : (
               currentList.map((cat) => (
                 <button

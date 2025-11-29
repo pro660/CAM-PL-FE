@@ -14,23 +14,23 @@ import ResetPasswordPage from "../pages/login/ResetPasswordPage";
 import ResetPasswordDonePage from "../pages/login/ResetPasswordDonePage";
 import KakaoCallbackPage from "../pages/login/KakaoCallbackPage";
 import CalendarPage from "../pages/calendar/CalendarPage";
-import MapPage from "../pages/map/MapPage";               // ✅ 맵 페이지
-import MyPage from "../pages/mypage/MyPage";              // ✅ 마이페이지
-import CourseAreaSelectPage from "../pages/mypage/CourseSelectPage"; // ✅ 전공/영역 선택 페이지
+import MapPage from "../pages/map/MapPage"; // 맵 페이지
+import MyPage from "../pages/mypage/MyPage"; // 마이페이지
+import CourseAreaSelectPage from "../pages/mypage/CourseSelectPage"; // 전공/영역 선택 페이지
 
-import Loader from "../components/common/Loader";          // ✅ 로더
-import { useLoading } from "../context/LoadingContext.jsx"; // ✅ 로딩 컨텍스트
+import Loader from "../components/common/Loader";
+import { useLoading } from "../context/LoadingContext.jsx";
 
 function Layout({ children }) {
   const location = useLocation();
-  const { isLoading } = useLoading(); // ✅ 전역 로딩 상태 사용
+  const { isLoading } = useLoading();
 
-  // ✅ Header / Menu 를 숨길 경로들
+  // Header / Menu 숨길 경로
   const hiddenPaths = [
     "/login",
     "/signup",
-    "/oauth/signed-in", // ✅ 콜백 페이지
-    "/course-area",     // ✅ 전공/영역 선택 페이지 (헤더/메뉴 숨김)
+    "/oauth/signed-in",
+    "/course-area",
   ];
 
   const shouldHide = hiddenPaths.some((path) =>
@@ -41,7 +41,6 @@ function Layout({ children }) {
 
   return (
     <>
-      {/* ✅ 전역 로더 오버레이 */}
       {isLoading && (
         <div
           style={{
@@ -59,6 +58,7 @@ function Layout({ children }) {
       )}
 
       {!shouldHide && <Header />}
+
       <main
         style={{
           minHeight: "100vh",
@@ -69,6 +69,7 @@ function Layout({ children }) {
       >
         {children}
       </main>
+
       {!shouldHide && <Menu />}
     </>
   );
@@ -81,7 +82,7 @@ function AppRouter() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
 
-          {/* ✅ 카카오 콜백 */}
+          {/* 카카오 콜백 */}
           <Route path="/oauth/signed-in" element={<KakaoCallbackPage />} />
 
           <Route path="/login/form" element={<LoginFormPage />} />
@@ -111,7 +112,7 @@ function AppRouter() {
             }
           />
 
-          {/* ✅ 맵 페이지 라우트 */}
+          {/* 맵 페이지 */}
           <Route
             path="/map"
             element={
@@ -121,7 +122,7 @@ function AppRouter() {
             }
           />
 
-          {/* ✅ 마이페이지 라우트 */}
+          {/* 마이페이지 */}
           <Route
             path="/mypage"
             element={
@@ -131,7 +132,7 @@ function AppRouter() {
             }
           />
 
-          {/* ✅ 전공/영역 선택 페이지 라우트 */}
+          {/* 전공/영역 선택 페이지 */}
           <Route
             path="/course-area"
             element={

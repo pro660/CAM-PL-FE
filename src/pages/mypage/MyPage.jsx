@@ -1,6 +1,6 @@
-// src/pages/mypage/MyPage.jsx 
+// src/pages/mypage/MyPage.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "../../css/mypage/MyPage.css";
 
 import api from "../../api/axios";
@@ -24,11 +24,12 @@ export default function MyPage() {
   const [courses, setCourses] = useState([]);
   const { showLoading, hideLoading } = useLoading();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // ✅ 강의 추가 바텀시트 열림 여부
+  // 강의 추가 바텀시트 열림 여부
   const [isCourseSheetOpen, setIsCourseSheetOpen] = useState(false);
 
-  // ★ 사용자 아이디 (추후 AuthContext 연동용) → camp_auth.name 사용
+  // 사용자 이름
   const [userName, setUserName] = useState("CAM-PL 사용자");
 
   useEffect(() => {
@@ -81,8 +82,16 @@ export default function MyPage() {
     };
   }, [showLoading, hideLoading]);
 
+  // 전공/영역 페이지에서 돌아온 경우: 바텀시트 자동 오픈
+  useEffect(() => {
+    if (location.state?.fromCourseArea) {
+      setIsCourseSheetOpen(true);
+      // state 제거
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location, navigate]);
+
   const handleEditProfile = () => {
-    // 나중에 개인정보 수정 페이지 생기면 여기서 이동
     console.log("개인정보 수정 클릭");
   };
 
@@ -94,7 +103,6 @@ export default function MyPage() {
     } catch (e) {
       console.error(e);
     } finally {
-      // 토큰 / 유저정보 정리 (키 이름은 프로젝트에 맞게 조정)
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       navigate("/login", { replace: true });
@@ -178,7 +186,7 @@ export default function MyPage() {
         </button>
       </section>
 
-      {/* ✅ 강의 검색 바텀시트 */}
+      {/* 강의 검색 바텀시트 */}
       {isCourseSheetOpen && (
         <CourseSearchBottomSheet onClose={handleToggleCourseSheet} />
       )}
