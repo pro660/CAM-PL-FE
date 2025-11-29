@@ -1,6 +1,6 @@
 // src/components/mypage/SearchSheet.jsx
 import React, { useEffect, useState } from "react";
-import "../../css/mypage/CourseSearchBottomSheet.css";
+import "../../css/mypage/SearchSheet.css";
 import api from "../../api/axios";
 
 const mapDayToKor = (dayOfWeek) => {

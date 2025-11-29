@@ -6,7 +6,7 @@ import "../../css/mypage/MyPage.css";
 import api from "../../api/axios";
 import { useLoading } from "../../context/LoadingContext.jsx";
 import MyTimetable from "../../components/mypage/MyTimetable.jsx";
-import CourseSearchBottomSheet from "../../components/mypage/CourseSearchBottomSheet.jsx";
+import CourseSearchBottomSheet from "../../components/mypage/SearchSheet.jsx";
 
 import PenImg from "../../images/mypage/pen.svg";
 
