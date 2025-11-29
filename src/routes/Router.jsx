@@ -15,7 +15,8 @@ import ResetPasswordDonePage from "../pages/login/ResetPasswordDonePage";
 import KakaoCallbackPage from "../pages/login/KakaoCallbackPage";
 import CalendarPage from "../pages/calendar/CalendarPage";
 import MapPage from "../pages/map/MapPage";               // ✅ 맵 페이지
-import MyPage from "../pages/mypage/MyPage";              // ✅ 마이페이지 추가
+import MyPage from "../pages/mypage/MyPage";              // ✅ 마이페이지
+import CourseAreaSelectPage from "../pages/mypage/CourseSelectPage"; // ✅ 전공/영역 선택 페이지
 
 import Loader from "../components/common/Loader";          // ✅ 로더
 import { useLoading } from "../context/LoadingContext.jsx"; // ✅ 로딩 컨텍스트
@@ -24,15 +25,19 @@ function Layout({ children }) {
   const location = useLocation();
   const { isLoading } = useLoading(); // ✅ 전역 로딩 상태 사용
 
+  // ✅ Header / Menu 를 숨길 경로들
   const hiddenPaths = [
     "/login",
     "/signup",
     "/oauth/signed-in", // ✅ 콜백 페이지
+    "/course-area",     // ✅ 전공/영역 선택 페이지 (헤더/메뉴 숨김)
   ];
 
   const shouldHide = hiddenPaths.some((path) =>
     location.pathname.startsWith(path)
   );
+
+  const mainBottomPadding = shouldHide ? "16px" : "72px";
 
   return (
     <>
@@ -57,7 +62,7 @@ function Layout({ children }) {
       <main
         style={{
           minHeight: "100vh",
-          padding: "16px 16px 72px",
+          padding: `16px 16px ${mainBottomPadding}`,
           maxWidth: 600,
           margin: "0 auto",
         }}
@@ -92,7 +97,7 @@ function AppRouter() {
             path="/"
             element={
               <ProtectedRoute>
-              <HomePage />
+                <HomePage />
               </ProtectedRoute>
             }
           />
@@ -101,7 +106,7 @@ function AppRouter() {
             path="/calendar"
             element={
               <ProtectedRoute>
-              <CalendarPage />
+                <CalendarPage />
               </ProtectedRoute>
             }
           />
@@ -111,7 +116,7 @@ function AppRouter() {
             path="/map"
             element={
               <ProtectedRoute>
-              <MapPage />
+                <MapPage />
               </ProtectedRoute>
             }
           />
@@ -121,7 +126,17 @@ function AppRouter() {
             path="/mypage"
             element={
               <ProtectedRoute>
-              <MyPage />
+                <MyPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ✅ 전공/영역 선택 페이지 라우트 */}
+          <Route
+            path="/course-area"
+            element={
+              <ProtectedRoute>
+                <CourseAreaSelectPage />
               </ProtectedRoute>
             }
           />

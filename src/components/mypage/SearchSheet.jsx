@@ -1,5 +1,5 @@
-// src/components/mypage/SearchSheet.jsx
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "../../css/mypage/SearchSheet.css";
 import api from "../../api/axios";
 
@@ -64,17 +64,35 @@ const FILTER_CONFIG = [
   { key: "keyword", label: "검색어", defaultValue: "없음" },
 ];
 
+const readSavedAreaFilterLabel = () => {
+  try {
+    const raw = localStorage.getItem("course_area_filter");
+    if (!raw) return "전체";
+    const parsed = JSON.parse(raw);
+    return parsed?.categoryName || "전체";
+  } catch (e) {
+    return "전체";
+  }
+};
+
 const CourseSearchBottomSheet = ({ onClose }) => {
+  const navigate = useNavigate();
+
+  const [allCourses, setAllCourses] = useState([]);
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
-  const [closing, setClosing] = useState(false); // 닫힘 애니메이션 여부
+  const [closing, setClosing] = useState(false);
 
   // 필터 UI 상태
   const [activeFilter, setActiveFilter] = useState(null); // type | time | ...
   const [filterValues, setFilterValues] = useState(() =>
     FILTER_CONFIG.reduce((acc, f) => {
-      acc[f.key] = f.defaultValue;
+      if (f.key === "type") {
+        acc[f.key] = readSavedAreaFilterLabel();
+      } else {
+        acc[f.key] = f.defaultValue;
+      }
       return acc;
     }, {})
   );
@@ -94,41 +112,122 @@ const CourseSearchBottomSheet = ({ onClose }) => {
     };
   }, []);
 
-  // 공통 강의 조회 함수 (q가 없으면 전체)
-  const fetchCourses = async (keyword = "") => {
-    const q = keyword.trim();
-    setLoading(true);
-    try {
-      const res = await api.get("/courses", {
-        params: q ? { q } : {},
-      });
-      const list = Array.isArray(res.data) ? res.data : [];
-      setCourses(list);
-    } catch (err) {
-      console.error("강의 검색 실패:", err);
-      setCourses([]);
-    } finally {
-      setLoading(false);
-      setHasLoadedOnce(true);
-    }
+  // 전체 강의 1번만 로딩
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchAllCourses = async () => {
+      setLoading(true);
+      try {
+        const res = await api.get("/courses");
+        if (cancelled) return;
+        const list = Array.isArray(res.data) ? res.data : [];
+        setAllCourses(list);
+        setHasLoadedOnce(true);
+      } catch (err) {
+        console.error("강의 목록 조회 실패:", err);
+        if (!cancelled) {
+          setAllCourses([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchAllCourses();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // 필터 적용 함수
+  const buildFilteredCourses = (base, filters) => {
+    if (!base || base.length === 0) return [];
+
+    return base.filter((course) => {
+      // 전공/교양(카테고리) 필터
+      if (filters.type && filters.type !== "전체") {
+        if ((course.categoryName || "") !== filters.type) {
+          return false;
+        }
+      }
+
+      // 학년 필터
+      if (filters.year && filters.year !== "전체") {
+        if (String(course.year || "") !== String(filters.year)) {
+          return false;
+        }
+      }
+
+      // 학점 필터
+      if (filters.credit && filters.credit !== "전체") {
+        if (String(course.credit || "") !== String(filters.credit)) {
+          return false;
+        }
+      }
+
+      // 시간 필터: 문자열 포함 여부로만 처리
+      if (filters.time && filters.time !== "전체") {
+        const timesText = formatTimes(course.times || []);
+        if (!timesText.includes(filters.time)) {
+          return false;
+        }
+      }
+
+      // 검색어 필터
+      const kw =
+        filters.keyword && filters.keyword !== "없음"
+          ? filters.keyword.trim().toLowerCase()
+          : "";
+      if (kw) {
+        const haystack = (
+          (course.name || "") +
+          " " +
+          (course.professor || "") +
+          " " +
+          (course.courseCode || "")
+        )
+          .toLowerCase()
+          .replace(/\s+/g, " ");
+        if (!haystack.includes(kw)) {
+          return false;
+        }
+      }
+
+      return true;
+    });
   };
 
-  // 처음 열릴 때 전체 강의 불러오기
+  // allCourses / filterValues 변경 시마다 재필터링
   useEffect(() => {
-    fetchCourses("");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const next = buildFilteredCourses(allCourses, filterValues);
+    setCourses(next);
+  }, [allCourses, filterValues]);
 
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) {
-      setClosing(true); // 닫힘 애니메이션 시작
+      setClosing(true);
     }
   };
 
-  // 필터 pill 클릭 시
+  const handleSheetAnimationEnd = () => {
+    if (closing) {
+      onClose?.();
+    }
+  };
+
+  // 필터 pill 클릭
   const handleFilterClick = (key) => {
+    if (key === "type") {
+      // 전공/교양 페이지로 이동
+      onClose?.();
+      navigate("/course-area"); // 라우터에서 이 경로에 CourseAreaSelectPage 연결
+      return;
+    }
+
     if (activeFilter === key) {
-      // 같은 필터 다시 누르면 닫기
       setActiveFilter(null);
       setFilterInput("");
       return;
@@ -139,13 +238,12 @@ const CourseSearchBottomSheet = ({ onClose }) => {
 
     setActiveFilter(key);
     const currentValue = filterValues[key];
-    // 기본값이면 입력칸은 비워두기
     setFilterInput(
       currentValue === config.defaultValue ? "" : currentValue || ""
     );
   };
 
-  // 필터 입력 적용
+  // 필터 적용
   const handleFilterApply = () => {
     if (!activeFilterConfig) return;
 
@@ -158,17 +256,11 @@ const CourseSearchBottomSheet = ({ onClose }) => {
       [key]: displayValue,
     }));
 
-    // 검색어 필터는 실제 검색도 수행
-    if (key === "keyword") {
-      fetchCourses(trimmed);
-    }
-
-    // 입력 패널 닫기
     setActiveFilter(null);
     setFilterInput("");
   };
 
-  // 필터 입력 리셋
+  // 필터 초기화
   const handleFilterReset = () => {
     if (!activeFilterConfig) return;
     const { key, defaultValue } = activeFilterConfig;
@@ -178,19 +270,8 @@ const CourseSearchBottomSheet = ({ onClose }) => {
       [key]: defaultValue,
     }));
 
-    if (key === "keyword") {
-      fetchCourses("");
-    }
-
     setFilterInput("");
     setActiveFilter(null);
-  };
-
-  // 애니메이션 종료 후 실제 onClose 호출
-  const handleSheetAnimationEnd = () => {
-    if (closing) {
-      onClose?.();
-    }
   };
 
   return (
@@ -205,7 +286,7 @@ const CourseSearchBottomSheet = ({ onClose }) => {
         onClick={(e) => e.stopPropagation()}
         onAnimationEnd={handleSheetAnimationEnd}
       >
-        {/* 상단 드래그 핸들 + 제목 줄 */}
+        {/* 상단 핸들 + 제목 */}
         <div className="mypage-bottomsheet-header">
           <div className="mypage-bottomsheet-handle" />
           <div className="mypage-bottomsheet-title-row">
@@ -214,7 +295,7 @@ const CourseSearchBottomSheet = ({ onClose }) => {
         </div>
 
         <div className="mypage-bottomsheet-body">
-          {/* 필터 pill 영역 */}
+          {/* 필터 pill들 */}
           <div className="mypage-bottomsheet-filter-row">
             {FILTER_CONFIG.map((f) => (
               <button
@@ -235,8 +316,8 @@ const CourseSearchBottomSheet = ({ onClose }) => {
             ))}
           </div>
 
-          {/* ✅ 필터 클릭 시 뜨는 검색/입력 칸 (검색어 필터 포함) */}
-          {activeFilterConfig && (
+          {/* 전공/교양 제외한 필터 입력 박스 */}
+          {activeFilterConfig && activeFilterConfig.key !== "type" && (
             <div className="mypage-bottomsheet-filter-input-row">
               <div className="mypage-bottomsheet-filter-input-box">
                 <span className="mypage-bottomsheet-filter-input-label">
@@ -251,7 +332,9 @@ const CourseSearchBottomSheet = ({ onClose }) => {
                       : "값을 입력하세요"
                   }
                   value={filterInput}
-                  onChange={(e) => setFilterInput(e.target.value)}
+                  onChange={(e) =>
+                    setFilterInput(e.target.value)
+                  }
                 />
               </div>
               <div className="mypage-bottomsheet-filter-input-actions">
@@ -273,21 +356,19 @@ const CourseSearchBottomSheet = ({ onClose }) => {
             </div>
           )}
 
-          {/* ⬇️ 항상 떠 있던 검색바는 제거 */}
-
           {/* 강의 리스트 */}
           <div className="mypage-bottomsheet-course-list">
-            {loading ? (
+            {loading && !hasLoadedOnce ? (
               <p className="mypage-bottomsheet-info-text">
                 강의를 불러오는 중이에요...
               </p>
             ) : !hasLoadedOnce ? (
               <p className="mypage-bottomsheet-info-text">
-                강의를 불러오는 중이에요...
+                강의 목록이 없어요.
               </p>
             ) : courses.length === 0 ? (
               <p className="mypage-bottomsheet-info-text">
-                검색 결과가 없습니다.
+                필터에 해당하는 강의가 없습니다.
               </p>
             ) : (
               courses.map((course) => (
@@ -343,7 +424,9 @@ const CourseSearchBottomSheet = ({ onClose }) => {
                       </span>
                       <span>
                         {course.courseCode}
-                        {course.section ? `-${course.section}` : ""}
+                        {course.section
+                          ? `-${course.section}`
+                          : ""}
                       </span>
                     </p>
                   </div>

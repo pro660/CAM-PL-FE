@@ -1,0 +1,164 @@
+.area-page {
+  min-height: 100vh;
+  background-color: #f3f3f5;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 상단 헤더 */
+.area-header {
+  height: 3.2rem;
+  padding: 0 1rem;
+  display: flex;
+  align-items: center;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.area-back-btn {
+  border: none;
+  background: transparent;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #666666;
+}
+
+.area-header-title {
+  flex: 1;
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #333333;
+}
+
+.area-header-right {
+  width: 1.5rem; /* back 버튼과 균형 맞추기용 */
+}
+
+/* 공통 body 레이아웃 */
+.area-body {
+  flex: 1;
+  padding: 0.8rem 1rem 1rem;
+}
+
+/* 1단계: 전공 / 교양 선택 */
+.area-body-type {
+  background-color: #f3f3f5;
+}
+
+.area-type-card {
+  width: 100%;
+  border: none;
+  outline: none;
+  border-radius: 1rem;
+  background-color: #ffffff;
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.area-type-text {
+  font-size: 0.9rem;
+  color: #333333;
+  font-weight: 500;
+}
+
+.area-type-arrow {
+  font-size: 1rem;
+  color: #bbbbbb;
+}
+
+/* 2단계: 검색 + 리스트 공통 */
+.area-body-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* 검색 박스 */
+.area-search-box {
+  display: flex;
+  align-items: center;
+  padding: 0.4rem 0.75rem;
+  border-radius: 0.9rem;
+  border: 1px solid #dddddd;
+  background-color: #ffffff;
+}
+
+.area-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 0.8rem;
+  background: transparent;
+  color: #333333;
+}
+
+.area-search-input::placeholder {
+  color: #b2b2b2;
+}
+
+.area-search-icon {
+  font-size: 0.85rem;
+  color: #b2b2b2;
+  margin-left: 0.25rem;
+}
+
+/* 리스트 전체 박스 */
+.area-list {
+  flex: 1;
+  background-color: #ffffff;
+  border-radius: 1rem;
+  overflow-y: auto;
+  padding: 0.2rem 0;
+}
+
+.area-list-info {
+  padding: 0.7rem 0.9rem;
+  font-size: 0.8rem;
+  color: #999999;
+}
+
+/* 리스트 아이템 공통 */
+.area-list-item {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 0.6rem 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.area-list-item + .area-list-item {
+  border-top: 1px solid #f0f0f0;
+}
+
+.area-list-item-text {
+  text-align: left;
+  color: #333333;
+  line-height: 1.35;
+}
+
+/* 전공 리스트용 (선택 시 보라색) */
+.area-list-item-major.selected {
+  background-color: #eee7ff;
+}
+
+.area-list-item-check {
+  font-size: 0.85rem;
+  color: #8256e9;
+}
+
+/* 교양 리스트용 (오른쪽 화살표) */
+.area-list-item-arrow {
+  font-size: 1rem;
+  color: #c0c0c0;
+}
