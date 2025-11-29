@@ -91,18 +91,18 @@ function AppRouter() {
           <Route
             path="/"
             element={
-              // <ProtectedRoute>
+              <ProtectedRoute>
               <HomePage />
-              // </ProtectedRoute>
+              </ProtectedRoute>
             }
           />
 
           <Route
             path="/calendar"
             element={
-              // <ProtectedRoute>
+              <ProtectedRoute>
               <CalendarPage />
-              // </ProtectedRoute>
+              </ProtectedRoute>
             }
           />
 
@@ -110,9 +110,9 @@ function AppRouter() {
           <Route
             path="/map"
             element={
-              // <ProtectedRoute>
+              <ProtectedRoute>
               <MapPage />
-              // </ProtectedRoute>
+              </ProtectedRoute>
             }
           />
 
@@ -120,9 +120,9 @@ function AppRouter() {
           <Route
             path="/mypage"
             element={
-              // <ProtectedRoute>
+              <ProtectedRoute>
               <MyPage />
-              // </ProtectedRoute>
+              </ProtectedRoute>
             }
           />
         </Routes>
