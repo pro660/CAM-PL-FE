@@ -183,9 +183,9 @@ export default function MapPage() {
 
       try {
         const [resY, resToday, resT, resMap] = await Promise.all([
-          fetchDay(yesterday),                           // 어제 일정
-          fetchDay(today),                               // 오늘 일정
-          fetchDay(tomorrow),                            // 내일 일정
+          fetchDay(yesterday), // 어제 일정
+          fetchDay(today), // 오늘 일정
+          fetchDay(tomorrow), // 내일 일정
           api.get("/calendar/map/36.690711/126.581783"), // 주변 시설
         ]);
 
@@ -289,7 +289,7 @@ export default function MapPage() {
     setShowRecommend(false);
   };
 
-  // 모달에서 “일정에 추가하기” 눌렀을 때
+  // 모달에서 “일정에 추가하기” 눌렀을 때 (기존 로직)
   const handleAddToScheduleFromModal = ({ place, category }) => {
     if (!place) return;
 
@@ -305,9 +305,20 @@ export default function MapPage() {
     setShowRecommend(false);
   };
 
+  // ✅ 주변 시설 카드의 + 버튼 클릭 시
   const handleClickAddPlace = (place) => {
-    // 나중에 즐겨찾기 등 붙이면 여기서 처리
-    console.log("주변 시설 + 버튼 클릭:", place);
+    if (!place) return;
+
+    navigate("/calendar", {
+      state: {
+        fromPlaceRecommend: {
+          // 장소 이름만 넘김 → CalendarPage에서 initialLocation으로 들어감
+          location: place.name,
+          // category는 넘기지 않으면 CalendarPage에서 기본값("LECTURE") 사용
+          // 필요해지면 여기서 "MEETING" 같은 카테고리로 매핑해도 됨.
+        },
+      },
+    });
   };
 
   // 오늘의 일정 칩 클릭 핸들러
