@@ -48,7 +48,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.7rem;
-  margin-bottom: 1.6rem;
+  margin-bottom: 2rem;
 }
 
 .year-chip {
@@ -57,7 +57,7 @@
   border-radius: 0.9rem;
   border: 1px solid #dedede;
   background-color: #ffffff;
-  height: 2.5rem;
+  height: 4rem;
   display: flex;
   align-items: center;
   justify-content: center;
