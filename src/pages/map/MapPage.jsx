@@ -13,21 +13,6 @@ import PlaceEventsBar from "../../components/map/PlaceEventsBar";
 import api from "../../api/axios";
 import { useLoading } from "../../context/LoadingContext";
 
-// ===== 날짜 유틸 =====
-// yyyy-MM-DD
-function formatDateKey(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-function addDays(date, diff) {
-  const d = new Date(date);
-  d.setDate(d.getDate() + diff);
-  return d;
-}
-
 // ===== 카테고리/타입 유틸 =====
 function getCategoryLabel(category) {
   if (!category) return "일정";
@@ -106,12 +91,6 @@ function extractPlaceLabel(location) {
   return text.split(" ")[0];
 }
 
-// /calendar/day 응답 정규화
-function normalizeDayResponse(res) {
-  const body = res.data ?? [];
-  return Array.isArray(body) ? body : body.events || body.items || [];
-}
-
 // 요일 + 시간 포맷 (슬라이더 카드용)
 const DAY_NAMES_SHORT = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -134,6 +113,10 @@ function formatEventTimeRange(startIso, endIso) {
   return endText ? `${weekday} ${startText} ~ ${endText}` : `${weekday} ${startText}`;
 }
 
+// ✅ 맵용 고정 좌표 (캠퍼스 기준)
+const MAP_LAT = 36.690711;
+const MAP_LON = 126.581783;
+
 export default function MapPage() {
   const navigate = useNavigate();
   const { showLoading, hideLoading } = useLoading();
@@ -142,7 +125,7 @@ export default function MapPage() {
   const [yesterdayEvents, setYesterdayEvents] = useState([]);
   const [tomorrowEvents, setTomorrowEvents] = useState([]);
 
-  // summary/today에서 내려오는 주변 시설
+  // /calendar/map 에서 내려오는 주변 시설
   const [nearbyPlaces, setNearbyPlaces] = useState([]);
 
   const [loading, setLoading] = useState(false); // 리스트 섹션 로딩
@@ -154,51 +137,69 @@ export default function MapPage() {
   // 👉 오늘의 일정 칩에서 선택된 건물명
   const [selectedPlace, setSelectedPlace] = useState(null);
 
-  // 오늘 날짜(시분초 0으로 맞춤)
+  // 오늘 날짜(시분초 0으로 맞춤) - 필요 시 UI에 활용 가능
   const today = useMemo(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), now.getDate());
   }, []);
 
-  // 어제 / 오늘 요약 / 내일 일정 로딩
+  // /calendar/map/{lat}/{lon} 한 번만 호출해서
+  // - 오늘 일정
+  // - 어제 일정
+  // - 내일 일정
+  // - 주변 시설
+  // 모두 가져오기
   useEffect(() => {
-    const yesterday = addDays(today, -1);
-    const tomorrow = addDays(today, 1);
-
-    const fetchDay = (date) =>
-      api.get("/calendar/day", { params: { date: formatDateKey(date) } });
-
     (async () => {
       setLoading(true);
       showLoading();
       setError("");
 
       try {
-        const [resY, resTodaySummary, resN] = await Promise.all([
-          fetchDay(yesterday),
-          api.get("/calendar/summary/today"),
-          fetchDay(tomorrow),
-        ]);
+        const res = await api.get(
+          `/calendar/map/${MAP_LAT}/${MAP_LON}`
+        );
 
-        // 지난/다음 일정
-        setYesterdayEvents(normalizeDayResponse(resY));
-        setTomorrowEvents(normalizeDayResponse(resN));
+        const data = res.data ?? {};
 
-        // 오늘 요약
-        const summary = resTodaySummary.data ?? {};
-        const events = Array.isArray(summary.events) ? summary.events : [];
-        const lectures = Array.isArray(summary.lectures)
-          ? summary.lectures
+        // ===== 오늘 일정 =====
+        const todayList = Array.isArray(data.todayEvents)
+          ? data.todayEvents
+          : Array.isArray(data.today)
+          ? data.today
+          : Array.isArray(data.events)
+          ? data.events
           : [];
 
-        setTodayEvents([...events, ...lectures]);
+        // ===== 어제 일정 =====
+        const yesterdayList = Array.isArray(data.yesterdayEvents)
+          ? data.yesterdayEvents
+          : Array.isArray(data.yesterday)
+          ? data.yesterday
+          : [];
 
-        const studyPlaces = Array.isArray(summary.studyPlaces)
-          ? summary.studyPlaces
+        // ===== 내일 일정 =====
+        const tomorrowList = Array.isArray(data.tomorrowEvents)
+          ? data.tomorrowEvents
+          : Array.isArray(data.tomorrow)
+          ? data.tomorrow
+          : [];
+
+        setTodayEvents(todayList);
+        setYesterdayEvents(yesterdayList);
+        setTomorrowEvents(tomorrowList);
+
+        // ===== 주변 시설 =====
+        const rawPlaces = Array.isArray(data.nearbyPlaces)
+          ? data.nearbyPlaces
+          : Array.isArray(data.studyPlaces)
+          ? data.studyPlaces
+          : Array.isArray(data.places)
+          ? data.places
           : [];
 
         setNearbyPlaces(
-          studyPlaces.map((p) => ({
+          rawPlaces.map((p) => ({
             id: p.id,
             name: p.name,
             category: getPlaceTypeLabel(p.type),
@@ -210,12 +211,16 @@ export default function MapPage() {
       } catch (e) {
         console.error(e);
         setError("일정 정보를 불러오는 중 오류가 발생했습니다.");
+        setTodayEvents([]);
+        setYesterdayEvents([]);
+        setTomorrowEvents([]);
+        setNearbyPlaces([]);
       } finally {
         setLoading(false);
         hideLoading();
       }
     })();
-  }, [today, showLoading, hideLoading]);
+  }, [showLoading, hideLoading]);
 
   // 오늘 일정 → 장소별 카운트 (칩용)
   const todayPlaceItems = useMemo(() => {
@@ -258,8 +263,8 @@ export default function MapPage() {
   // 지난 / 다음 일정용 리스트
   const prevItems = useMemo(
     () =>
-      yesterdayEvents.map((ev) => ({
-        id: ev.id,
+      yesterdayEvents.map((ev, idx) => ({
+        id: ev.id ?? `y-${idx}`,
         category: getCategoryLabel(ev.category),
         title: ev.title || "",
       })),
@@ -268,8 +273,8 @@ export default function MapPage() {
 
   const nextItems = useMemo(
     () =>
-      tomorrowEvents.map((ev) => ({
-        id: ev.id,
+      tomorrowEvents.map((ev, idx) => ({
+        id: ev.id ?? `t-${idx}`,
         category: getCategoryLabel(ev.category),
         title: ev.title || "",
       })),
