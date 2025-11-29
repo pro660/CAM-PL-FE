@@ -100,24 +100,37 @@ const readSavedYearFilter = () => {
   }
 };
 
+/** 학점 필터 (course_credit_filter)
+ * credits: ["1","2","3","4"] 중 일부
+ * label  : "1학점, 2학점" 같은 표시용 텍스트
+ */
+const readSavedCreditFilter = () => {
+  try {
+    const raw = localStorage.getItem("course_credit_filter");
+    if (!raw) return { credits: [], label: "전체" };
+    const parsed = JSON.parse(raw);
+    const credits = Array.isArray(parsed.credits) ? parsed.credits : [];
+    return {
+      credits,
+      label: parsed.label || "전체",
+    };
+  } catch {
+    return { credits: [], label: "전체" };
+  }
+};
+
 /**
  * /api/courses 에 넘길 쿼리 파라미터 빌드
  *  - categoryId : 전공/교양(카테고리)
- *  - credit     : 단일 학점
  *  - q          : 검색어
  *
- *  학년은 여러 개 선택 + 기타(ETC)가 있어서 클라이언트에서만 필터링.
- *  시간(time)도 현재는 문자열 포함으로만 필터해서 클라이언트에서 처리.
+ *  학년 / 학점 / 시간은 현재 클라이언트에서만 필터링.
  */
 const buildApiParams = (filters, categoryId) => {
   const params = {};
 
   if (categoryId) {
     params.categoryId = categoryId;
-  }
-
-  if (filters.credit && filters.credit !== "전체") {
-    params.credit = filters.credit.trim();
   }
 
   if (filters.keyword && filters.keyword !== "없음") {
@@ -136,20 +149,40 @@ const normalizeCourseYear = (year) => {
 };
 
 const ALL_YEAR_KEYS = ["1", "2", "3", "4", "ETC"];
+const ALL_CREDIT_KEYS = ["1", "2", "3", "4"];
 
-/** 서버 결과에 학년/시간 필터 적용 */
-const applyClientSideFilters = (base, filters, selectedYears) => {
+/** 서버 결과에 학년/학점/시간 필터 적용 */
+const applyClientSideFilters = (
+  base,
+  filters,
+  selectedYears,
+  selectedCredits
+) => {
   if (!base || base.length === 0) return [];
 
   const years = Array.isArray(selectedYears) ? selectedYears : [];
   const useYearFilter =
     years.length > 0 && years.length < ALL_YEAR_KEYS.length;
 
+  const credits = Array.isArray(selectedCredits)
+    ? selectedCredits
+    : [];
+  const useCreditFilter =
+    credits.length > 0 && credits.length < ALL_CREDIT_KEYS.length;
+
   return base.filter((course) => {
     // 학년 필터
     if (useYearFilter) {
       const key = normalizeCourseYear(course.year);
       if (!years.includes(key)) {
+        return false;
+      }
+    }
+
+    // 학점 필터
+    if (useCreditFilter) {
+      const cKey = String(course.credit ?? "");
+      if (!credits.includes(cKey)) {
         return false;
       }
     }
@@ -171,24 +204,28 @@ const CourseSearchBottomSheet = ({ onClose }) => {
 
   const savedArea = useMemo(readSavedAreaFilter, []);
   const savedYear = useMemo(readSavedYearFilter, []);
+  const savedCredit = useMemo(readSavedCreditFilter, []);
 
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [closing, setClosing] = useState(false);
 
-  // 서버 쿼리용 카테고리 ID / 학년 선택값
+  // 서버 쿼리용 카테고리 ID / 학년 / 학점 선택값
   const [selectedCategoryId] = useState(savedArea.categoryId);
   const [selectedYears] = useState(savedYear.years || []);
+  const [selectedCredits] = useState(savedCredit.credits || []);
 
   // 필터 UI 상태
-  const [activeFilter, setActiveFilter] = useState(null); // type | time | year | ...
+  const [activeFilter, setActiveFilter] = useState(null); // type | time | year | credit | ...
   const [filterValues, setFilterValues] = useState(() =>
     FILTER_CONFIG.reduce((acc, f) => {
       if (f.key === "type") {
         acc[f.key] = savedArea.categoryName; // 전공/교양 라벨
       } else if (f.key === "year") {
         acc[f.key] = savedYear.label; // 학년 라벨
+      } else if (f.key === "credit") {
+        acc[f.key] = savedCredit.label; // 학점 라벨
       } else {
         acc[f.key] = f.defaultValue;
       }
@@ -211,7 +248,7 @@ const CourseSearchBottomSheet = ({ onClose }) => {
     };
   }, []);
 
-  // 필터 값/카테고리/학년이 바뀔 때마다 서버 호출 + 클라이언트 필터
+  // 필터 값/카테고리/학년/학점이 바뀔 때마다 서버 호출 + 클라이언트 필터
   useEffect(() => {
     let cancelled = false;
 
@@ -226,7 +263,8 @@ const CourseSearchBottomSheet = ({ onClose }) => {
         const filtered = applyClientSideFilters(
           list,
           filterValues,
-          selectedYears
+          selectedYears,
+          selectedCredits
         );
 
         setCourses(filtered);
@@ -243,7 +281,7 @@ const CourseSearchBottomSheet = ({ onClose }) => {
     return () => {
       cancelled = true;
     };
-  }, [filterValues, selectedCategoryId, selectedYears]);
+  }, [filterValues, selectedCategoryId, selectedYears, selectedCredits]);
 
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -273,7 +311,14 @@ const CourseSearchBottomSheet = ({ onClose }) => {
       return;
     }
 
-    // 나머지(time, credit, keyword)는 입력창 토글
+    if (key === "credit") {
+      // 학점 선택 페이지
+      onClose?.();
+      navigate("/course-credit");
+      return;
+    }
+
+    // 나머지(time, keyword)는 입력창 토글
     if (activeFilter === key) {
       setActiveFilter(null);
       setFilterInput("");
@@ -290,7 +335,7 @@ const CourseSearchBottomSheet = ({ onClose }) => {
     );
   };
 
-  /** 필터 적용(time, credit, keyword 전용) */
+  /** 필터 적용(time, keyword 전용) */
   const handleFilterApply = () => {
     if (!activeFilterConfig) return;
 
@@ -363,10 +408,11 @@ const CourseSearchBottomSheet = ({ onClose }) => {
             ))}
           </div>
 
-          {/* 전공/교양, 학년 제외한 필터 입력 박스 */}
+          {/* 전공/교양, 학년, 학점 제외한 필터 입력 박스 */}
           {activeFilterConfig &&
             activeFilterConfig.key !== "type" &&
-            activeFilterConfig.key !== "year" && (
+            activeFilterConfig.key !== "year" &&
+            activeFilterConfig.key !== "credit" && (
               <div className="mypage-bottomsheet-filter-input-row">
                 <div className="mypage-bottomsheet-filter-input-box">
                   <span className="mypage-bottomsheet-filter-input-label">

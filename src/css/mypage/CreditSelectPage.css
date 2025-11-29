@@ -1,0 +1,112 @@
+/* src/css/mypage/CreditSelectPage.css */
+
+.credit-page {
+  min-height: 100vh;
+  background-color: #f3f3f5;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 헤더 */
+.credit-header {
+  height: 3.2rem;
+  padding: 0 1rem;
+  display: flex;
+  align-items: center;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.credit-back-btn {
+  border: none;
+  background: transparent;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #666666;
+}
+
+.credit-header-title {
+  flex: 1;
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #333333;
+}
+
+.credit-header-right {
+  width: 1.5rem;
+}
+
+/* 본문 */
+.credit-body {
+  flex: 1;
+  padding: 1.1rem 1.2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 학점 버튼 그리드 */
+.credit-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-bottom: 2rem;
+}
+
+.credit-chip {
+  flex: 1 0 calc(50% - 0.45rem);
+  min-width: 7rem;
+  border-radius: 0.9rem;
+  border: 1px solid #dedede;
+  background-color: #ffffff;
+  height: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: #333333;
+  cursor: pointer;
+}
+
+.credit-chip.selected {
+  background-color: #f3e7ff;
+  border-color: #b493f8;
+  color: #7b56e9;
+  font-weight: 600;
+}
+
+/* 전체 선택/취소 */
+.credit-bulk-row {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.credit-bulk-btn {
+  flex: 1;
+  height: 2.1rem;
+  border-radius: 999px;
+  border: 1px solid #dedede;
+  background-color: #ffffff;
+  font-size: 0.8rem;
+  cursor: pointer;
+  color: #555555;
+}
+
+.credit-bulk-btn.primary {
+  background-color: #c09ef1;
+  border-color: #c09ef1;
+  color: #ffffff;
+}
+
+/* 적용 버튼 */
+.credit-apply-btn {
+  height: 2.4rem;
+  border-radius: 999px;
+  border: 1px solid #c09ef1;
+  background-color: #ffffff;
+  color: #c09ef1;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
