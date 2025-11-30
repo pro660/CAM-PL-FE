@@ -131,6 +131,9 @@ export default function MapPage() {
   // /calendar/map 에서 내려오는 장소별 마커
   const [mapMarkers, setMapMarkers] = useState([]);
 
+  // 사용자의 현재 위치
+  const [userLocation, setUserLocation] = useState(null);
+
   const [loading, setLoading] = useState(false); // 리스트 섹션 로딩
   const [error, setError] = useState("");
 
@@ -139,6 +142,36 @@ export default function MapPage() {
 
   // 👉 오늘의 일정 칩/마커에서 선택된 장소 이름
   const [selectedPlace, setSelectedPlace] = useState(null);
+
+  // 🔵 사용자 위치 실시간 추적 (watchPosition)
+  useEffect(() => {
+    if (!("geolocation" in navigator)) {
+      console.warn("이 브라우저에서는 위치 정보를 사용할 수 없습니다.");
+      return;
+    }
+
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setUserLocation({
+          lat: latitude,
+          lng: longitude,
+        });
+      },
+      (err) => {
+        console.error("위치 정보 가져오기 실패:", err);
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 5000,
+        timeout: 10000,
+      }
+    );
+
+    return () => {
+      navigator.geolocation.clearWatch(watchId);
+    };
+  }, []);
 
   // 최초 진입 시: /calendar/map 만 호출
   useEffect(() => {
@@ -292,16 +325,23 @@ export default function MapPage() {
   // ✅ 현재 선택된 장소 이름과 일치하는 마커 찾기
   const selectedPlaceMarker = useMemo(() => {
     if (!selectedPlace) return null;
-    return (
-      mapMarkers.find((m) => m.name === selectedPlace) || null
-    );
+    return mapMarkers.find((m) => m.name === selectedPlace) || null;
   }, [selectedPlace, mapMarkers]);
 
-  // ✅ 지도에 넘길 center 값 (없으면 null → 기본 한서대 위치로)
+  // ✅ 지도에 넘길 center 값 (장소 선택 시 → 그 장소, 아니면 null)
   const centerForMap = useMemo(() => {
     if (!selectedPlaceMarker) return null;
     return { lat: selectedPlaceMarker.lat, lng: selectedPlaceMarker.lng };
   }, [selectedPlaceMarker]);
+
+  // ✅ 경로(길) 타겟: 사용자 위치 + 선택된 장소가 모두 있을 때만
+  const routeTarget = useMemo(() => {
+    if (!userLocation || !selectedPlaceMarker) return null;
+    return {
+      lat: selectedPlaceMarker.lat,
+      lng: selectedPlaceMarker.lng,
+    };
+  }, [userLocation, selectedPlaceMarker]);
 
   const handleClickRecommend = () => {
     setShowRecommend(true);
@@ -355,10 +395,12 @@ export default function MapPage() {
     <div className="map-page">
       {/* 상단 네이버 지도 + 건물별 일정 슬라이더 */}
       <div className="map-page-map-wrapper">
-        {/* ✅ placeMarkers로부터 받은 마커들을 지도에 넘김 */}
+        {/* ✅ placeMarkers로부터 받은 마커 + userLocation + routeTarget 모두 지도에 넘김 */}
         <NaverMap
           markers={mapMarkers}
           center={centerForMap}
+          userLocation={userLocation}
+          routeTarget={routeTarget}
           onMarkerClick={handleMarkerClick}
         />
 
