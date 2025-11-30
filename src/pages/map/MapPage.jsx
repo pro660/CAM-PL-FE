@@ -13,30 +13,6 @@ import PlaceEventsBar from "../../components/map/PlaceEventsBar";
 import api from "../../api/axios";
 import { useLoading } from "../../context/LoadingContext";
 
-// ===== 날짜 유틸 =====
-// yyyy-MM-DD
-function formatDateKey(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-function addDays(date, diff) {
-  const d = new Date(date);
-  d.setDate(d.getDate() + diff);
-  return d;
-}
-
-// /calendar/day 응답 정규화
-function normalizeDayResponse(res) {
-  const body = res.data ?? [];
-  if (Array.isArray(body)) return body;
-  if (Array.isArray(body.events)) return body.events;
-  if (Array.isArray(body.items)) return body.items;
-  return [];
-}
-
 // ===== 카테고리/타입 유틸 =====
 function getCategoryLabel(category) {
   if (!category) return "일정";
@@ -143,11 +119,11 @@ export default function MapPage() {
   const navigate = useNavigate();
   const { showLoading, hideLoading } = useLoading();
 
-  // 오늘 일정(events + lectures 등 /calendar/day 기준)
+  // 오늘 일정(칩/슬라이더에 쓸 전체 일정)
   const [todayEvents, setTodayEvents] = useState([]);
-  // 지난 일정
+  // "지난 일정" (같은 날 안에서 이미 지난 것들)
   const [yesterdayEvents, setYesterdayEvents] = useState([]);
-  // 다음 일정
+  // "다음 일정" (같은 날 안에서 앞으로 남은 것들)
   const [tomorrowEvents, setTomorrowEvents] = useState([]);
 
   // /calendar/map 에서 내려오는 주변 시설
@@ -162,44 +138,53 @@ export default function MapPage() {
   // 👉 오늘의 일정 칩에서 선택된 건물명
   const [selectedPlace, setSelectedPlace] = useState(null);
 
-  // 오늘 날짜(시분초 0으로 맞춤)
-  const today = useMemo(() => {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  }, []);
-
-  // 최초 진입 시: 달력(day) + 맵(map) API 같이 호출
+  // 최초 진입 시: /calendar/map 만 호출
   useEffect(() => {
-    const yesterday = addDays(today, -1);
-    const tomorrow = addDays(today, 1);
-
-    const fetchDay = (date) =>
-      api.get("/calendar/day", { params: { date: formatDateKey(date) } });
-
     (async () => {
       setLoading(true);
       showLoading();
       setError("");
 
       try {
-        const [resY, resToday, resT, resMap] = await Promise.all([
-          fetchDay(yesterday), // 어제 일정
-          fetchDay(today), // 오늘 일정
-          fetchDay(tomorrow), // 내일 일정
-          api.get("/calendar/map/36.690711/126.581783"), // 주변 시설
-        ]);
+        const res = await api.get("/calendar/map/36.690711/126.581783");
+        const data = res.data ?? {};
 
-        // 지난/오늘/다음 일정 (달력 API 기준)
-        setYesterdayEvents(normalizeDayResponse(resY));
-        setTodayEvents(normalizeDayResponse(resToday));
-        setTomorrowEvents(normalizeDayResponse(resT));
-
-        // 주변 시설 (맵 API 기준)
-        const mapData = resMap.data ?? {};
-        const nearby = Array.isArray(mapData.nearbyPlaces)
-          ? mapData.nearbyPlaces
+        const baseEvents = Array.isArray(data.events) ? data.events : [];
+        const lectures = Array.isArray(data.lectures) ? data.lectures : [];
+        const pastEvents = Array.isArray(data.pastEvents)
+          ? data.pastEvents
+          : [];
+        const upcomingEvents = Array.isArray(data.upcomingEvents)
+          ? data.upcomingEvents
           : [];
 
+        // ✅ 오늘의 일정(칩/슬라이더용) = 같은 날의 전체 일정(중복 제거)
+        const mergedSource = [
+          ...baseEvents,
+          ...lectures,
+          ...pastEvents,
+          ...upcomingEvents,
+        ];
+
+        const seen = new Set();
+        const mergedToday = [];
+        mergedSource.forEach((ev, idx) => {
+          if (!ev) return;
+          const key = ev.id ?? `${ev.title || "event"}-${ev.startAt || idx}`;
+          if (seen.has(key)) return;
+          seen.add(key);
+          mergedToday.push(ev);
+        });
+        setTodayEvents(mergedToday);
+
+        // ✅ 지난 일정 / 다음 일정 (같은 날짜 안에서 현재 시간 기준으로 나눠진 값)
+        setYesterdayEvents(pastEvents);
+        setTomorrowEvents(upcomingEvents);
+
+        // ✅ 주변 시설
+        const nearby = Array.isArray(data.nearbyPlaces)
+          ? data.nearbyPlaces
+          : [];
         setNearbyPlaces(
           nearby.map((p) => ({
             id: p.id,
@@ -218,7 +203,7 @@ export default function MapPage() {
         hideLoading();
       }
     })();
-  }, [today, showLoading, hideLoading]);
+  }, [showLoading, hideLoading]);
 
   // 오늘 일정 → 장소별 카운트 (칩용)
   const todayPlaceItems = useMemo(() => {
@@ -349,14 +334,14 @@ export default function MapPage() {
           onSelectPlace={handleSelectPlace}
         />
 
-        {/* 지난 일정 */}
+        {/* 지난 일정 (같은 날짜 안에서 이미 지나간 일정들) */}
         <ScheduleList
           title="지난 일정"
           items={prevItems}
           emptyText="지난 일정이 없어요."
         />
 
-        {/* 다음 일정 */}
+        {/* 다음 일정 (같은 날짜 안에서 앞으로 남은 일정들) */}
         <ScheduleList
           title="다음 일정"
           items={nextItems}
