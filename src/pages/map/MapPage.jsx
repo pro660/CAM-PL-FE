@@ -1,4 +1,3 @@
-// src/pages/map/MapPage.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../css/map/MapPage.css";
@@ -137,7 +136,7 @@ export default function MapPage() {
   // 추천 모달 열림 여부
   const [showRecommend, setShowRecommend] = useState(false);
 
-  // 👉 오늘의 일정 칩/마커에서 선택된 장소 이름
+  // 👉 오늘의 일정 칩/마커에서 선택된 장소 "키" (extractPlaceLabel 기준)
   const [selectedPlace, setSelectedPlace] = useState(null);
 
   // 최초 진입 시: /calendar/map 만 호출
@@ -198,7 +197,7 @@ export default function MapPage() {
           }))
         );
 
-        // ✅ 지도용 placeMarkers (이름 + 위도/경도 + count)
+        // ✅ 지도용 placeMarkers (이름 + 위도/경도 + count + placeKey)
         const rawMarkers = Array.isArray(data.placeMarkers)
           ? data.placeMarkers
           : [];
@@ -209,13 +208,17 @@ export default function MapPage() {
               typeof m.latitude === "number" &&
               typeof m.longitude === "number"
           )
-          .map((m, idx) => ({
-            id: m.name ? `${m.name}-${idx}` : `marker-${idx}`,
-            name: m.name,
-            lat: m.latitude,
-            lng: m.longitude,
-            count: m.count,
-          }));
+          .map((m, idx) => {
+            const placeKey = extractPlaceLabel(m.name);
+            return {
+              id: m.name ? `${m.name}-${idx}` : `marker-${idx}`,
+              name: m.name,
+              placeKey, // 🔥 이벤트 쪽과 매칭할 키
+              lat: m.latitude,
+              lng: m.longitude,
+              count: m.count,
+            };
+          });
 
         setMapMarkers(parsedMarkers);
       } catch (e) {
@@ -289,11 +292,11 @@ export default function MapPage() {
     [tomorrowEvents]
   );
 
-  // ✅ 현재 선택된 장소 이름과 일치하는 마커 찾기
+  // ✅ 현재 선택된 장소 키와 일치하는 마커 찾기 (name이 아니라 placeKey로 비교)
   const selectedPlaceMarker = useMemo(() => {
     if (!selectedPlace) return null;
     return (
-      mapMarkers.find((m) => m.name === selectedPlace) || null
+      mapMarkers.find((m) => m.placeKey === selectedPlace) || null
     );
   }, [selectedPlace, mapMarkers]);
 
@@ -311,7 +314,7 @@ export default function MapPage() {
     setShowRecommend(false);
   };
 
-  // 모달에서 “일정에 추가하기” 눌렀을 때 (기존 로직)
+  // 모달에서 “일정에 추가하기” 눌렀을 때
   const handleAddToScheduleFromModal = ({ place, category }) => {
     if (!place) return;
 
@@ -342,13 +345,14 @@ export default function MapPage() {
 
   // 오늘의 일정 칩 클릭 핸들러
   const handleSelectPlace = (placeName) => {
+    // placeName 자체가 이미 extractPlaceLabel 결과(= 키)
     setSelectedPlace((prev) => (prev === placeName ? null : placeName));
   };
 
-  // ✅ 마커 클릭 시 → 해당 장소 선택 (칩 클릭과 동일한 효과)
+  // ✅ 마커 클릭 시 → 해당 placeKey 선택 (칩 클릭과 동일한 효과)
   const handleMarkerClick = (marker) => {
-    if (!marker?.name) return;
-    setSelectedPlace(marker.name);
+    if (!marker?.placeKey) return;
+    setSelectedPlace(marker.placeKey);
   };
 
   return (

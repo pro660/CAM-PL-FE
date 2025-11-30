@@ -1,12 +1,12 @@
-// src/components/home/NaverMap.jsx
 import React, { useEffect, useRef } from "react";
 import "../../css/home/HomePage.css";
 import { useLoading } from "../../context/LoadingContext.jsx";
 
 import PlaceMarkerIcon from "../../images/map/marker-place.svg";
+
 /**
  * props:
- * - markers: [{ id, name, lat, lng, count }]
+ * - markers: [{ id, name, placeKey, lat, lng, count }]
  * - center: { lat, lng } | null   // 선택된 장소가 있을 때만 사용
  * - onMarkerClick: (marker) => void
  */
@@ -87,18 +87,16 @@ const NaverMap = ({ markers = [], center, onMarkerClick }) => {
     });
     markersRef.current = [];
 
-    // ✅ 커스텀 SVG 마커 옵션 (여기만 살짝 조절하면 됨)
+    // ✅ 커스텀 SVG 마커 옵션
     const markerIcon =
-  PlaceMarkerIcon && typeof PlaceMarkerIcon === "string"
-    ? {
-        url: PlaceMarkerIcon,
-        // size: new naver.maps.Size(40, 40), // ⛔ 크롭용이라 빼버리기
-        scaledSize: new naver.maps.Size(30, 30), // 실제 화면에 찍히는 크기
-        origin: new naver.maps.Point(0, 0),
-        anchor: new naver.maps.Point(20, 40), // 40x40 기준이면 중앙 아래
-      }
-    : null;
-
+      PlaceMarkerIcon && typeof PlaceMarkerIcon === "string"
+        ? {
+            url: PlaceMarkerIcon,
+            scaledSize: new naver.maps.Size(30, 30), // 실제 화면에 찍히는 크기
+            origin: new naver.maps.Point(0, 0),
+            anchor: new naver.maps.Point(15, 30), // 30x30 기준 중앙 아래
+          }
+        : null;
 
     // ------- 새 마커 생성 -------
     if (markers.length > 0) {
@@ -111,7 +109,6 @@ const NaverMap = ({ markers = [], center, onMarkerClick }) => {
           title: m.name || undefined,
         };
 
-        // 아이콘 파일이 있으면 icon 적용
         if (markerIcon) {
           markerOptions.icon = markerIcon;
         }
