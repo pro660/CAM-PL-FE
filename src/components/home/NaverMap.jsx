@@ -6,8 +6,10 @@ import { useLoading } from "../../context/LoadingContext.jsx"; // ✅ 전역 로
 /**
  * props:
  * - markers: [{ id, name, lat, lng, count }]
+ * - center: { lat, lng } | null   // 선택된 장소가 있을 때만 사용
+ * - onMarkerClick: (marker) => void
  */
-const NaverMap = ({ markers = [] }) => {
+const NaverMap = ({ markers = [], center, onMarkerClick }) => {
   const mapRef = useRef(null);
   const { showLoading, hideLoading } = useLoading(); // ✅ 로더 제어
 
@@ -31,9 +33,16 @@ const NaverMap = ({ markers = [] }) => {
       // ✅ 기본 캠퍼스 중심(고정)
       const defaultCenter = new naver.maps.LatLng(36.69085, 126.58297);
 
-      // 항상 기본 센터로 고정
+      // center prop이 있으면 그 좌표로, 없으면 기본값
+      const mapCenter =
+        center &&
+        typeof center.lat === "number" &&
+        typeof center.lng === "number"
+          ? new naver.maps.LatLng(center.lat, center.lng)
+          : defaultCenter;
+
       const map = new naver.maps.Map(mapRef.current, {
-        center: defaultCenter,
+        center: mapCenter,
         zoom: 16,
       });
 
@@ -44,11 +53,18 @@ const NaverMap = ({ markers = [] }) => {
             return;
           }
 
-          new naver.maps.Marker({
+          const marker = new naver.maps.Marker({
             position: new naver.maps.LatLng(m.lat, m.lng),
             map,
             title: m.name || undefined,
           });
+
+          // 마커 클릭 시 상위 콜백으로 전달 → MapPage에서 selectedPlace 세팅
+          if (onMarkerClick) {
+            naver.maps.Event.addListener(marker, "click", () => {
+              onMarkerClick(m);
+            });
+          }
         });
       } else {
         // ✅ markers 없으면 한서대학교 기본 마커만 표시 (기존 동작 유지)
@@ -65,7 +81,7 @@ const NaverMap = ({ markers = [] }) => {
       console.error(e);
       hideLoading(); // ✅ 예외 나도 무조건 해제
     }
-  }, [markers, showLoading, hideLoading]);
+  }, [markers, center, onMarkerClick, showLoading, hideLoading]);
 
   return <div ref={mapRef} className="home-naver-map" />;
 };

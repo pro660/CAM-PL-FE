@@ -289,6 +289,14 @@ export default function MapPage() {
     [tomorrowEvents]
   );
 
+  // ✅ 선택된 장소의 위도/경도 → 지도 중심으로 사용
+  const selectedPlaceCenter = useMemo(() => {
+    if (!selectedPlace) return null;
+    const marker = mapMarkers.find((m) => m.name === selectedPlace);
+    if (!marker) return null;
+    return { lat: marker.lat, lng: marker.lng };
+  }, [selectedPlace, mapMarkers]);
+
   const handleClickRecommend = () => {
     setShowRecommend(true);
   };
@@ -329,15 +337,27 @@ export default function MapPage() {
 
   // 오늘의 일정 칩 클릭 핸들러
   const handleSelectPlace = (placeName) => {
+    // 칩에서는 토글 동작 유지
     setSelectedPlace((prev) => (prev === placeName ? null : placeName));
+  };
+
+  // ✅ 마커 클릭 시: 선택 장소 세팅 (지도 중심 이동 + 정보 패널 열림)
+  const handleMarkerClick = (marker) => {
+    if (!marker) return;
+    // 마커 클릭은 항상 해당 장소로 포커스 이동 (토글 X)
+    setSelectedPlace(marker.name || null);
   };
 
   return (
     <div className="map-page">
       {/* 상단 네이버 지도 + 건물별 일정 슬라이더 */}
       <div className="map-page-map-wrapper">
-        {/* ✅ placeMarkers로부터 받은 마커들을 지도에 넘김 */}
-        <NaverMap markers={mapMarkers} />
+        {/* ✅ placeMarkers로부터 받은 마커들을 지도에 넘기고, 선택된 장소로 센터 이동 */}
+        <NaverMap
+          markers={mapMarkers}
+          center={selectedPlaceCenter}
+          onMarkerClick={handleMarkerClick}
+        />
 
         <PlaceEventsBar
           place={selectedPlace}
