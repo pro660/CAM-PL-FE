@@ -6,9 +6,8 @@ import { useLoading } from "../../context/LoadingContext.jsx"; // ✅ 전역 로
 /**
  * props:
  * - markers: [{ id, name, lat, lng, count }]
- * - center: { lat, lng } (옵션)
  */
-const NaverMap = ({ markers = [], center }) => {
+const NaverMap = ({ markers = [] }) => {
   const mapRef = useRef(null);
   const { showLoading, hideLoading } = useLoading(); // ✅ 로더 제어
 
@@ -29,34 +28,19 @@ const NaverMap = ({ markers = [], center }) => {
 
       const { naver } = window;
 
-      // 기본 캠퍼스 중심
+      // ✅ 기본 캠퍼스 중심(고정)
       const defaultCenter = new naver.maps.LatLng(36.69085, 126.58297);
 
-      // center prop 우선 → 없으면 markers[0] → 없으면 기본값
-      let mapCenter = defaultCenter;
-      if (
-        center &&
-        typeof center.lat === "number" &&
-        typeof center.lng === "number"
-      ) {
-        mapCenter = new naver.maps.LatLng(center.lat, center.lng);
-      } else if (markers.length > 0) {
-        const first = markers[0];
-        mapCenter = new naver.maps.LatLng(first.lat, first.lng);
-      }
-
+      // 항상 기본 센터로 고정
       const map = new naver.maps.Map(mapRef.current, {
-        center: mapCenter,
+        center: defaultCenter,
         zoom: 16,
       });
 
       if (markers.length > 0) {
         // ✅ placeMarkers 기반으로 여러 개 마커 표시
         markers.forEach((m) => {
-          if (
-            typeof m.lat !== "number" ||
-            typeof m.lng !== "number"
-          ) {
+          if (typeof m.lat !== "number" || typeof m.lng !== "number") {
             return;
           }
 
@@ -65,9 +49,6 @@ const NaverMap = ({ markers = [], center }) => {
             map,
             title: m.name || undefined,
           });
-
-          // 필요하면 count 기반 커스텀 오버레이도 여기서 추가 가능
-          // (지금은 기본 마커만 표시)
         });
       } else {
         // ✅ markers 없으면 한서대학교 기본 마커만 표시 (기존 동작 유지)
@@ -84,7 +65,7 @@ const NaverMap = ({ markers = [], center }) => {
       console.error(e);
       hideLoading(); // ✅ 예외 나도 무조건 해제
     }
-  }, [markers, center, showLoading, hideLoading]);
+  }, [markers, showLoading, hideLoading]);
 
   return <div ref={mapRef} className="home-naver-map" />;
 };
