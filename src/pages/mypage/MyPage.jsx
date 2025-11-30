@@ -19,6 +19,7 @@ const WEEKDAY_KR_LONG = [
   "토요일",
 ];
 
+
 export default function MyPage() {
   const [courses, setCourses] = useState([]);
   const { showLoading, hideLoading } = useLoading(); // ✅ 전역 로더 훅 사용
