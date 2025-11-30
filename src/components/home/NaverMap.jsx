@@ -93,7 +93,7 @@ const NaverMap = ({ markers = [], center, onMarkerClick }) => {
         ? {
             url: PlaceMarkerIcon,
             size: new naver.maps.Size(25, 25), // SVG 원본 기준 사이즈 조절
-            scaledSize: new naver.maps.Size(40, 40),
+            scaledSize: new naver.maps.Size(25, 25),
             origin: new naver.maps.Point(0, 0),
             anchor: new naver.maps.Point(20, 40), // 꼬리 끝이 좌표를 가리키도록
           }
