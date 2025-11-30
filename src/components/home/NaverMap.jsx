@@ -3,7 +3,12 @@ import React, { useEffect, useRef } from "react";
 import "../../css/home/HomePage.css";
 import { useLoading } from "../../context/LoadingContext.jsx"; // ✅ 전역 로더 훅
 
-const NaverMap = () => {
+/**
+ * props:
+ * - markers: [{ id, name, lat, lng, count }]
+ * - center: { lat, lng } (옵션)
+ */
+const NaverMap = ({ markers = [], center }) => {
   const mapRef = useRef(null);
   const { showLoading, hideLoading } = useLoading(); // ✅ 로더 제어
 
@@ -22,21 +27,56 @@ const NaverMap = () => {
         return;
       }
 
-      const hanseoCenter = new window.naver.maps.LatLng(
-        36.69085,
-        126.58297
-      );
+      const { naver } = window;
 
-      const map = new window.naver.maps.Map(mapRef.current, {
-        center: hanseoCenter,
+      // 기본 캠퍼스 중심
+      const defaultCenter = new naver.maps.LatLng(36.69085, 126.58297);
+
+      // center prop 우선 → 없으면 markers[0] → 없으면 기본값
+      let mapCenter = defaultCenter;
+      if (
+        center &&
+        typeof center.lat === "number" &&
+        typeof center.lng === "number"
+      ) {
+        mapCenter = new naver.maps.LatLng(center.lat, center.lng);
+      } else if (markers.length > 0) {
+        const first = markers[0];
+        mapCenter = new naver.maps.LatLng(first.lat, first.lng);
+      }
+
+      const map = new naver.maps.Map(mapRef.current, {
+        center: mapCenter,
         zoom: 16,
       });
 
-      new window.naver.maps.Marker({
-        position: hanseoCenter,
-        map,
-        title: "한서대학교",
-      });
+      if (markers.length > 0) {
+        // ✅ placeMarkers 기반으로 여러 개 마커 표시
+        markers.forEach((m) => {
+          if (
+            typeof m.lat !== "number" ||
+            typeof m.lng !== "number"
+          ) {
+            return;
+          }
+
+          new naver.maps.Marker({
+            position: new naver.maps.LatLng(m.lat, m.lng),
+            map,
+            title: m.name || undefined,
+          });
+
+          // 필요하면 count 기반 커스텀 오버레이도 여기서 추가 가능
+          // (지금은 기본 마커만 표시)
+        });
+      } else {
+        // ✅ markers 없으면 한서대학교 기본 마커만 표시 (기존 동작 유지)
+        new naver.maps.Marker({
+          position: defaultCenter,
+          map,
+          title: "한서대학교",
+        });
+      }
 
       // ✅ 여기까지 왔으면 지도/마커 초기화는 끝난 상태 → 바로 로더 끄기
       hideLoading();
@@ -44,10 +84,7 @@ const NaverMap = () => {
       console.error(e);
       hideLoading(); // ✅ 예외 나도 무조건 해제
     }
-
-    // StrictMode에서 이펙트가 두 번 도는 것까지 고려하면
-    // cleanup에서 별도로 hideLoading 안 하는 게 안정적 (위에서 show/hide 1:1로 끝냄)
-  }, [showLoading, hideLoading]);
+  }, [markers, center, showLoading, hideLoading]);
 
   return <div ref={mapRef} className="home-naver-map" />;
 };

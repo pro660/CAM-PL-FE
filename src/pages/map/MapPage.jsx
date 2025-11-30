@@ -128,6 +128,8 @@ export default function MapPage() {
 
   // /calendar/map 에서 내려오는 주변 시설
   const [nearbyPlaces, setNearbyPlaces] = useState([]);
+  // /calendar/map 에서 내려오는 장소별 마커
+  const [mapMarkers, setMapMarkers] = useState([]);
 
   const [loading, setLoading] = useState(false); // 리스트 섹션 로딩
   const [error, setError] = useState("");
@@ -195,6 +197,27 @@ export default function MapPage() {
             distanceMeters: p.distanceMeters,
           }))
         );
+
+        // ✅ 지도용 placeMarkers (이름 + 위도/경도 + count)
+        const rawMarkers = Array.isArray(data.placeMarkers)
+          ? data.placeMarkers
+          : [];
+
+        const parsedMarkers = rawMarkers
+          .filter(
+            (m) =>
+              typeof m.latitude === "number" &&
+              typeof m.longitude === "number"
+          )
+          .map((m, idx) => ({
+            id: m.name ? `${m.name}-${idx}` : `marker-${idx}`,
+            name: m.name,
+            lat: m.latitude,
+            lng: m.longitude,
+            count: m.count,
+          }));
+
+        setMapMarkers(parsedMarkers);
       } catch (e) {
         console.error(e);
         setError("일정 정보를 불러오는 중 오류가 발생했습니다.");
@@ -299,8 +322,6 @@ export default function MapPage() {
         fromPlaceRecommend: {
           // 장소 이름만 넘김 → CalendarPage에서 initialLocation으로 들어감
           location: place.name,
-          // category는 넘기지 않으면 CalendarPage에서 기본값("LECTURE") 사용
-          // 필요해지면 여기서 "MEETING" 같은 카테고리로 매핑해도 됨.
         },
       },
     });
@@ -315,7 +336,8 @@ export default function MapPage() {
     <div className="map-page">
       {/* 상단 네이버 지도 + 건물별 일정 슬라이더 */}
       <div className="map-page-map-wrapper">
-        <NaverMap />
+        {/* ✅ placeMarkers로부터 받은 마커들을 지도에 넘김 */}
+        <NaverMap markers={mapMarkers} />
 
         <PlaceEventsBar
           place={selectedPlace}
