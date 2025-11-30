@@ -92,7 +92,8 @@ const NaverMap = ({ markers = [], center, onMarkerClick }) => {
       PlaceMarkerIcon && typeof PlaceMarkerIcon === "string"
         ? {
             url: PlaceMarkerIcon,
-            scaledSize: new naver.maps.Size(30, 30), // 실제 화면에 찍히는 크기
+            // 원본 비율 유지 + 화면 크기만 조절
+            scaledSize: new naver.maps.Size(30, 30),
             origin: new naver.maps.Point(0, 0),
             anchor: new naver.maps.Point(15, 30), // 30x30 기준 중앙 아래
           }
@@ -123,21 +124,8 @@ const NaverMap = ({ markers = [], center, onMarkerClick }) => {
 
         markersRef.current.push(marker);
       });
-    } else {
-      // 마커가 아예 없으면 기본 캠퍼스 마커 하나만
-      const markerOptions = {
-        position: defaultCenter,
-        map,
-        title: "한서대학교",
-      };
-
-      if (markerIcon) {
-        markerOptions.icon = markerIcon;
-      }
-
-      const defaultMarker = new naver.maps.Marker(markerOptions);
-      markersRef.current.push(defaultMarker);
     }
+    // 🔥 else 블록 삭제: markers가 0개일 땐 아무 마커도 찍지 않음
   }, [markers, center, onMarkerClick]);
 
   return <div ref={mapRef} className="home-naver-map" />;
