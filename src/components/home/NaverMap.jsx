@@ -89,15 +89,16 @@ const NaverMap = ({ markers = [], center, onMarkerClick }) => {
 
     // ✅ 커스텀 SVG 마커 옵션 (여기만 살짝 조절하면 됨)
     const markerIcon =
-      PlaceMarkerIcon && typeof PlaceMarkerIcon === "string"
-        ? {
-            url: PlaceMarkerIcon,
-            size: new naver.maps.Size(25, 25), // SVG 원본 기준 사이즈 조절
-            scaledSize: new naver.maps.Size(25, 25),
-            origin: new naver.maps.Point(0, 0),
-            anchor: new naver.maps.Point(20, 40), // 꼬리 끝이 좌표를 가리키도록
-          }
-        : null;
+  PlaceMarkerIcon && typeof PlaceMarkerIcon === "string"
+    ? {
+        url: PlaceMarkerIcon,
+        // size: new naver.maps.Size(40, 40), // ⛔ 크롭용이라 빼버리기
+        scaledSize: new naver.maps.Size(30, 30), // 실제 화면에 찍히는 크기
+        origin: new naver.maps.Point(0, 0),
+        anchor: new naver.maps.Point(20, 40), // 40x40 기준이면 중앙 아래
+      }
+    : null;
+
 
     // ------- 새 마커 생성 -------
     if (markers.length > 0) {
