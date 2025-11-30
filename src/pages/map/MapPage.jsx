@@ -137,7 +137,7 @@ export default function MapPage() {
   // 추천 모달 열림 여부
   const [showRecommend, setShowRecommend] = useState(false);
 
-  // 👉 오늘의 일정 칩에서 선택된 건물명
+  // 👉 오늘의 일정 칩/마커에서 선택된 장소 이름
   const [selectedPlace, setSelectedPlace] = useState(null);
 
   // 최초 진입 시: /calendar/map 만 호출
@@ -289,13 +289,19 @@ export default function MapPage() {
     [tomorrowEvents]
   );
 
-  // ✅ 선택된 장소의 위도/경도 → 지도 중심으로 사용
-  const selectedPlaceCenter = useMemo(() => {
+  // ✅ 현재 선택된 장소 이름과 일치하는 마커 찾기
+  const selectedPlaceMarker = useMemo(() => {
     if (!selectedPlace) return null;
-    const marker = mapMarkers.find((m) => m.name === selectedPlace);
-    if (!marker) return null;
-    return { lat: marker.lat, lng: marker.lng };
+    return (
+      mapMarkers.find((m) => m.name === selectedPlace) || null
+    );
   }, [selectedPlace, mapMarkers]);
+
+  // ✅ 지도에 넘길 center 값 (없으면 null → 기본 한서대 위치로)
+  const centerForMap = useMemo(() => {
+    if (!selectedPlaceMarker) return null;
+    return { lat: selectedPlaceMarker.lat, lng: selectedPlaceMarker.lng };
+  }, [selectedPlaceMarker]);
 
   const handleClickRecommend = () => {
     setShowRecommend(true);
@@ -328,7 +334,6 @@ export default function MapPage() {
     navigate("/calendar", {
       state: {
         fromPlaceRecommend: {
-          // 장소 이름만 넘김 → CalendarPage에서 initialLocation으로 들어감
           location: place.name,
         },
       },
@@ -337,25 +342,23 @@ export default function MapPage() {
 
   // 오늘의 일정 칩 클릭 핸들러
   const handleSelectPlace = (placeName) => {
-    // 칩에서는 토글 동작 유지
     setSelectedPlace((prev) => (prev === placeName ? null : placeName));
   };
 
-  // ✅ 마커 클릭 시: 선택 장소 세팅 (지도 중심 이동 + 정보 패널 열림)
+  // ✅ 마커 클릭 시 → 해당 장소 선택 (칩 클릭과 동일한 효과)
   const handleMarkerClick = (marker) => {
-    if (!marker) return;
-    // 마커 클릭은 항상 해당 장소로 포커스 이동 (토글 X)
-    setSelectedPlace(marker.name || null);
+    if (!marker?.name) return;
+    setSelectedPlace(marker.name);
   };
 
   return (
     <div className="map-page">
       {/* 상단 네이버 지도 + 건물별 일정 슬라이더 */}
       <div className="map-page-map-wrapper">
-        {/* ✅ placeMarkers로부터 받은 마커들을 지도에 넘기고, 선택된 장소로 센터 이동 */}
+        {/* ✅ placeMarkers로부터 받은 마커들을 지도에 넘김 */}
         <NaverMap
           markers={mapMarkers}
-          center={selectedPlaceCenter}
+          center={centerForMap}
           onMarkerClick={handleMarkerClick}
         />
 

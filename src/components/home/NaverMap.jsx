@@ -1,8 +1,9 @@
 // src/components/home/NaverMap.jsx
 import React, { useEffect, useRef } from "react";
 import "../../css/home/HomePage.css";
-import { useLoading } from "../../context/LoadingContext.jsx"; // ✅ 전역 로더 훅
+import { useLoading } from "../../context/LoadingContext.jsx";
 
+import PlaceMarkerIcon from "../../images/map/marker-place.svg";
 /**
  * props:
  * - markers: [{ id, name, lat, lng, count }]
@@ -13,7 +14,7 @@ const NaverMap = ({ markers = [], center, onMarkerClick }) => {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
-  const { showLoading, hideLoading } = useLoading(); // ✅ 로더 제어
+  const { showLoading, hideLoading } = useLoading();
 
   // ✅ 지도는 한 번만 생성
   useEffect(() => {
@@ -64,13 +65,21 @@ const NaverMap = ({ markers = [], center, onMarkerClick }) => {
     if (!map || !window.naver) return;
     const { naver } = window;
 
+    const defaultCenter = new naver.maps.LatLng(36.69085, 126.58297);
+
     // ------- 지도 중심 부드럽게 이동 -------
-    if (center && typeof center.lat === "number" && typeof center.lng === "number") {
+    if (
+      center &&
+      typeof center.lat === "number" &&
+      typeof center.lng === "number"
+    ) {
       const target = new naver.maps.LatLng(center.lat, center.lng);
-      // panTo는 애니메이션 이동, setCenter는 바로 점프
+      // ✅ 선택된 장소가 있으면 그 위치로 부드럽게 이동
       map.panTo(target);
+    } else {
+      // ✅ 선택된 장소가 없으면 다시 한서대 기본 위치로 부드럽게 복귀
+      map.panTo(defaultCenter);
     }
-    // center가 null일 때는 마지막 위치 유지 (요청사항대로 한서대 기본 중심은 최초 진입 시에만 적용)
 
     // ------- 기존 마커 제거 -------
     markersRef.current.forEach((marker) => {
@@ -78,16 +87,35 @@ const NaverMap = ({ markers = [], center, onMarkerClick }) => {
     });
     markersRef.current = [];
 
+    // ✅ 커스텀 SVG 마커 옵션 (여기만 살짝 조절하면 됨)
+    const markerIcon =
+      PlaceMarkerIcon && typeof PlaceMarkerIcon === "string"
+        ? {
+            url: PlaceMarkerIcon,
+            size: new naver.maps.Size(40, 40), // SVG 원본 기준 사이즈 조절
+            scaledSize: new naver.maps.Size(40, 40),
+            origin: new naver.maps.Point(0, 0),
+            anchor: new naver.maps.Point(20, 40), // 꼬리 끝이 좌표를 가리키도록
+          }
+        : null;
+
     // ------- 새 마커 생성 -------
     if (markers.length > 0) {
       markers.forEach((m) => {
         if (typeof m.lat !== "number" || typeof m.lng !== "number") return;
 
-        const marker = new naver.maps.Marker({
+        const markerOptions = {
           position: new naver.maps.LatLng(m.lat, m.lng),
           map,
           title: m.name || undefined,
-        });
+        };
+
+        // 아이콘 파일이 있으면 icon 적용
+        if (markerIcon) {
+          markerOptions.icon = markerIcon;
+        }
+
+        const marker = new naver.maps.Marker(markerOptions);
 
         if (onMarkerClick) {
           naver.maps.Event.addListener(marker, "click", () => {
@@ -99,12 +127,17 @@ const NaverMap = ({ markers = [], center, onMarkerClick }) => {
       });
     } else {
       // 마커가 아예 없으면 기본 캠퍼스 마커 하나만
-      const defaultCenter = new naver.maps.LatLng(36.69085, 126.58297);
-      const defaultMarker = new naver.maps.Marker({
+      const markerOptions = {
         position: defaultCenter,
         map,
         title: "한서대학교",
-      });
+      };
+
+      if (markerIcon) {
+        markerOptions.icon = markerIcon;
+      }
+
+      const defaultMarker = new naver.maps.Marker(markerOptions);
       markersRef.current.push(defaultMarker);
     }
   }, [markers, center, onMarkerClick]);
