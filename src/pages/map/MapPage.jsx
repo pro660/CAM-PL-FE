@@ -416,8 +416,9 @@ export default function MapPage() {
 
   // ✅ 마커 클릭 시 → 해당 placeKey 선택 (칩 클릭과 동일한 효과)
   const handleMarkerClick = (marker) => {
-    if (!marker?.placeKey) return;
-    setSelectedPlace(marker.placeKey);
+  if (!marker?.placeKey) return;
+  setSelectedPlace((prev) =>
+    prev === marker.placeKey ? null : marker.placeKey);
   };
 
   return (

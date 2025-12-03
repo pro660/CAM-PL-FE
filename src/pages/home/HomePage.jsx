@@ -67,6 +67,25 @@ function parseDDayValue(dDayStr) {
   return Math.abs(num);
 }
 
+// 위치 문자열에서 "건물" 이름 비슷한 부분만 추출
+// 예: "[H05] 건축토목공학관 612" → "건축토목공학관"
+function extractPlaceLabel(location) {
+  if (!location) return "";
+  let text = location.trim();
+
+  // 앞에 [H05] 이런 코드 있으면 제거
+  text = text.replace(/^\[[^\]]*]\s*/, "");
+
+  // "관"까지 자르기
+  const idx = text.indexOf("관");
+  if (idx !== -1) {
+    return text.slice(0, idx + 1).trim();
+  }
+
+  // 아니면 첫 단어만
+  return text.split(" ")[0];
+}
+
 const HomePage = () => {
   const { showLoading, hideLoading } = useLoading(); // ✅ 전역 로더 제어
 
@@ -79,7 +98,7 @@ const HomePage = () => {
 
   // D-Day 정보 + 로딩 상태
   const [ddayInfo, setDdayInfo] = useState({
-    hasImportant: false, // 🔥 중요 D-Day 존재 여부
+    hasImportant: false, // 🔥 중요 일정 존재 여부
     label: "중요 일정이 없어요",
     sub: "캠플이 응원할게요!~",
     days: 0,
@@ -95,6 +114,8 @@ const HomePage = () => {
 
   // ✅ 홈 상단 지도에 사용할 마커들
   const [homeMapMarkers, setHomeMapMarkers] = useState([]);
+  // ✅ 장소별 일정(강의/일정) 맵 → 지도에서 마커 클릭 시 쓸 데이터
+  const [homePlaceEventsMap, setHomePlaceEventsMap] = useState({});
 
   // ✅ 사용자 좌표 (기본값은 캠퍼스)
   const [coords, setCoords] = useState({
@@ -173,7 +194,7 @@ const HomePage = () => {
 
         const body = res.data ?? {};
 
-        // ===== 오늘의 일정 목록 파싱 =====
+        // ===== 오늘의 일정 목록 파싱 (리스트용) =====
         const rawEvents = Array.isArray(body)
           ? body
           : Array.isArray(body.events)
@@ -213,16 +234,21 @@ const HomePage = () => {
         const ddays = Array.isArray(body.ddays) ? body.ddays : [];
 
         if (ddays.length > 0) {
-          // D-값(숫자) 기준으로 가장 가까운 일정 하나 선택
-          const sorted = ddays
-            .map((d) => ({
+          const withParsed = ddays
+            .map((d, index) => ({
               ...d,
+              _order: index,
               _dValue: parseDDayValue(d.dDay),
             }))
             .filter((d) => d._dValue !== null)
-            .sort((a, b) => a._dValue - b._dValue);
+            .sort((a, b) => {
+              if (a._dValue !== b._dValue) {
+                return a._dValue - b._dValue;
+              }
+              return a._order - b._order;
+            });
 
-          const nearest = sorted[0] || ddays[0];
+          const nearest = withParsed[0] || ddays[0];
 
           setDdayInfo({
             hasImportant: true,
@@ -265,20 +291,66 @@ const HomePage = () => {
               typeof m.latitude === "number" &&
               typeof m.longitude === "number"
           )
-          .map((m, idx) => ({
-            id: m.name ? `${m.name}-${idx}` : `marker-${idx}`,
-            name: m.name,
-            lat: m.latitude,
-            lng: m.longitude,
-            count: m.count,
-          }));
+          .map((m, idx) => {
+            const placeKey = extractPlaceLabel(m.name);
+            return {
+              id: m.name ? `${m.name}-${idx}` : `marker-${idx}`,
+              name: m.name,
+              placeKey,
+              lat: m.latitude,
+              lng: m.longitude,
+              count: m.count,
+            };
+          });
 
         setHomeMapMarkers(parsedMarkers);
+
+        // ===== 장소별 일정(강의 + 이벤트) 맵 생성 (홈 지도에서 정보 패널용) =====
+        const lectures = Array.isArray(body.lectures) ? body.lectures : [];
+        const eventsForPlaces = Array.isArray(body.events)
+          ? body.events
+          : [];
+
+        const placeEventsTmp = {};
+
+        // 강의 → placeKey 기준으로 묶기
+        lectures.forEach((lec, idx) => {
+          const loc = lec.location;
+          if (!loc || !lec.courseName) return;
+          const placeKey = extractPlaceLabel(loc);
+          if (!placeKey) return;
+
+          if (!placeEventsTmp[placeKey]) placeEventsTmp[placeKey] = [];
+          placeEventsTmp[placeKey].push({
+            id: `lecture-${idx}`,
+            category: "강의",
+            title: lec.courseName,
+            timeText: formatTimeRange(lec.startAt, lec.endAt),
+          });
+        });
+
+        // 일반 일정 → placeKey 기준으로 묶기
+        eventsForPlaces.forEach((ev, idx) => {
+          if (!ev.location || !ev.title) return;
+          const placeKey = extractPlaceLabel(ev.location);
+          if (!placeKey) return;
+
+          if (!placeEventsTmp[placeKey]) placeEventsTmp[placeKey] = [];
+          placeEventsTmp[placeKey].push({
+            id: ev.id ?? `event-${idx}`,
+            category: getCategoryLabel(ev.category, ev.origin),
+            title: ev.title,
+            timeText: formatTimeRange(ev.startAt, ev.endAt),
+          });
+        });
+
+        setHomePlaceEventsMap(placeEventsTmp);
       } catch (error) {
         console.error("오늘 요약(일정/장소) 조회 실패:", error);
         setTodaySchedules([]);
         setStudyPlaces([]);
         setHomeMapMarkers([]);
+        setHomePlaceEventsMap({});
         setDdayInfo({
           hasImportant: false,
           label: "중요 일정이 없어요",
@@ -330,10 +402,11 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* 지도 / 시간표 (홈 상단 지도에 placeMarkers 사용) */}
+      {/* 지도 / 시간표 (홈 상단 지도에 placeMarkers + 장소별 일정 맵 사용) */}
       <TimetableMapSection
         onTodayLecturesChange={setTodayLectures}
         markers={homeMapMarkers}
+        placeEventsMap={homePlaceEventsMap}
       />
 
       {/* 오늘의 강의 리스트 (시간표에서 내려주는 것 그대로 사용) */}

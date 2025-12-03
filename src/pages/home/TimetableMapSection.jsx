@@ -1,8 +1,9 @@
 // src/pages/home/TimetableMapSection.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import NaverMap from "../../components/home/NaverMap";
 import api from "../../api/axios";
 import { useLoading } from "../../context/LoadingContext.jsx"; // ✅ 전역 로더 훅 추가
+import PlaceEventsBar from "../../components/map/PlaceEventsBar";
 
 // 요일(표시용)
 const weekdayLabels = ["월", "화", "수", "목", "금"];
@@ -63,7 +64,11 @@ const mapApiDayToKor = (dayStr) => {
   }
 };
 
-const TimetableMapSection = ({ onTodayLecturesChange, markers = [] }) => {
+const TimetableMapSection = ({
+  onTodayLecturesChange,
+  markers = [],          // 🔥 홈에서 내려주는 마커 배열
+  placeEventsMap = {},   // 🔥 장소별 일정(강의/일정) 맵
+}) => {
   const { showLoading, hideLoading } = useLoading(); // ✅ 전역 로더 제어
   const [activeView, setActiveView] = useState("timetable"); // "timetable" | "map"
   const [timetable, setTimetable] = useState([]); // 평탄화된 강의 리스트
@@ -76,6 +81,38 @@ const TimetableMapSection = ({ onTodayLecturesChange, markers = [] }) => {
 
   // ✅ 전체 강의 유무
   const hasLectures = timetable.length > 0;
+
+  // ✅ 지도에서 선택된 장소 키 (extractPlaceLabel 결과와 동일한 값)
+  const [selectedPlaceKey, setSelectedPlaceKey] = useState(null);
+
+  // ✅ 선택된 장소 키와 일치하는 마커 찾기
+  const selectedMarker = useMemo(() => {
+    if (!selectedPlaceKey) return null;
+    return (
+      markers.find(
+        (m) =>
+          (m.placeKey || m.name) === selectedPlaceKey
+      ) || null
+    );
+  }, [selectedPlaceKey, markers]);
+
+  // ✅ 지도에 내려보낼 center 값 (없으면 null → 한서대 기본 위치로 부드럽게 복귀)
+  const centerForMap = useMemo(() => {
+    if (!selectedMarker) return null;
+    return { lat: selectedMarker.lat, lng: selectedMarker.lng };
+  }, [selectedMarker]);
+
+  // ✅ 선택된 장소에 대한 일정 카드들 (PlaceEventsBar 용)
+  const selectedPlaceItems = useMemo(() => {
+    if (!selectedPlaceKey) return [];
+    const list = placeEventsMap[selectedPlaceKey] || [];
+    return list.map((ev, idx) => ({
+      id: ev.id ?? `${ev.title || "event"}-${idx}`,
+      category: ev.category,
+      title: ev.title || "",
+      timeText: ev.timeText || "",
+    }));
+  }, [selectedPlaceKey, placeEventsMap]);
 
   // 시간표 API 호출 + 데이터 정규화
   useEffect(() => {
@@ -147,6 +184,14 @@ const TimetableMapSection = ({ onTodayLecturesChange, markers = [] }) => {
 
   const isMap = activeView === "map";
 
+  // ✅ 홈 지도에서 마커 클릭 시: 같은 곳을 다시 클릭하면 선택 해제(→ 기본 좌표로 복귀)
+  const handleMarkerClick = (marker) => {
+    if (!marker) return;
+    const key = marker.placeKey || marker.name;
+    if (!key) return;
+    setSelectedPlaceKey((prev) => (prev === key ? null : key));
+  };
+
   return (
     <section className="home-timetable-map-section">
       <div className="home-timetable-map-header">
@@ -157,7 +202,10 @@ const TimetableMapSection = ({ onTodayLecturesChange, markers = [] }) => {
             className={`home-toggle-btn ${
               activeView === "timetable" ? "active" : ""
             }`}
-            onClick={() => setActiveView("timetable")}
+            onClick={() => {
+              setActiveView("timetable");
+              setSelectedPlaceKey(null); // 시간표 보기로 전환 시 선택 해제
+            }}
           >
             시간표보기
           </button>
@@ -175,8 +223,20 @@ const TimetableMapSection = ({ onTodayLecturesChange, markers = [] }) => {
 
       <div className="home-timetable-map-content">
         {isMap ? (
-          // ===== 네이버 지도 화면 (홈용 마커 표시) =====
-          <NaverMap markers={markers} />
+          // ===== 네이버 지도 화면 (홈용 마커 + 장소 정보 패널) =====
+          <div className="map-page-map-wrapper">
+            <NaverMap
+              markers={markers}
+              center={centerForMap}
+              onMarkerClick={handleMarkerClick}
+            />
+
+            <PlaceEventsBar
+              place={selectedPlaceKey}
+              items={selectedPlaceItems}
+              onClose={() => setSelectedPlaceKey(null)}
+            />
+          </div>
         ) : (
           // ===== 시간표 화면 =====
           <div className="home-timetable">
