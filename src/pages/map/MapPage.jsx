@@ -1,3 +1,4 @@
+// src/pages/map/MapPage.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../css/map/MapPage.css";
@@ -11,6 +12,28 @@ import PlaceEventsBar from "../../components/map/PlaceEventsBar";
 
 import api from "../../api/axios";
 import { useLoading } from "../../context/LoadingContext";
+
+// ===== 공통 유틸 =====
+
+// "제목"으로 쓸 문자열 통합: title > courseName > name
+function getEventTitle(ev) {
+  if (!ev) return "";
+  return ev.title || ev.courseName || ev.name || "";
+}
+
+// 위치 문자열 통합
+function getEventLocation(ev) {
+  if (!ev) return "";
+  return ev.location || ev.place || ev.room || "";
+}
+
+// 카테고리 키 추출 (강의 객체도 LECTURE로 취급)
+function getEventCategoryKey(ev) {
+  if (!ev) return null;
+  if (ev.category) return ev.category;
+  if (ev.courseName) return "LECTURE";
+  return null;
+}
 
 // ===== 카테고리/타입 유틸 =====
 function getCategoryLabel(category) {
@@ -160,6 +183,7 @@ export default function MapPage() {
           : [];
 
         // ✅ 오늘의 일정(칩/슬라이더용) = 같은 날의 전체 일정(중복 제거)
+        //    + 제목( title || courseName || name )이 없는 건 아예 제외
         const mergedSource = [
           ...baseEvents,
           ...lectures,
@@ -169,12 +193,20 @@ export default function MapPage() {
 
         const seen = new Set();
         const mergedToday = [];
-        mergedSource.forEach((ev, idx) => {
-          if (!ev) return;
-          const key = ev.id ?? `${ev.title || "event"}-${ev.startAt || idx}`;
+        mergedSource.forEach((raw, idx) => {
+          if (!raw) return;
+          const title = getEventTitle(raw);
+          if (!title) return; // 🔥 제목이 실제로 없으면 오늘의 일정에서 제외
+
+          const key = raw.id ?? `${title}-${raw.startAt || idx}`;
           if (seen.has(key)) return;
           seen.add(key);
-          mergedToday.push(ev);
+
+          mergedToday.push({
+            ...raw,
+            _displayTitle: title,
+            _displayLocation: getEventLocation(raw),
+          });
         });
         setTodayEvents(mergedToday);
 
@@ -232,11 +264,16 @@ export default function MapPage() {
   }, [showLoading, hideLoading]);
 
   // 오늘 일정 → 장소별 카운트 (칩용)
+  // 🔥 제목 없는 이벤트는 위에서 이미 걸러졌지만, 한 번 더 방어적으로 체크
   const todayPlaceItems = useMemo(() => {
     const map = {};
     todayEvents.forEach((ev) => {
-      const location = ev.location || ev.place || ev.room;
+      const title = ev._displayTitle || getEventTitle(ev);
+      if (!title) return; // 제목 없는 건 집계에서 제외
+
+      const location = ev._displayLocation || getEventLocation(ev);
       if (!location) return;
+
       const key = extractPlaceLabel(location);
       map[key] = (map[key] || 0) + 1;
     });
@@ -250,8 +287,12 @@ export default function MapPage() {
   const placeEventsMap = useMemo(() => {
     const map = {};
     todayEvents.forEach((ev) => {
-      const location = ev.location || ev.place || ev.room;
+      const title = ev._displayTitle || getEventTitle(ev);
+      if (!title) return; // 제목 없는 건 슬라이더에서도 제외
+
+      const location = ev._displayLocation || getEventLocation(ev);
       if (!location) return;
+
       const key = extractPlaceLabel(location);
       if (!map[key]) map[key] = [];
       map[key].push(ev);
@@ -263,41 +304,58 @@ export default function MapPage() {
   const selectedPlaceItems = useMemo(() => {
     if (!selectedPlace) return [];
     const list = placeEventsMap[selectedPlace] || [];
-    return list.map((ev, idx) => ({
-      id: ev.id ?? `${ev.title || "event"}-${ev.startAt}-${idx}`,
-      category: getCategoryLabel(ev.category),
-      title: ev.title || "",
-      timeText: formatEventTimeRange(ev.startAt, ev.endAt),
-    }));
+    return list.map((ev, idx) => {
+      const title = ev._displayTitle || getEventTitle(ev);
+      const categoryKey = getEventCategoryKey(ev);
+
+      return {
+        id: ev.id ?? `${title || "event"}-${ev.startAt}-${idx}`,
+        category: getCategoryLabel(categoryKey),
+        title,
+        timeText: formatEventTimeRange(ev.startAt, ev.endAt),
+      };
+    });
   }, [selectedPlace, placeEventsMap]);
 
-  // 지난 / 다음 일정용 리스트
+  // 지난 / 다음 일정용 리스트 (여기도 제목 통합/필터 적용)
   const prevItems = useMemo(
     () =>
-      yesterdayEvents.map((ev, idx) => ({
-        id: ev.id ?? `${ev.title || "past"}-${idx}`,
-        category: getCategoryLabel(ev.category),
-        title: ev.title || "",
-      })),
+      yesterdayEvents.reduce((acc, ev, idx) => {
+        const title = getEventTitle(ev);
+        if (!title) return acc; // 제목 완전 없으면 안 보여줌
+
+        const categoryKey = getEventCategoryKey(ev);
+        acc.push({
+          id: ev.id ?? `${title || "past"}-${idx}`,
+          category: getCategoryLabel(categoryKey),
+          title,
+        });
+        return acc;
+      }, []),
     [yesterdayEvents]
   );
 
   const nextItems = useMemo(
     () =>
-      tomorrowEvents.map((ev, idx) => ({
-        id: ev.id ?? `${ev.title || "upcoming"}-${idx}`,
-        category: getCategoryLabel(ev.category),
-        title: ev.title || "",
-      })),
+      tomorrowEvents.reduce((acc, ev, idx) => {
+        const title = getEventTitle(ev);
+        if (!title) return acc;
+
+        const categoryKey = getEventCategoryKey(ev);
+        acc.push({
+          id: ev.id ?? `${title || "upcoming"}-${idx}`,
+          category: getCategoryLabel(categoryKey),
+          title,
+        });
+        return acc;
+      }, []),
     [tomorrowEvents]
   );
 
   // ✅ 현재 선택된 장소 키와 일치하는 마커 찾기 (name이 아니라 placeKey로 비교)
   const selectedPlaceMarker = useMemo(() => {
     if (!selectedPlace) return null;
-    return (
-      mapMarkers.find((m) => m.placeKey === selectedPlace) || null
-    );
+    return mapMarkers.find((m) => m.placeKey === selectedPlace) || null;
   }, [selectedPlace, mapMarkers]);
 
   // ✅ 지도에 넘길 center 값 (없으면 null → 기본 한서대 위치로)
