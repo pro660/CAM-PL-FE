@@ -612,7 +612,7 @@ export default function CalendarPage() {
         onClose={handleMemoClose}
         onSave={handleMemoSaved}
         onRequestEdit={handleRequestEditFromMemo}
-        onDeleted={handleEventDeleted}   {/* 🔥 여기! */}
+        onDeleted={handleEventDeleted}   
       />
     </div>
   );
