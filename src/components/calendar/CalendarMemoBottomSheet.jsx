@@ -146,7 +146,6 @@ export default function CalendarMemoBottomSheet({
                 type="button"
                 className="calendar-memo-delete-button"
                 aria-label="메모 삭제"
-                style={"border: none; background: none;"}
               >
                 <img
                   src={Trash_ICON}

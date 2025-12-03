@@ -59,17 +59,14 @@
   color: #555555;
 }
 
-/* 우측 편집 아이콘 버튼 */
-.calendar-memo-edit-button {
-  border: none;
-  background: transparent;
-  padding: 0;
-  cursor: default; /* 실제 기능은 없어서 기본 커서 */
+.calendar-memo-edit-icon img {
+  width: 1.3rem;
+  height: 1.3rem;
 }
 
-.calendar-memo-edit-icon img {
-  width: 0.9rem;
-  height: 0.9rem;
+.calendar-memo-delete-icon img {
+  width: 1.3rem;
+  height: 1.3rem;
 }
 
 /* 메모 입력 박스 */
