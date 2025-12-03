@@ -76,7 +76,7 @@
   border: 2px solid #d3c2ff; /* 보라색 테두리 */
   background-color: #ffffff;
   padding: 0.7rem 0.9rem;
-  min-height: 8rem;
+  min-height: 14rem;
   box-sizing: border-box;
   position: relative; /* 내부 empty 상태 overlay를 위해 */
 }

@@ -49,7 +49,7 @@ export default function CalendarMemoBottomSheet({
   event,
   onClose,
   onSave,
-  // 🔥 추가: 수정 모드 진입 요청 콜백
+  // 🔥 수정 모드 진입 요청 콜백
   onRequestEdit,
 }) {
   const [memoText, setMemoText] = useState("");
@@ -65,15 +65,13 @@ export default function CalendarMemoBottomSheet({
   if (!visible || !event) return null;
 
   const handleChange = (e) => {
-    // 🔒 이 컴포넌트에서는 수정 불가(readOnly)지만,
-    // 혹시 실수로 readOnly 제거해도 state는 갱신되도록 남겨둠.
+    // 🔒 readOnly지만 혹시라도 풀릴 상황 대비해서 state는 갱신되도록 유지
     setMemoText(e.target.value);
   };
 
   const commitAndClose = () => {
     const trimmed = memoText.trim();
 
-    // 부모 state와 동기화 (월 이벤트 리스트 갱신용)
     if (onSave) onSave(trimmed);
     if (onClose) onClose();
   };
@@ -91,12 +89,17 @@ export default function CalendarMemoBottomSheet({
     const trimmed = memoText.trim();
     if (onSave) onSave(trimmed);
 
-    // 🔥 일정 수정 모드 진입 요청
     if (onRequestEdit) {
       onRequestEdit(event);
     } else if (onClose) {
       onClose();
     }
+  };
+
+  const handleClickDelete = () => {
+    // 메모 삭제: 빈 문자열로 저장 후 닫기
+    if (onSave) onSave("");
+    if (onClose) onClose();
   };
 
   return (
@@ -139,31 +142,20 @@ export default function CalendarMemoBottomSheet({
               해당 일정의 메모입니다.
             </span>
 
-            {/* 🔥 쓰레기통 + 연필 아이콘 영역 */}
+            {/* 🔥 쓰레기통 + 연필 이미지 (onClick) */}
             <div className="calendar-memo-actions">
-  
-              <button
-                type="button"
-                className="calendar-memo-delete-button"
-                aria-label="메모 삭제"
-              >
-                <img
-                  src={Trash_ICON}
-                  alt="메모 삭제"
-                  className="calendar-memo-delete-icon"
-                />
-              </button>
-
-              <button
-                type="button"
-                className="calendar-memo-edit-button"
-                aria-label="메모 수정"
+              <img
+                src={Trash_ICON}
+                alt="메모 삭제"
+                className="calendar-memo-delete-icon"
+                onClick={handleClickDelete}
+              />
+              <img
+                src={EDIT_ICON}
+                alt="메모 수정"
+                className="calendar-memo-edit-icon"
                 onClick={handleClickEdit}
-              >
-                <span className="calendar-memo-edit-icon">
-                  <img src={EDIT_ICON} alt="수정 아이콘" />
-                </span>
-              </button>
+              />
             </div>
           </div>
 
