@@ -45,7 +45,7 @@
   box-sizing: border-box;
 }
 
-/* 카드 상단 텍스트 + 연필 아이콘 */
+/* 카드 상단 텍스트 + 아이콘 래퍼 */
 .calendar-memo-card-header {
   display: flex;
   justify-content: space-between;
@@ -59,19 +59,27 @@
   color: #555555;
 }
 
-.calendar-memo-edit-icon{
-  margin-top: -0.5rem;
+/* 아이콘 영역 (삭제 + 수정) */
+.calendar-memo-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* edit 아이콘 (조금 위로) */
+.calendar-memo-edit-icon {
   cursor: pointer;
   width: 1.3rem;
   height: 1.3rem;
+  transform: translateY(-1px); /* 살짝 위로 */
 }
 
+/* delete 아이콘 (조금 아래로) */
 .calendar-memo-delete-icon {
-  margin-left: -1.4rem;
-  margin-top: 0.5rem;
   cursor: pointer;
   width: 1.5rem;
   height: 1.5rem;
+  transform: translateY(2px); /* 살짝 아래로 */
 }
 
 /* 메모 입력 박스 */
