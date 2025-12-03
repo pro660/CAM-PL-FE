@@ -62,13 +62,19 @@
 .calendar-memo-edit-icon img {
   width: 1.3rem;
   height: 1.3rem;
-  cursor: pointer;
 }
 
 .calendar-memo-delete-icon img {
-  width: 1.6rem;
-  height: 1.6rem;
-  margin-left: -0.4rem;
+  width: 2rem;
+  height: 2rem;
+}
+
+.calendar-memo-edit-icon{
+  cursor: pointer;
+}
+
+.calendar-memo-delete-icon {
+  margin-left: -0.7rem;
   cursor: pointer;
 }
 
