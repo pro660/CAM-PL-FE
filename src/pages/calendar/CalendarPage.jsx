@@ -133,14 +133,14 @@ export default function CalendarPage() {
   // 일정 추가 바텀시트
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
 
-  // 새 일정 추가/수정 후 재로딩용
+  // 새 일정 추가/수정/삭제 후 재로딩용
   const [monthReloadKey, setMonthReloadKey] = useState(0);
 
   // 메모 팝업
   const [isMemoOpen, setIsMemoOpen] = useState(false);
   const [selectedMemoEvent, setSelectedMemoEvent] = useState(null);
 
-  // 🔥 일정 수정 모드용
+  // 일정 수정 모드용
   const [editingEvent, setEditingEvent] = useState(null);
 
   const yearMonthLabel = `${currentMonth.getFullYear()}년 ${
@@ -160,7 +160,7 @@ export default function CalendarPage() {
     [currentMonth]
   );
 
-  // 🔥 location.state에 fromPlaceRecommend 있으면 한 번만 처리
+  // location.state에 fromPlaceRecommend 있으면 한 번만 처리
   useEffect(() => {
     const state = location.state;
     if (state?.fromPlaceRecommend) {
@@ -168,7 +168,6 @@ export default function CalendarPage() {
       setEditingEvent(null); // 장소 추천에서 들어올 때는 항상 새 일정 추가
       setIsAddSheetOpen(true);
 
-      // URL state 정리
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location, navigate]);
@@ -357,7 +356,7 @@ export default function CalendarPage() {
     setSelectedMemoEvent(null);
   };
 
-  // ➕ 새 일정 추가 버튼
+  // 새 일정 추가 버튼
   const handleClickAdd = () => {
     setEditingEvent(null); // 새 일정 추가 모드
     setIsAddSheetOpen(true);
@@ -376,7 +375,7 @@ export default function CalendarPage() {
     setEditingEvent(null);
   };
 
-  // 🔥 일정 수정 완료 시
+  // 일정 수정 완료 시
   const handleEventUpdated = () => {
     setMonthReloadKey((v) => v + 1);
     setIsAddSheetOpen(false);
@@ -409,11 +408,9 @@ export default function CalendarPage() {
   const handleRequestEditFromMemo = (event) => {
     if (!event) return;
 
-    // 메모 시트 닫기
     setIsMemoOpen(false);
     setSelectedMemoEvent(null);
 
-    // 일정 날짜 기준으로 달/날짜 맞추기
     if (event.startAt) {
       const d = new Date(event.startAt);
       if (!Number.isNaN(d.getTime())) {
@@ -425,9 +422,14 @@ export default function CalendarPage() {
       }
     }
 
-    // 수정 모드로 일정 추가 바텀시트 열기
     setEditingEvent(event);
     setIsAddSheetOpen(true);
+  };
+
+  // 🔥 삭제 완료 시: 프론트 목록에서 제거 + API 재호출 트리거
+  const handleEventDeleted = (deletedId) => {
+    setMonthEvents((prev) => prev.filter((ev) => ev.id !== deletedId));
+    setMonthReloadKey((v) => v + 1);
   };
 
   const isSameDate = (d1, d2) =>
@@ -610,6 +612,7 @@ export default function CalendarPage() {
         onClose={handleMemoClose}
         onSave={handleMemoSaved}
         onRequestEdit={handleRequestEditFromMemo}
+        onDeleted={handleEventDeleted}   {/* 🔥 여기! */}
       />
     </div>
   );

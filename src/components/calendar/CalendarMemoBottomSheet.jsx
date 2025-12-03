@@ -6,15 +6,45 @@ import EMPTY_MEMO_ICON from "../../images/calendar/nomemo.svg";
 import EDIT_ICON from "../../images/calendar/edit.svg";
 import Trash_ICON from "../../images/calendar/trash.svg";
 
-// 🔥 새로 import
+// 삭제 확인 팝업
 import Delete_schdule from "./Delete_schdule";
 
 function getCategoryLabel(category) {
-  // ... (생략: 기존 그대로)
+  switch (category) {
+    case "LECTURE":
+      return "강의";
+    case "EXAM":
+      return "시험";
+    case "PRESENTATION":
+      return "발표";
+    case "TEAM":
+      return "팀플";
+    case "MEETING":
+      return "미팅";
+    case "ASSIGNMENT":
+      return "과제";
+    case "MEAL":
+      return "식사";
+    case "REST":
+      return "휴식";
+    case "GATHERING":
+      return "모임";
+    default:
+      return "일정";
+  }
 }
 
 function formatTimeRange(startIso, endIso) {
-  // ... (생략: 기존 그대로)
+  if (!startIso || !endIso) return "";
+  const s = new Date(startIso);
+  const e = new Date(endIso);
+
+  const toTime = (d) =>
+    `${String(d.getHours()).padStart(2, "0")}:${String(
+      d.getMinutes()
+    ).padStart(2, "0")}`;
+
+  return `${toTime(s)} ~ ${toTime(e)}`;
 }
 
 export default function CalendarMemoBottomSheet({
@@ -23,10 +53,13 @@ export default function CalendarMemoBottomSheet({
   onClose,
   onSave,
   onRequestEdit,
+  // 🔥 삭제 완료 시 CalendarPage에 알려줄 콜백
+  onDeleted,
 }) {
   const [memoText, setMemoText] = useState("");
-  const [showDeleteModal, setShowDeleteModal] = useState(false); // 🔥 추가
+  const [showDeleteModal, setShowDeleteModal] = useState(false); // 삭제 팝업 on/off
 
+  // 팝업 열릴 때 기본 메모값 설정 (서버에서 온 description/memo만 사용)
   useEffect(() => {
     if (!visible || !event) return;
     const base = event.description ?? event.memo ?? "";
@@ -36,6 +69,7 @@ export default function CalendarMemoBottomSheet({
   if (!visible || !event) return null;
 
   const handleChange = (e) => {
+    // 지금은 readOnly지만 혹시 몰라 그대로 둠
     setMemoText(e.target.value);
   };
 
@@ -56,6 +90,7 @@ export default function CalendarMemoBottomSheet({
   const handleClickEdit = () => {
     const trimmed = memoText.trim();
     if (onSave) onSave(trimmed);
+
     if (onRequestEdit) {
       onRequestEdit(event);
     } else if (onClose) {
@@ -63,21 +98,21 @@ export default function CalendarMemoBottomSheet({
     }
   };
 
-  // 🔥 쓰레기통 눌렀을 때: 삭제 팝업 open
+  // 쓰레기통 아이콘 클릭 → 삭제 확인 팝업 열기
   const handleClickDelete = (e) => {
     e.stopPropagation();
     setShowDeleteModal(true);
   };
 
-  // 🔥 삭제 팝업 닫기
   const handleDeleteModalClose = () => {
     setShowDeleteModal(false);
   };
 
-  // 🔥 삭제 성공 후 처리 (목록 갱신은 부모가 하도록)
-  const handleDeleted = () => {
+  // 삭제 성공 후 처리: CalendarPage에 알리고, 메모 시트 닫기
+  const handleDeleted = (deletedId) => {
     setShowDeleteModal(false);
-    if (onClose) onClose(); // 메모 시트 닫기
+    if (onDeleted) onDeleted(deletedId);
+    if (onClose) onClose();
   };
 
   return (
@@ -165,7 +200,7 @@ export default function CalendarMemoBottomSheet({
         </div>
       </div>
 
-      {/* 🔥 여기서 실제로 Delete_schdule를 렌더링해야 팝업이 보임 */}
+      {/* 🔥 삭제 확인 팝업 실제 렌더링 */}
       <Delete_schdule
         visible={showDeleteModal}
         eventId={event.id}
