@@ -71,7 +71,7 @@
   cursor: pointer;
   width: 1.3rem;
   height: 1.3rem;
-  transform: translateY(-1px); /* 살짝 위로 */
+  transform: translateY(0px); /* 살짝 위로 */
 }
 
 /* delete 아이콘 (조금 아래로) */
@@ -79,7 +79,7 @@
   cursor: pointer;
   width: 1.5rem;
   height: 1.5rem;
-  transform: translateY(1px); /* 살짝 아래로 */
+  transform: translateY(0px); /* 살짝 아래로 */
 }
 
 /* 메모 입력 박스 */
