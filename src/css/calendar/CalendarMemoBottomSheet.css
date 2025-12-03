@@ -66,7 +66,8 @@
 }
 
 .calendar-memo-delete-icon {
-  margin-left: -0.7rem;
+  margin-left: -1.4rem;
+  margin-top: 0.3rem;
   cursor: pointer;
   width: 1.5rem;
   height: 1.5rem;
