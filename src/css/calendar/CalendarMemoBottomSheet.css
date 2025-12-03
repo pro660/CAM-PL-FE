@@ -65,8 +65,8 @@
 }
 
 .calendar-memo-delete-icon img {
-  width: 1.3rem;
-  height: 1.3rem;
+  width: 1.15rem;
+  height: 1.15rem;
 }
 
 /* 메모 입력 박스 */
@@ -76,24 +76,9 @@
   border: 2px solid #d3c2ff; /* 보라색 테두리 */
   background-color: #ffffff;
   padding: 0.7rem 0.9rem;
-  min-height: 14rem;
+  min-height: 15rem;
   box-sizing: border-box;
   position: relative; /* 내부 empty 상태 overlay를 위해 */
-}
-
-/* 메모 텍스트 입력 */
-.calendar-memo-textarea {
-  width: 100%;
-  min-height: 6rem;
-  border: none;
-  outline: none;
-  resize: vertical;
-  font-size: 0.85rem;
-  line-height: 1.5;
-  color: #444444;
-  font-family: inherit;
-  background: transparent;
-  box-sizing: border-box;
 }
 
 /* 메모가 없을 때 표시되는 안내 영역 */
