@@ -60,6 +60,7 @@
 }
 
 .calendar-memo-edit-icon{
+  margin-top: -0.5rem;
   cursor: pointer;
   width: 1.3rem;
   height: 1.3rem;
@@ -67,7 +68,7 @@
 
 .calendar-memo-delete-icon {
   margin-left: -1.4rem;
-  margin-top: 1rem;
+  margin-top: 0.5rem;
   cursor: pointer;
   width: 1.5rem;
   height: 1.5rem;
