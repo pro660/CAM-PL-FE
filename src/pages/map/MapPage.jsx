@@ -193,14 +193,21 @@ export default function MapPage() {
 
         const seen = new Set();
         const mergedToday = [];
+
         mergedSource.forEach((raw, idx) => {
           if (!raw) return;
+
           const title = getEventTitle(raw);
           if (!title) return; // 🔥 제목이 실제로 없으면 오늘의 일정에서 제외
 
-          const key = raw.id ?? `${title}-${raw.startAt || idx}`;
-          if (seen.has(key)) return;
-          seen.add(key);
+          const startAt = raw.startAt || raw.startTime || "";
+          // 🔥 id 대신 "제목 + 시작시간"을 기준으로 중복 제거
+          const dedupKey = `${title}|${startAt || idx}`;
+
+          if (seen.has(dedupKey)) {
+            return; // 동일한 강의/일정은 한 번만
+          }
+          seen.add(dedupKey);
 
           mergedToday.push({
             ...raw,
@@ -208,6 +215,7 @@ export default function MapPage() {
             _displayLocation: getEventLocation(raw),
           });
         });
+
         setTodayEvents(mergedToday);
 
         // ✅ 지난 일정 / 다음 일정 (같은 날짜 안에서 현재 시간 기준으로 나눠진 값)
@@ -264,12 +272,11 @@ export default function MapPage() {
   }, [showLoading, hideLoading]);
 
   // 오늘 일정 → 장소별 카운트 (칩용)
-  // 🔥 제목 없는 이벤트는 위에서 이미 걸러졌지만, 한 번 더 방어적으로 체크
   const todayPlaceItems = useMemo(() => {
     const map = {};
     todayEvents.forEach((ev) => {
       const title = ev._displayTitle || getEventTitle(ev);
-      if (!title) return; // 제목 없는 건 집계에서 제외
+      if (!title) return; // 제목 없는 건 집계에서 제외 (이론상 이미 필터됨)
 
       const location = ev._displayLocation || getEventLocation(ev);
       if (!location) return;
@@ -288,7 +295,7 @@ export default function MapPage() {
     const map = {};
     todayEvents.forEach((ev) => {
       const title = ev._displayTitle || getEventTitle(ev);
-      if (!title) return; // 제목 없는 건 슬라이더에서도 제외
+      if (!title) return;
 
       const location = ev._displayLocation || getEventLocation(ev);
       if (!location) return;
@@ -317,12 +324,12 @@ export default function MapPage() {
     });
   }, [selectedPlace, placeEventsMap]);
 
-  // 지난 / 다음 일정용 리스트 (여기도 제목 통합/필터 적용)
+  // 지난 / 다음 일정용 리스트
   const prevItems = useMemo(
     () =>
       yesterdayEvents.reduce((acc, ev, idx) => {
         const title = getEventTitle(ev);
-        if (!title) return acc; // 제목 완전 없으면 안 보여줌
+        if (!title) return acc;
 
         const categoryKey = getEventCategoryKey(ev);
         acc.push({
@@ -468,7 +475,6 @@ export default function MapPage() {
           <button
             type="button"
             className="map-page-recommend-button"
-            onClick={handleClickRecommend}
           >
             장소 추천받기
           </button>
