@@ -133,12 +133,15 @@ export default function CalendarPage() {
   // 일정 추가 바텀시트
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
 
-  // 새 일정 추가 후 재로딩용
+  // 새 일정 추가/수정 후 재로딩용
   const [monthReloadKey, setMonthReloadKey] = useState(0);
 
   // 메모 팝업
   const [isMemoOpen, setIsMemoOpen] = useState(false);
   const [selectedMemoEvent, setSelectedMemoEvent] = useState(null);
+
+  // 🔥 일정 수정 모드용
+  const [editingEvent, setEditingEvent] = useState(null);
 
   const yearMonthLabel = `${currentMonth.getFullYear()}년 ${
     currentMonth.getMonth() + 1
@@ -162,6 +165,7 @@ export default function CalendarPage() {
     const state = location.state;
     if (state?.fromPlaceRecommend) {
       setPrefillFromPlace(state.fromPlaceRecommend);
+      setEditingEvent(null); // 장소 추천에서 들어올 때는 항상 새 일정 추가
       setIsAddSheetOpen(true);
 
       // URL state 정리
@@ -353,19 +357,31 @@ export default function CalendarPage() {
     setSelectedMemoEvent(null);
   };
 
+  // ➕ 새 일정 추가 버튼
   const handleClickAdd = () => {
+    setEditingEvent(null); // 새 일정 추가 모드
     setIsAddSheetOpen(true);
   };
 
   const handleAddSheetClose = () => {
     setIsAddSheetOpen(false);
     setPrefillFromPlace(null);
+    setEditingEvent(null);
   };
 
   const handleEventAdded = () => {
     setMonthReloadKey((v) => v + 1);
     setIsAddSheetOpen(false);
     setPrefillFromPlace(null);
+    setEditingEvent(null);
+  };
+
+  // 🔥 일정 수정 완료 시
+  const handleEventUpdated = () => {
+    setMonthReloadKey((v) => v + 1);
+    setIsAddSheetOpen(false);
+    setPrefillFromPlace(null);
+    setEditingEvent(null);
   };
 
   const handleOpenMemo = (event) => {
@@ -387,6 +403,31 @@ export default function CalendarPage() {
         ev.id === id ? { ...ev, memo: memoText, description: memoText } : ev
       )
     );
+  };
+
+  // 🔥 메모 시트 → "수정" 아이콘 클릭 시
+  const handleRequestEditFromMemo = (event) => {
+    if (!event) return;
+
+    // 메모 시트 닫기
+    setIsMemoOpen(false);
+    setSelectedMemoEvent(null);
+
+    // 일정 날짜 기준으로 달/날짜 맞추기
+    if (event.startAt) {
+      const d = new Date(event.startAt);
+      if (!Number.isNaN(d.getTime())) {
+        const monthStart = new Date(d.getFullYear(), d.getMonth(), 1);
+        setCurrentMonth(monthStart);
+        setSelectedDate(
+          new Date(d.getFullYear(), d.getMonth(), d.getDate())
+        );
+      }
+    }
+
+    // 수정 모드로 일정 추가 바텀시트 열기
+    setEditingEvent(event);
+    setIsAddSheetOpen(true);
   };
 
   const isSameDate = (d1, d2) =>
@@ -550,7 +591,7 @@ export default function CalendarPage() {
         +
       </button>
 
-      {/* 일정 추가 바텀시트 */}
+      {/* 일정 추가 / 수정 바텀시트 */}
       <CalendarAddBottomSheet
         visible={isAddSheetOpen}
         date={selectedDate}
@@ -558,6 +599,8 @@ export default function CalendarPage() {
         onAdded={handleEventAdded}
         initialLocation={prefillFromPlace?.location || ""}
         initialCategory={prefillFromPlace?.category || "LECTURE"}
+        editingEvent={editingEvent}
+        onUpdated={handleEventUpdated}
       />
 
       {/* 메모 팝업 */}
@@ -566,6 +609,7 @@ export default function CalendarPage() {
         event={selectedMemoEvent}
         onClose={handleMemoClose}
         onSave={handleMemoSaved}
+        onRequestEdit={handleRequestEditFromMemo}
       />
     </div>
   );

@@ -48,49 +48,31 @@ export default function CalendarMemoBottomSheet({
   event,
   onClose,
   onSave,
+  // 🔥 추가: 수정 모드 진입 요청 콜백
+  onRequestEdit,
 }) {
   const [memoText, setMemoText] = useState("");
 
-  // 팝업 열릴 때 기본 메모값 설정
+  // 팝업 열릴 때 기본 메모값 설정 (서버에서 온 description/memo만 사용)
   useEffect(() => {
     if (!visible || !event) return;
 
-    // 1순위: localStorage, 2순위: 서버 description(추가 페이지 메모), 3순위: 프론트 memo
-    let base = event.description ?? event.memo ?? "";
-
-    try {
-      const stored = window.localStorage.getItem(
-        `calendarMemo:${event.id}`
-      );
-      if (stored !== null) {
-        base = stored;
-      }
-    } catch {
-      // localStorage 실패해도 무시
-    }
-
+    const base = event.description ?? event.memo ?? "";
     setMemoText(base);
   }, [visible, event]);
 
   if (!visible || !event) return null;
 
   const handleChange = (e) => {
+    // 🔒 이 컴포넌트에서는 수정 불가(readOnly)지만,
+    // 혹시 실수로 readOnly 제거해도 state는 갱신되도록 남겨둠.
     setMemoText(e.target.value);
   };
 
   const commitAndClose = () => {
     const trimmed = memoText.trim();
 
-    // localStorage에 캐시
-    try {
-      window.localStorage.setItem(
-        `calendarMemo:${event.id}`,
-        trimmed
-      );
-    } catch {
-      // ignore
-    }
-
+    // 부모 state와 동기화 (월 이벤트 리스트 갱신용)
     if (onSave) onSave(trimmed);
     if (onClose) onClose();
   };
@@ -103,6 +85,18 @@ export default function CalendarMemoBottomSheet({
   };
 
   const isEmpty = memoText.trim().length === 0;
+
+  const handleClickEdit = () => {
+    const trimmed = memoText.trim();
+    if (onSave) onSave(trimmed);
+
+    // 🔥 일정 수정 모드 진입 요청
+    if (onRequestEdit) {
+      onRequestEdit(event);
+    } else if (onClose) {
+      onClose();
+    }
+  };
 
   return (
     <div
@@ -143,15 +137,33 @@ export default function CalendarMemoBottomSheet({
             <span className="calendar-memo-card-title">
               해당 일정의 메모입니다.
             </span>
-            <button
-              type="button"
-              className="calendar-memo-edit-button"
-              aria-label="메모 수정"
-            >
-              <span className="calendar-memo-edit-icon">
-                <img src={EDIT_ICON} alt="수정 아이콘" />
-              </span>
-            </button>
+
+            {/* 🔥 쓰레기통 + 연필 아이콘 영역 */}
+            <div className="calendar-memo-actions">
+              {/* 쓰레기통 이미지 틀만 제공 (src는 나중에 채워넣기) */}
+              <button
+                type="button"
+                className="calendar-memo-delete-button"
+                aria-label="메모 삭제"
+              >
+                <img
+                  src=""
+                  alt="메모 삭제"
+                  className="calendar-memo-delete-icon"
+                />
+              </button>
+
+              <button
+                type="button"
+                className="calendar-memo-edit-button"
+                aria-label="메모 수정"
+                onClick={handleClickEdit}
+              >
+                <span className="calendar-memo-edit-icon">
+                  <img src={EDIT_ICON} alt="수정 아이콘" />
+                </span>
+              </button>
+            </div>
           </div>
 
           <div className="calendar-memo-textbox-wrapper">
@@ -159,6 +171,7 @@ export default function CalendarMemoBottomSheet({
               className="calendar-memo-textarea"
               value={memoText}
               onChange={handleChange}
+              readOnly // 🔒 메모 바텀시트에서는 직접 수정 불가
             />
             {isEmpty && (
               <div className="calendar-memo-empty">

@@ -30,6 +30,9 @@ export default function CalendarAddBottomSheet({
   onAdded,
   initialLocation,
   initialCategory,
+  // 🔥 추가: 수정 모드용 props
+  editingEvent,      // 일정 객체 (수정 모드일 때만 사용)
+  onUpdated,         // 수정 완료 콜백
 }) {
   const [title, setTitle] = useState("");
   const [location, setLocation] = useState("");
@@ -45,10 +48,19 @@ export default function CalendarAddBottomSheet({
   const [timePickerVisible, setTimePickerVisible] = useState(false);
   const [timePickerTarget, setTimePickerTarget] = useState("start");
 
+  // 🔥 기반 날짜: 수정 모드면 event.startAt, 아니면 props.date
+  const baseDate = useMemo(() => {
+    if (editingEvent?.startAt) {
+      const d = new Date(editingEvent.startAt);
+      if (!Number.isNaN(d.getTime())) return d;
+    }
+    return date;
+  }, [date, editingEvent]);
+
   const dateLabel = useMemo(() => {
-    const y = date.getFullYear();
-    const m = date.getMonth() + 1;
-    const d = date.getDate();
+    const y = baseDate.getFullYear();
+    const m = baseDate.getMonth() + 1;
+    const d = baseDate.getDate();
     const weekdayNames = [
       "일요일",
       "월요일",
@@ -58,24 +70,55 @@ export default function CalendarAddBottomSheet({
       "금요일",
       "토요일",
     ];
-    const weekday = weekdayNames[date.getDay()];
+    const weekday = weekdayNames[baseDate.getDay()];
     return `${y}년 ${m}월 ${d}일 ${weekday}`;
-  }, [date]);
+  }, [baseDate]);
 
   // 바텀시트 열릴 때마다 form 초기화 + 프리필 적용
   useEffect(() => {
     if (!visible) return;
 
-    setTitle("");
-    setMemo("");
-    setStartTime("10:00");
-    setEndTime("11:00");
-    setIsImportant(false);
     setError("");
+    setLoading(false);
 
-    setLocation(initialLocation || "");
-    setCategory(initialCategory || "LECTURE");
-  }, [visible, initialLocation, initialCategory]);
+    if (editingEvent) {
+      // 🔥 수정 모드: 기존 일정 정보로 프리필
+      setTitle(editingEvent.title || "");
+      setLocation(editingEvent.location || "");
+      const baseMemo = editingEvent.description ?? editingEvent.memo ?? "";
+      setMemo(baseMemo);
+
+      if (editingEvent.startAt) {
+        setStartTime(editingEvent.startAt.slice(11, 16)); // "HH:MM"
+      } else {
+        setStartTime("10:00");
+      }
+
+      if (editingEvent.endAt) {
+        setEndTime(editingEvent.endAt.slice(11, 16));
+      } else {
+        setEndTime("11:00");
+      }
+
+      const cat =
+        editingEvent.category ||
+        editingEvent.type ||
+        initialCategory ||
+        "LECTURE";
+      setCategory(cat);
+      setIsImportant(!!editingEvent.important);
+    } else {
+      // ➕ 추가 모드 (기존 로직 그대로)
+      setTitle("");
+      setMemo("");
+      setStartTime("10:00");
+      setEndTime("11:00");
+      setIsImportant(false);
+
+      setLocation(initialLocation || "");
+      setCategory(initialCategory || "LECTURE");
+    }
+  }, [visible, editingEvent, initialLocation, initialCategory]);
 
   if (!visible) return null;
 
@@ -105,7 +148,7 @@ export default function CalendarAddBottomSheet({
       return;
     }
 
-    const dateStr = formatDate(date);
+    const dateStr = formatDate(baseDate);
     const makeIso = (time) => `${dateStr}T${time}:00`;
 
     const startAt = makeIso(startTime);
@@ -114,7 +157,7 @@ export default function CalendarAddBottomSheet({
     setLoading(true);
 
     try {
-      await api.post("/calendar/events", {
+      const payload = {
         title: title.trim(),
         description: memo.trim() || null,
         startAt,
@@ -122,25 +165,36 @@ export default function CalendarAddBottomSheet({
         location: location.trim() || null,
         category,
         important: isImportant,
-      });
+      };
 
-      onAdded && onAdded();
+      if (editingEvent && editingEvent.id) {
+        // 🔥 수정 모드: 일정 수정 API 호출 (엔드포인트는 백엔드에 맞게 조정)
+        await api.put(`/calendar/events/${editingEvent.id}`, payload);
+        onUpdated && onUpdated();
+      } else {
+        // ➕ 추가 모드
+        await api.post("/calendar/events", payload);
+        onAdded && onAdded();
+      }
     } catch (e) {
       console.error(e);
       const msg =
-        e.response?.data?.error || "일정 추가 중 오류가 발생했습니다.";
+        e.response?.data?.error ||
+        (editingEvent
+          ? "일정 수정 중 오류가 발생했습니다."
+          : "일정 추가 중 오류가 발생했습니다.");
       setError(msg);
     } finally {
       setLoading(false);
     }
   };
 
+  // 버튼 텍스트: 추가 / 수정
+  const submitLabel = editingEvent ? "수정" : "추가";
+
   return (
     <>
-      <div
-        className="calendar-add-overlay"
-        onClick={handleClickBackdrop}
-      >
+      <div className="calendar-add-overlay" onClick={handleClickBackdrop}>
         <div className="calendar-add-sheet">
           {/* 상단 헤더 */}
           <header className="calendar-add-header">
@@ -265,7 +319,7 @@ export default function CalendarAddBottomSheet({
               className="calendar-add-submit"
               disabled={loading}
             >
-              {loading ? "추가 중..." : "추가"}
+              {loading ? `${submitLabel} 중...` : submitLabel}
             </button>
           </form>
         </div>
