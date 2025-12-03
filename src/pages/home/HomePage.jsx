@@ -57,6 +57,16 @@ function formatTimeRange(startIso, endIso) {
   return `${toTime(s)} ~ ${toTime(e)}`;
 }
 
+// "D-1", "D-8" → 1, 8 같은 숫자만 뽑기 (파싱 실패 시 null)
+function parseDDayValue(dDayStr) {
+  if (typeof dDayStr !== "string") return null;
+  const match = dDayStr.match(/-?\d+/);
+  if (!match) return null;
+  const num = Number(match[0]);
+  if (Number.isNaN(num)) return null;
+  return Math.abs(num);
+}
+
 const HomePage = () => {
   const { showLoading, hideLoading } = useLoading(); // ✅ 전역 로더 제어
 
@@ -69,7 +79,8 @@ const HomePage = () => {
 
   // D-Day 정보 + 로딩 상태
   const [ddayInfo, setDdayInfo] = useState({
-    label: "주요 일정까지",
+    hasImportant: false, // 🔥 중요 D-Day 존재 여부
+    label: "중요 일정이 없어요",
     sub: "캠플이 응원할게요!~",
     days: 0,
   });
@@ -81,6 +92,9 @@ const HomePage = () => {
 
   // ✅ 선택된 장소 (팝업용)
   const [selectedPlaceId, setSelectedPlaceId] = useState(null);
+
+  // ✅ 홈 상단 지도에 사용할 마커들
+  const [homeMapMarkers, setHomeMapMarkers] = useState([]);
 
   // ✅ 사용자 좌표 (기본값은 캠퍼스)
   const [coords, setCoords] = useState({
@@ -136,92 +150,7 @@ const HomePage = () => {
   }, []);
 
   /* =========================
-     1. D-Day용 주요 일정 API 호출
-        GET /calendar/events?ym=YYYY-MM
-     ========================= */
-  useEffect(() => {
-    const fetchMainEvents = async () => {
-      showLoading(); // ✅ 전역 로더 +1
-      try {
-        const startOfToday = new Date(year, today.getMonth(), date);
-
-        // 현재 연/월을 기준으로 ym 파라미터 구성 (예: 2025-12)
-        const ym = `${year}-${String(month).padStart(2, "0")}`;
-
-        const res = await api.get("/calendar/events", {
-          params: { ym },
-        });
-
-        const body = res.data ?? {};
-        const events = Array.isArray(body)
-          ? body
-          : body.events || body.items || [];
-
-        // 앞으로 남은 일정들 중 "가장 가까운 일정"을 찾는다.
-        let nearest = null;
-
-        events.forEach((item) => {
-          // 날짜 필드 추정: startAt 기준으로 YYYY-MM-DD 부분만 사용
-          const dateStr =
-            item.date ||
-            item.eventDate ||
-            item.startDate ||
-            item.day ||
-            (item.startAt ? item.startAt.slice(0, 10) : null);
-
-          if (!dateStr) return;
-
-          const [yyyy, mm, dd] = dateStr.split("-").map(Number);
-          if (!yyyy || !mm || !dd) return;
-
-          const eventDate = new Date(yyyy, mm - 1, dd);
-          const diffMs = eventDate.getTime() - startOfToday.getTime();
-          const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-          // 이미 지난 일정은 제외
-          if (diffDays < 0) return;
-
-          if (!nearest || diffDays < nearest.diffDays) {
-            nearest = { item, diffDays };
-          }
-        });
-
-        if (nearest) {
-          const { item, diffDays } = nearest;
-
-          setDdayInfo({
-            label:
-              item.ddayLabel || item.title || item.name || "주요 일정까지",
-            sub:
-              item.description ||
-              item.memo ||
-              item.place ||
-              item.location ||
-              "캠플이 응원할게요!~",
-            days: diffDays,
-          });
-        } else {
-          setDdayInfo({
-            label: "주요 일정이 없어요",
-            sub: "캠플이 응원할게요!~",
-            days: 0,
-          });
-        }
-      } catch (error) {
-        console.error("주요 일정(D-Day) 조회 실패:", error);
-      } finally {
-        setDdayLoading(false);
-        hideLoading(); // ✅ 전역 로더 -1
-      }
-    };
-
-    fetchMainEvents();
-    // 홈 진입 시 한 번만 호출
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // ✅ 날짜 변하게 되면 그때 로직 따로 잡는 게 좋고, 지금은 첫 진입 기준
-
-  /* =========================
-     2. 오늘의 일정 + 과제하기 좋은 장소 추천
+     1. 오늘의 일정 + 중요 D-Day + 과제하기 좋은 장소 + 홈 지도 마커
         GET /calendar/summary/today?lat=&lon=
         - coords(lat, lon)이 바뀔 때마다 호출
         - 초기: 캠퍼스 좌표로 한 번
@@ -232,6 +161,7 @@ const HomePage = () => {
       showLoading(); // ✅ 전역 로더 +1
       setScheduleLoading(true);
       setStudyPlacesLoading(true);
+      setDdayLoading(true);
 
       try {
         const res = await api.get("/calendar/summary/today", {
@@ -279,6 +209,40 @@ const HomePage = () => {
 
         setTodaySchedules(mappedSchedules);
 
+        // ===== 중요 일정 D-DAY (ddays) 처리 =====
+        const ddays = Array.isArray(body.ddays) ? body.ddays : [];
+
+        if (ddays.length > 0) {
+          // D-값(숫자) 기준으로 가장 가까운 일정 하나 선택
+          const sorted = ddays
+            .map((d) => ({
+              ...d,
+              _dValue: parseDDayValue(d.dDay),
+            }))
+            .filter((d) => d._dValue !== null)
+            .sort((a, b) => a._dValue - b._dValue);
+
+          const nearest = sorted[0] || ddays[0];
+
+          setDdayInfo({
+            hasImportant: true,
+            label: nearest.title || "중요 일정",
+            sub: "캠플이 응원할게요!~",
+            days:
+              nearest._dValue != null
+                ? nearest._dValue
+                : 0,
+          });
+        } else {
+          // 🔥 중요 일정이 하나도 없을 때: D-숫자는 숨기고 텍스트만
+          setDdayInfo({
+            hasImportant: false,
+            label: "중요 일정이 없어요",
+            sub: "캠플이 응원할게요!~",
+            days: 0,
+          });
+        }
+
         // ===== 과제하기 좋은 장소 추천 리스트 파싱 =====
         const rawPlaces = Array.isArray(body.studyPlaces)
           ? body.studyPlaces
@@ -289,13 +253,42 @@ const HomePage = () => {
           : [];
 
         setStudyPlaces(rawPlaces);
+
+        // ===== 홈 상단 지도용 placeMarkers 파싱 =====
+        const rawMarkers = Array.isArray(body.placeMarkers)
+          ? body.placeMarkers
+          : [];
+
+        const parsedMarkers = rawMarkers
+          .filter(
+            (m) =>
+              typeof m.latitude === "number" &&
+              typeof m.longitude === "number"
+          )
+          .map((m, idx) => ({
+            id: m.name ? `${m.name}-${idx}` : `marker-${idx}`,
+            name: m.name,
+            lat: m.latitude,
+            lng: m.longitude,
+            count: m.count,
+          }));
+
+        setHomeMapMarkers(parsedMarkers);
       } catch (error) {
         console.error("오늘 요약(일정/장소) 조회 실패:", error);
         setTodaySchedules([]);
         setStudyPlaces([]);
+        setHomeMapMarkers([]);
+        setDdayInfo({
+          hasImportant: false,
+          label: "중요 일정이 없어요",
+          sub: "캠플이 응원할게요!~",
+          days: 0,
+        });
       } finally {
         setScheduleLoading(false);
         setStudyPlacesLoading(false);
+        setDdayLoading(false);
         hideLoading(); // ✅ 전역 로더 -1
       }
     };
@@ -326,17 +319,22 @@ const HomePage = () => {
             <span className="home-dday-sub">{ddayInfo.sub}</span>
           </div>
           <div className="home-dday-value">
-            <span className="home-dday-number">
-              {ddayLoading
-                ? "D-..."
-                : `D-${ddayInfo.days > 0 ? ddayInfo.days : 0}`}
-            </span>
+            {ddayLoading ? (
+              <span className="home-dday-number">D-...</span>
+            ) : ddayInfo.hasImportant ? (
+              <span className="home-dday-number">
+                {ddayInfo.days > 0 ? `D-${ddayInfo.days}` : "D-DAY"}
+              </span>
+            ) : null}
           </div>
         </div>
       </section>
 
-      {/* 지도 / 시간표 */}
-      <TimetableMapSection onTodayLecturesChange={setTodayLectures} />
+      {/* 지도 / 시간표 (홈 상단 지도에 placeMarkers 사용) */}
+      <TimetableMapSection
+        onTodayLecturesChange={setTodayLectures}
+        markers={homeMapMarkers}
+      />
 
       {/* 오늘의 강의 리스트 (시간표에서 내려주는 것 그대로 사용) */}
       <TodayLectureList lectures={todayLectures} />

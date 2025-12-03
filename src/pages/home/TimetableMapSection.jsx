@@ -1,4 +1,4 @@
-// src/components/home/TimetableMapSection.jsx
+// src/pages/home/TimetableMapSection.jsx
 import React, { useState, useEffect } from "react";
 import NaverMap from "../../components/home/NaverMap";
 import api from "../../api/axios";
@@ -63,7 +63,7 @@ const mapApiDayToKor = (dayStr) => {
   }
 };
 
-const TimetableMapSection = ({ onTodayLecturesChange }) => {
+const TimetableMapSection = ({ onTodayLecturesChange, markers = [] }) => {
   const { showLoading, hideLoading } = useLoading(); // ✅ 전역 로더 제어
   const [activeView, setActiveView] = useState("timetable"); // "timetable" | "map"
   const [timetable, setTimetable] = useState([]); // 평탄화된 강의 리스트
@@ -175,8 +175,8 @@ const TimetableMapSection = ({ onTodayLecturesChange }) => {
 
       <div className="home-timetable-map-content">
         {isMap ? (
-          // ===== 네이버 지도 화면 =====
-          <NaverMap />
+          // ===== 네이버 지도 화면 (홈용 마커 표시) =====
+          <NaverMap markers={markers} />
         ) : (
           // ===== 시간표 화면 =====
           <div className="home-timetable">
