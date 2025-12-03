@@ -475,6 +475,7 @@ export default function MapPage() {
           <button
             type="button"
             className="map-page-recommend-button"
+            onClick={handleClickRecommend}
           >
             장소 추천받기
           </button>
