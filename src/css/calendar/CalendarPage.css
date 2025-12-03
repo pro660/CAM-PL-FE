@@ -151,26 +151,10 @@
   margin-top: 0.9rem;
   background-color: #ffffff;
   border-radius: 1.4rem 1.4rem 0 0;
-  /* 기존 그림자 제거 */
-  box-shadow: none;
   padding: 0.6rem 1rem 1.4rem;
   position: relative; /* 🔥 pseudo-element 기준 */
   overflow: visible;  /* 혹시나 잘리는 거 방지 */
 }
-
-/* 윗면에만 보이는 그림자 */
-.calendar-bottom-sheet::before {
-  content: "";
-  position: absolute;
-  top: -0.4rem;   /* 바텀시트 바로 위에 살짝 겹치게 */
-  left: 0;
-  right: 0;
-  height: 0.8rem; /* 얇은 띠처럼 */
-  border-radius: 1.4rem 1.4rem 0 0;
-  box-shadow: 0 -0.3rem 0.8rem rgba(0, 0, 0, 0.12);
-  pointer-events: none; /* 클릭 막지 않게 */
-}
-
 
 /* 위쪽 작은 손잡이 */
 .calendar-bottom-handle {
