@@ -141,11 +141,12 @@ export default function CalendarMemoBottomSheet({
 
             {/* 🔥 쓰레기통 + 연필 아이콘 영역 */}
             <div className="calendar-memo-actions">
-              {/* 쓰레기통 이미지 틀만 제공 (src는 나중에 채워넣기) */}
+  
               <button
                 type="button"
                 className="calendar-memo-delete-button"
                 aria-label="메모 삭제"
+                style={"border: none; background: none;"}
               >
                 <img
                   src={Trash_ICON}
