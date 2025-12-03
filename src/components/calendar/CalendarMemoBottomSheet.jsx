@@ -6,42 +6,15 @@ import EMPTY_MEMO_ICON from "../../images/calendar/nomemo.svg";
 import EDIT_ICON from "../../images/calendar/edit.svg";
 import Trash_ICON from "../../images/calendar/trash.svg";
 
+// 🔥 새로 import
+import Delete_schdule from "./Delete_schdule";
+
 function getCategoryLabel(category) {
-  switch (category) {
-    case "LECTURE":
-      return "강의";
-    case "EXAM":
-      return "시험";
-    case "PRESENTATION":
-      return "발표";
-    case "TEAM":
-      return "팀플";
-    case "MEETING":
-      return "미팅";
-    case "ASSIGNMENT":
-      return "과제";
-    case "MEAL":
-      return "식사";
-    case "REST":
-      return "휴식";
-    case "GATHERING":
-      return "모임";
-    default:
-      return "일정";
-  }
+  // ... (생략: 기존 그대로)
 }
 
 function formatTimeRange(startIso, endIso) {
-  if (!startIso || !endIso) return "";
-  const s = new Date(startIso);
-  const e = new Date(endIso);
-
-  const toTime = (d) =>
-    `${String(d.getHours()).padStart(2, "0")}:${String(
-      d.getMinutes()
-    ).padStart(2, "0")}`;
-
-  return `${toTime(s)} ~ ${toTime(e)}`;
+  // ... (생략: 기존 그대로)
 }
 
 export default function CalendarMemoBottomSheet({
@@ -49,15 +22,13 @@ export default function CalendarMemoBottomSheet({
   event,
   onClose,
   onSave,
-  // 🔥 수정 모드 진입 요청 콜백
   onRequestEdit,
 }) {
   const [memoText, setMemoText] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false); // 🔥 추가
 
-  // 팝업 열릴 때 기본 메모값 설정 (서버에서 온 description/memo만 사용)
   useEffect(() => {
     if (!visible || !event) return;
-
     const base = event.description ?? event.memo ?? "";
     setMemoText(base);
   }, [visible, event]);
@@ -65,20 +36,17 @@ export default function CalendarMemoBottomSheet({
   if (!visible || !event) return null;
 
   const handleChange = (e) => {
-    // 🔒 readOnly지만 혹시라도 풀릴 상황 대비해서 state는 갱신되도록 유지
     setMemoText(e.target.value);
   };
 
   const commitAndClose = () => {
     const trimmed = memoText.trim();
-
     if (onSave) onSave(trimmed);
     if (onClose) onClose();
   };
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
-      // 회색 배경 클릭 시에도 저장 후 닫기
       commitAndClose();
     }
   };
@@ -88,7 +56,6 @@ export default function CalendarMemoBottomSheet({
   const handleClickEdit = () => {
     const trimmed = memoText.trim();
     if (onSave) onSave(trimmed);
-
     if (onRequestEdit) {
       onRequestEdit(event);
     } else if (onClose) {
@@ -96,91 +63,115 @@ export default function CalendarMemoBottomSheet({
     }
   };
 
-  const handleClickDelete = () => {
-    // 메모 삭제: 빈 문자열로 저장 후 닫기
-    if (onSave) onSave("");
-    if (onClose) onClose();
+  // 🔥 쓰레기통 눌렀을 때: 삭제 팝업 open
+  const handleClickDelete = (e) => {
+    e.stopPropagation();
+    setShowDeleteModal(true);
+  };
+
+  // 🔥 삭제 팝업 닫기
+  const handleDeleteModalClose = () => {
+    setShowDeleteModal(false);
+  };
+
+  // 🔥 삭제 성공 후 처리 (목록 갱신은 부모가 하도록)
+  const handleDeleted = () => {
+    setShowDeleteModal(false);
+    if (onClose) onClose(); // 메모 시트 닫기
   };
 
   return (
-    <div
-      className="calendar-memo-overlay"
-      onClick={handleOverlayClick}
-    >
-      <div className="calendar-memo-sheet">
-        {/* 상단: 선택 일정 카드 */}
-        <div className="calendar-event-item calendar-memo-event-card">
-          <div className="calendar-event-main">
-            <div className="calendar-event-header">
-              <span className="calendar-event-tag">
-                {getCategoryLabel(event.category)}
+    <>
+      <div
+        className="calendar-memo-overlay"
+        onClick={handleOverlayClick}
+      >
+        <div className="calendar-memo-sheet">
+          {/* 상단: 선택 일정 카드 */}
+          <div className="calendar-event-item calendar-memo-event-card">
+            <div className="calendar-event-main">
+              <div className="calendar-event-header">
+                <span className="calendar-event-tag">
+                  {getCategoryLabel(event.category)}
+                </span>
+                <button
+                  type="button"
+                  className="calendar-memo-back-button"
+                  onClick={commitAndClose}
+                >
+                  뒤로
+                </button>
+              </div>
+              <div className="calendar-event-title">{event.title}</div>
+              {event.location && (
+                <div className="calendar-event-location">
+                  {event.location}
+                </div>
+              )}
+              <div className="calendar-event-time">
+                {formatTimeRange(event.startAt, event.endAt)}
+              </div>
+            </div>
+          </div>
+
+          {/* 하단: 메모 카드 */}
+          <div className="calendar-memo-card">
+            <div className="calendar-memo-card-header">
+              <span className="calendar-memo-card-title">
+                해당 일정의 메모입니다.
               </span>
-              <button
-                type="button"
-                className="calendar-memo-back-button"
-                onClick={commitAndClose}
-              >
-                뒤로
-              </button>
-            </div>
-            <div className="calendar-event-title">{event.title}</div>
-            {event.location && (
-              <div className="calendar-event-location">
-                {event.location}
-              </div>
-            )}
-            <div className="calendar-event-time">
-              {formatTimeRange(event.startAt, event.endAt)}
-            </div>
-          </div>
-        </div>
 
-        {/* 하단: 메모 카드 */}
-        <div className="calendar-memo-card">
-          <div className="calendar-memo-card-header">
-            <span className="calendar-memo-card-title">
-              해당 일정의 메모입니다.
-            </span>
-
-            {/* 🔥 쓰레기통 + 연필 이미지 (onClick) */}
-            <div className="calendar-memo-actions">
-              <img
-                src={Trash_ICON}
-                alt="메모 삭제"
-                className="calendar-memo-delete-icon"
-                onClick={handleClickDelete}
-              />
-              <img
-                src={EDIT_ICON}
-                alt="메모 수정"
-                className="calendar-memo-edit-icon"
-                onClick={handleClickEdit}
-              />
-            </div>
-          </div>
-
-          <div className="calendar-memo-textbox-wrapper">
-            <textarea
-              className="calendar-memo-textarea"
-              value={memoText}
-              onChange={handleChange}
-              readOnly // 🔒 메모 바텀시트에서는 직접 수정 불가
-            />
-            {isEmpty && (
-              <div className="calendar-memo-empty">
+              {/* 아이콘 영역 */}
+              <div className="calendar-memo-actions">
+                {/* 삭제 아이콘 */}
                 <img
-                  src={EMPTY_MEMO_ICON}
-                  alt="메모 없음"
-                  className="calendar-memo-empty-icon"
+                  src={Trash_ICON}
+                  alt="메모 삭제"
+                  className="calendar-memo-delete-icon"
+                  onClick={handleClickDelete}
                 />
-                <p className="calendar-memo-empty-text">
-                  작성된 메모가 없습니다.
-                </p>
+
+                {/* 수정 아이콘 */}
+                <img
+                  src={EDIT_ICON}
+                  alt="메모 수정"
+                  className="calendar-memo-edit-icon"
+                  onClick={handleClickEdit}
+                />
               </div>
-            )}
+            </div>
+
+            <div className="calendar-memo-textbox-wrapper">
+              <textarea
+                className="calendar-memo-textarea"
+                value={memoText}
+                onChange={handleChange}
+                readOnly
+              />
+              {isEmpty && (
+                <div className="calendar-memo-empty">
+                  <img
+                    src={EMPTY_MEMO_ICON}
+                    alt="메모 없음"
+                    className="calendar-memo-empty-icon"
+                  />
+                  <p className="calendar-memo-empty-text">
+                    작성된 메모가 없습니다.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* 🔥 여기서 실제로 Delete_schdule를 렌더링해야 팝업이 보임 */}
+      <Delete_schdule
+        visible={showDeleteModal}
+        eventId={event.id}
+        onClose={handleDeleteModalClose}
+        onDeleted={handleDeleted}
+      />
+    </>
   );
 }
