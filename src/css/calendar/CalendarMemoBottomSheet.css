@@ -67,17 +67,6 @@
   cursor: default; /* 실제 기능은 없어서 기본 커서 */
 }
 
-.calendar-memo-edit-icon {
-  width: 1.6rem;
-  height: 1.6rem;
-  border-radius: 999px;
-  background-color: #fbf7ff;
-  border: 1.5px solid #c1a8ff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .calendar-memo-edit-icon img {
   width: 0.9rem;
   height: 0.9rem;

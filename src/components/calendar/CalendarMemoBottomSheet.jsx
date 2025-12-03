@@ -4,6 +4,7 @@ import "../../css/calendar/CalendarMemoBottomSheet.css";
 
 import EMPTY_MEMO_ICON from "../../images/calendar/nomemo.svg";
 import EDIT_ICON from "../../images/calendar/edit.svg";
+import Trash_ICON from "../../images/calendar/trash.svg";
 
 function getCategoryLabel(category) {
   switch (category) {
@@ -147,7 +148,7 @@ export default function CalendarMemoBottomSheet({
                 aria-label="메모 삭제"
               >
                 <img
-                  src=""
+                  src={Trash_ICON}
                   alt="메모 삭제"
                   className="calendar-memo-delete-icon"
                 />
