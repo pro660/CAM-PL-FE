@@ -314,6 +314,13 @@
   font-weight: 600;
   line-height: 1.2;
   margin-bottom: 0.12rem;
+
+  /* ✅ 2줄까지 보여주고 넘어가면 ... 처리 */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;        /* 최대 2줄 */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .home-timetable-class-location {
