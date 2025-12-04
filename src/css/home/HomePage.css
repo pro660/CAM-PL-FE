@@ -203,7 +203,7 @@
   font-size: 0.7rem;
 
   /* 시간칸(1시간) 높이 공통 변수 */
-  --home-hour-row-height: 2.4rem;
+  --home-hour-row-height: 2rem; /* 🔽 2.4rem → 2rem 로 줄여서 전체 세로 간격 압축 */
 }
 
 /* 로딩 텍스트 */
@@ -301,7 +301,7 @@
   right: 0.25rem;
 
   background-color: #c9a8ff;
-  padding: 0.25rem 0.3rem;
+  padding: 0.18rem 0.28rem;  /* 🔽 패딩 줄여서 블록 높이도 살짝 감소 */
 
   color: #ffffff;
   box-sizing: border-box;
@@ -313,7 +313,7 @@
   font-size: 0.7rem;
   font-weight: 600;
   line-height: 1.2;
-  margin-bottom: 0.12rem;
+  margin-bottom: 0.08rem;
 
   /* ✅ 2줄까지 보여주고 넘어가면 ... 처리 */
   display: -webkit-box;
@@ -331,7 +331,7 @@
 .home-timetable-class-time {
   font-size: 0.62rem;
   opacity: 0.9;
-  margin-top: 0.05rem;
+  margin-top: 0.03rem;
 }
 
 /* =========================
