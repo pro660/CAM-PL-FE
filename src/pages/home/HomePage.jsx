@@ -457,13 +457,14 @@ const HomePage = () => {
     if (ddayLoading) return;
     if (ddayList.length <= 1) return; // 1개 이하면 슬라이드 없음
 
-    const interval = setInterval(() => {
-      // 애니메이션 시작 → CSS로 위로 올라가며 사라지고, 아래에서 다음이 올라옴
+    // 🔥 현재 인덱스 기준으로 6초 기다렸다가 애니메이션 시작
+    const timer = setTimeout(() => {
       setIsDdayAnimating(true);
-    }, 5000);
+    }, 6000); // 6초
 
-    return () => clearInterval(interval);
-  }, [ddayLoading, ddayList.length]);
+    // 인덱스가 바뀌거나 리스트가 바뀌면 이전 타이머 정리 후 다시 6초 카운트
+    return () => clearTimeout(timer);
+  }, [ddayLoading, ddayList.length, ddayCurrentIndex]);
 
   // 애니메이션이 끝났을 때 실제 인덱스를 다음으로 넘김
   const handleDdayTransitionEnd = (e) => {
