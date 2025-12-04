@@ -125,44 +125,21 @@
   height: 1.1rem; /* 제목 한 줄 높이 기준 */
 }
 
-/* 슬라이드되는 각각의 제목 라인 */
-.home-dday-label-line {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
+/* 여러 제목을 세로로 쌓는 컨테이너 (transform으로 위/아래 이동) */
+.home-dday-label-inner {
+  position: relative;
+  height: 100%;
+}
 
+/* 각 제목 라인 (한 칸씩 차지) */
+.home-dday-label-line {
+  display: flex;
+  align-items: center;
+
+  height: 100%;
   font-size: 0.78rem;
   font-weight: 600;
   white-space: nowrap;
-
-  transform: translateY(0);
-  opacity: 1;
-  transition: transform 0.35s ease, opacity 0.35s ease;
-}
-
-/* static (중요 일정 없을 때 / 로딩 텍스트) */
-.home-dday-label-line.single {
-  position: static;
-  transform: none;
-  opacity: 1;
-}
-
-/* 다음 제목은 아래쪽에서 대기 */
-.home-dday-label-line.next {
-  transform: translateY(100%);
-  opacity: 0;
-}
-
-/* 애니메이션 중: 현재 제목은 위로, 다음 제목은 제자리로 올라옴 */
-.home-dday-label-viewport.is-animating .home-dday-label-line.current {
-  transform: translateY(-100%);
-  opacity: 0;
-}
-
-.home-dday-label-viewport.is-animating .home-dday-label-line.next {
-  transform: translateY(0);
-  opacity: 1;
 }
 
 /* 기본 제목 스타일 (공통) */
@@ -198,37 +175,21 @@
   overflow: hidden;
 }
 
-/* 각각의 숫자 라인 */
+/* 여러 숫자를 세로로 쌓는 컨테이너 (transform으로 이동) */
+.home-dday-number-inner {
+  position: relative;
+  height: 100%;
+}
+
+/* 각각의 숫자 라인 (한 칸 높이) */
 .home-dday-number-line {
-  position: absolute;
-  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
 
+  height: 100%;
   font-size: 1rem;
   font-weight: 700;
-
-  transform: translateY(0);
-  opacity: 1;
-  transition: transform 0.35s ease, opacity 0.35s ease;
-}
-
-/* 다음 숫자는 아래에서 시작 */
-.home-dday-number-line.next {
-  transform: translateY(100%);
-  opacity: 0;
-}
-
-/* 애니메이션 중: 현재 숫자는 위로, 다음 숫자는 제자리로 올라옴 */
-.home-dday-value.is-animating .home-dday-number-line.current {
-  transform: translateY(-100%);
-  opacity: 0;
-}
-
-.home-dday-value.is-animating .home-dday-number-line.next {
-  transform: translateY(0);
-  opacity: 1;
 }
 
 /* 로딩용 / 기본 숫자 스타일 */

@@ -64,7 +64,6 @@ function parseDDayValue(dDayStr) {
   if (!match) return null;
   const num = Number(match[0]);
   if (Number.isNaN(num)) return null;
-  // 캠퍼스 스타일 D-day는 보통 D-3 이런 식이라, 절댓값만 사용
   return Math.abs(num);
 }
 
@@ -103,20 +102,11 @@ const HomePage = () => {
   const [todaySchedules, setTodaySchedules] = useState([]);
   const [scheduleLoading, setScheduleLoading] = useState(true);
 
-  // D-Day 정보 + 로딩 상태
-  const [ddayInfo, setDdayInfo] = useState({
-    hasImportant: false, // 🔥 중요 일정 존재 여부
-    label: "중요 일정이 없어요",
-    sub: "캠플이 응원할게요!~",
-    days: 0,
-  });
-  const [ddayLoading, setDdayLoading] = useState(true);
-
-  // 🔥 여러 개의 D-Day를 순환 표시하기 위한 리스트 & 인덱스 & 애니메이션 상태
-  //   ddayList: { label, days }[]
+  // 🔥 D-Day 목록 + 로딩 상태
+  //   ddayList: { id, label, days }[]
   const [ddayList, setDdayList] = useState([]);
   const [ddayCurrentIndex, setDdayCurrentIndex] = useState(0);
-  const [isDdayAnimating, setIsDdayAnimating] = useState(false);
+  const [ddayLoading, setDdayLoading] = useState(true);
 
   // 과제하기 좋은 장소 추천 리스트 + 로딩 상태
   const [studyPlaces, setStudyPlaces] = useState([]);
@@ -138,7 +128,6 @@ const HomePage = () => {
 
   // 오늘 날짜/요일 계산
   const today = new Date();
-  const year = today.getFullYear();
   const month = today.getMonth() + 1; // 실제 월 (1~12)
   const date = today.getDate();
   const weekdayNamesFull = [
@@ -152,18 +141,12 @@ const HomePage = () => {
   ];
   const weekday = weekdayNamesFull[today.getDay()];
 
-  // 🔥 D-Day 목록/인덱스 기반 현재/다음 아이템
+  // 🔥 D-Day 현재 아이템
   const hasImportantDday = ddayList.length > 0;
-
   const currentDdayItem =
     hasImportantDday && ddayList.length > 0
       ? ddayList[ddayCurrentIndex % ddayList.length]
       : null;
-
-  const nextDdayItem =
-    hasImportantDday && ddayList.length > 1
-      ? ddayList[(ddayCurrentIndex + 1) % ddayList.length]
-      : currentDdayItem;
 
   /* =========================
      0. 브라우저에서 현재 위치 가져오기
@@ -257,93 +240,47 @@ const HomePage = () => {
         setTodaySchedules(mappedSchedules);
 
         // ===== 중요 일정 D-DAY (ddays) 처리 =====
-        const ddays = Array.isArray(body.ddays) ? body.ddays : [];
+        const rawDd = Array.isArray(body.ddays) ? body.ddays : [];
 
-        if (ddays.length > 0) {
-          const withParsed = ddays
-            .map((d, index) => ({
-              ...d,
-              _order: index,
-              _dValue: parseDDayValue(d.dDay),
-            }))
-            .filter((d) => d._dValue !== null);
+        const withParsed = rawDd
+          .map((d, index) => ({
+            ...d,
+            _order: index,
+            _dValue: parseDDayValue(d.dDay),
+          }))
+          .filter((d) => d._dValue !== null);
 
-          // 🔥 1단계: 일단 D값이 있는 것만
-          if (withParsed.length > 0) {
-            // 🔥 2단계: 5일 이내(0~5) 일정만 우선 필터
-            let candidate = withParsed.filter(
-              (d) => d._dValue >= 0 && d._dValue <= 5
-            );
+        if (withParsed.length > 0) {
+          // 🔥 1단계: 0~5일 이내 일정만 우선
+          let candidate = withParsed.filter(
+            (d) => d._dValue >= 0 && d._dValue <= 5
+          );
 
-            // 🔥 3단계: 5일 이내가 하나도 없으면 전체에서 사용 (기존 동작 유지)
-            if (candidate.length === 0) {
-              candidate = withParsed;
-            }
-
-            // 🔥 4단계: 가장 가까운 일정 순으로 정렬
-            candidate.sort((a, b) => {
-              if (a._dValue !== b._dValue) {
-                return a._dValue - b._dValue;
-              }
-              return a._order - b._order;
-            });
-
-            const mappedDdays = candidate.map((d) => ({
-              label: d.title || "중요 일정",
-              days:
-                d._dValue != null
-                  ? d._dValue
-                  : 0,
-            }));
-
-            if (mappedDdays.length > 0) {
-              setDdayList(mappedDdays);
-              setDdayCurrentIndex(0);
-              setIsDdayAnimating(false);
-
-              const first = mappedDdays[0];
-
-              setDdayInfo({
-                hasImportant: true,
-                label: first.label,
-                sub: "캠플이 응원할게요!~",
-                days: first.days,
-              });
-            } else {
-              // D값이 없거나 파싱 실패
-              setDdayList([]);
-              setDdayCurrentIndex(0);
-              setIsDdayAnimating(false);
-              setDdayInfo({
-                hasImportant: false,
-                label: "중요 일정이 없어요",
-                sub: "캠플이 응원할게요!~",
-                days: 0,
-              });
-            }
-          } else {
-            // D-Day 문자열이 이상해서 전부 파싱 실패한 경우
-            setDdayList([]);
-            setDdayCurrentIndex(0);
-            setIsDdayAnimating(false);
-            setDdayInfo({
-              hasImportant: false,
-              label: "중요 일정이 없어요",
-              sub: "캠플이 응원할게요!~",
-              days: 0,
-            });
+          // 🔥 2단계: 5일 이내가 하나도 없으면 전체 사용
+          if (candidate.length === 0) {
+            candidate = withParsed;
           }
+
+          // 🔥 3단계: 가장 가까운 일정 순으로 정렬
+          candidate.sort((a, b) => {
+            if (a._dValue !== b._dValue) {
+              return a._dValue - b._dValue;
+            }
+            return a._order - b._order;
+          });
+
+          const mappedDdays = candidate.map((d, idx) => ({
+            id: d.id ?? `dday-${idx}`,
+            label: d.title || "중요 일정",
+            days: d._dValue != null ? d._dValue : 0,
+          }));
+
+          setDdayList(mappedDdays);
+          setDdayCurrentIndex(0);
         } else {
           // 🔥 중요 일정이 하나도 없을 때
           setDdayList([]);
           setDdayCurrentIndex(0);
-          setIsDdayAnimating(false);
-          setDdayInfo({
-            hasImportant: false,
-            label: "중요 일정이 없어요",
-            sub: "캠플이 응원할게요!~",
-            days: 0,
-          });
         }
 
         // ===== 과제하기 좋은 장소 추천 리스트 파싱 =====
@@ -430,13 +367,6 @@ const HomePage = () => {
         setHomePlaceEventsMap({});
         setDdayList([]);
         setDdayCurrentIndex(0);
-        setIsDdayAnimating(false);
-        setDdayInfo({
-          hasImportant: false,
-          label: "중요 일정이 없어요",
-          sub: "캠플이 응원할게요!~",
-          days: 0,
-        });
       } finally {
         setScheduleLoading(false);
         setStudyPlacesLoading(false);
@@ -450,37 +380,21 @@ const HomePage = () => {
   }, [coords.lat, coords.lon, showLoading, hideLoading]);
 
   /* =========================
-     2. D-Day 여러 개일 때 5초마다 슬라이드 전환
-        - 각 일정은 최소 5초씩 화면에 고정
+     2. D-Day 여러 개일 때 6초마다 순환
+        - 각 일정은 6초씩 화면에 고정
      ========================= */
   useEffect(() => {
     if (ddayLoading) return;
-    if (ddayList.length <= 1) return; // 1개 이하면 슬라이드 없음
+    if (ddayList.length <= 1) return; // 1개 이하면 순환 필요 없음
 
-    // 🔥 현재 인덱스 기준으로 6초 기다렸다가 애니메이션 시작
-    const timer = setTimeout(() => {
-      setIsDdayAnimating(true);
+    const interval = setInterval(() => {
+      setDdayCurrentIndex((prev) =>
+        ddayList.length === 0 ? 0 : (prev + 1) % ddayList.length
+      );
     }, 6000); // 6초
 
-    // 인덱스가 바뀌거나 리스트가 바뀌면 이전 타이머 정리 후 다시 6초 카운트
-    return () => clearTimeout(timer);
-  }, [ddayLoading, ddayList.length, ddayCurrentIndex]);
-
-  // 애니메이션이 끝났을 때 실제 인덱스를 다음으로 넘김
-  const handleDdayTransitionEnd = (e) => {
-    // transform 속성 애니메이션만 잡기
-    if (e.propertyName !== "transform") return;
-    if (!isDdayAnimating) return;
-    if (ddayList.length <= 1) {
-      setIsDdayAnimating(false);
-      return;
-    }
-
-    setIsDdayAnimating(false);
-    setDdayCurrentIndex((prev) =>
-      ddayList.length > 0 ? (prev + 1) % ddayList.length : 0
-    );
-  };
+    return () => clearInterval(interval);
+  }, [ddayLoading, ddayList.length]);
 
   const handlePlaceClick = (placeId) => {
     setSelectedPlaceId(placeId);
@@ -501,64 +415,63 @@ const HomePage = () => {
         <div className="home-dday-card">
           <div className="home-dday-texts">
             {/* 🔥 제목 슬라이드 영역 */}
-            <div
-              className={
-                "home-dday-label-viewport" +
-                (isDdayAnimating ? " is-animating" : "")
-              }
-              onTransitionEnd={handleDdayTransitionEnd}
-            >
+            <div className="home-dday-label-viewport">
               {ddayLoading ? (
-                <span className="home-dday-label home-dday-label-line single">
+                <span className="home-dday-label home-dday-label-line">
                   중요 일정 불러오는 중...
                 </span>
               ) : !hasImportantDday ? (
-                <span className="home-dday-label home-dday-label-line single">
+                <span className="home-dday-label home-dday-label-line">
                   중요 일정이 없어요
                 </span>
               ) : (
-                <>
-                  {/* 현재 일정 제목 */}
-                  <span className="home-dday-label home-dday-label-line current">
-                    {currentDdayItem?.label}
-                  </span>
-                  {/* 다음 일정 제목 (2개 이상일 때만 사용) */}
-                  {ddayList.length > 1 && (
-                    <span className="home-dday-label home-dday-label-line next">
-                      {nextDdayItem?.label}
+                <div
+                  className="home-dday-label-inner"
+                  style={{
+                    transform: `translateY(-${ddayCurrentIndex * 100}%)`,
+                    transition:
+                      ddayList.length > 1 ? "transform 0.35s ease" : "none",
+                  }}
+                >
+                  {ddayList.map((item) => (
+                    <span
+                      key={item.id}
+                      className="home-dday-label home-dday-label-line"
+                    >
+                      {item.label}
                     </span>
-                  )}
-                </>
+                  ))}
+                </div>
               )}
             </div>
 
             {/* 서브 텍스트는 고정 */}
-            <span className="home-dday-sub">
-              {ddayInfo.sub}
-            </span>
+            <span className="home-dday-sub">캠플이 응원할게요!~</span>
           </div>
 
           {/* 🔥 D-Day 숫자 슬라이드 영역 */}
-          <div
-            className={
-              "home-dday-value" +
-              (isDdayAnimating ? " is-animating" : "")
-            }
-          >
+          <div className="home-dday-value">
             {ddayLoading ? (
               <span className="home-dday-number">D-...</span>
             ) : hasImportantDday && currentDdayItem ? (
               <div className="home-dday-number-viewport">
-                {/* 현재 숫자 */}
-                <span className="home-dday-number home-dday-number-line current">
-                  {formatDDayTextFromNumber(currentDdayItem.days)}
-                </span>
-                {/* 다음 숫자 (2개 이상일 때만) */}
-                {ddayList.length > 1 && nextDdayItem && (
-                  <span className="home-dday-number home-dday-number-line next">
-                    {formatDDayTextFromNumber(nextDdayItem.days)}
-                  </span>
-                )}
+                <div
+                  className="home-dday-number-inner"
+                  style={{
+                    transform: `translateY(-${ddayCurrentIndex * 100}%)`,
+                    transition:
+                      ddayList.length > 1 ? "transform 0.35s ease" : "none",
+                  }}
+                >
+                  {ddayList.map((item) => (
+                    <span
+                      key={item.id}
+                      className="home-dday-number home-dday-number-line"
+                    >
+                      {formatDDayTextFromNumber(item.days)}
+                    </span>
+                  ))}
+                </div>
               </div>
             ) : null}
           </div>
