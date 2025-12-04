@@ -391,7 +391,7 @@ const HomePage = () => {
       setDdayCurrentIndex((prev) =>
         ddayList.length === 0 ? 0 : (prev + 1) % ddayList.length
       );
-    }, 6000); // 6초
+    }, 5000); // 6초
 
     return () => clearInterval(interval);
   }, [ddayLoading, ddayList.length]);
