@@ -79,7 +79,7 @@
 
 /* 셔틀 예약(gradient 카드)만 밑줄 더 두껍게 */
 .mypage-link-box--gradient .mypage-link-box-label::after {
-  height: 3px;
+  height: 2px;
 }
 
 /* 오른쪽 둥근 아이콘 영역 */

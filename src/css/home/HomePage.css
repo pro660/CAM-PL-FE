@@ -118,6 +118,54 @@
   gap: 0.18rem;
 }
 
+/* 🔥 D-Day 제목이 슬라이드되는 뷰포트 */
+.home-dday-label-viewport {
+  position: relative;
+  overflow: hidden;
+  height: 1.1rem; /* 제목 한 줄 높이 기준 */
+}
+
+/* 슬라이드되는 각각의 제목 라인 */
+.home-dday-label-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+
+  transform: translateY(0);
+  opacity: 1;
+  transition: transform 0.35s ease, opacity 0.35s ease;
+}
+
+/* static (중요 일정 없을 때 / 로딩 텍스트) */
+.home-dday-label-line.single {
+  position: static;
+  transform: none;
+  opacity: 1;
+}
+
+/* 다음 제목은 아래쪽에서 대기 */
+.home-dday-label-line.next {
+  transform: translateY(100%);
+  opacity: 0;
+}
+
+/* 애니메이션 중: 현재 제목은 위로, 다음 제목은 제자리로 올라옴 */
+.home-dday-label-viewport.is-animating .home-dday-label-line.current {
+  transform: translateY(-100%);
+  opacity: 0;
+}
+
+.home-dday-label-viewport.is-animating .home-dday-label-line.next {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* 기본 제목 스타일 (공통) */
 .home-dday-label {
   font-size: 0.78rem;
   font-weight: 600;
@@ -128,6 +176,7 @@
   opacity: 0.9;
 }
 
+/* 오른쪽 숫자 박스 */
 .home-dday-value {
   display: flex;
   align-items: center;
@@ -137,8 +186,52 @@
   height: 2.2rem;
   border-radius: 0.9rem;
   background-color: rgba(255, 255, 255, 0.18);
+
+  overflow: hidden; /* 숫자 슬라이드 영역 밖은 숨김 */
 }
 
+/* 숫자가 슬라이드되는 뷰포트 */
+.home-dday-number-viewport {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* 각각의 숫자 라인 */
+.home-dday-number-line {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 1rem;
+  font-weight: 700;
+
+  transform: translateY(0);
+  opacity: 1;
+  transition: transform 0.35s ease, opacity 0.35s ease;
+}
+
+/* 다음 숫자는 아래에서 시작 */
+.home-dday-number-line.next {
+  transform: translateY(100%);
+  opacity: 0;
+}
+
+/* 애니메이션 중: 현재 숫자는 위로, 다음 숫자는 제자리로 올라옴 */
+.home-dday-value.is-animating .home-dday-number-line.current {
+  transform: translateY(-100%);
+  opacity: 0;
+}
+
+.home-dday-value.is-animating .home-dday-number-line.next {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* 로딩용 / 기본 숫자 스타일 */
 .home-dday-number {
   font-size: 1rem;
   font-weight: 700;
@@ -311,7 +404,6 @@
 }
 
 /* 블록 안 텍스트 */
-/* ✅ 과목명(name)만 한 줄 + ... 처리 */
 .home-timetable-class-title {
   font-size: 0.7rem;
   font-weight: 600;
