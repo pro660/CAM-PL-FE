@@ -203,7 +203,7 @@
   font-size: 0.7rem;
 
   /* 시간칸(1시간) 높이 공통 변수 */
-  --home-hour-row-height: 2rem; /* 🔽 2.4rem → 2rem 로 줄여서 전체 세로 간격 압축 */
+  --home-hour-row-height: 2.4rem;
 }
 
 /* 로딩 텍스트 */
@@ -297,11 +297,13 @@
 /* 강의 블록 */
 .home-timetable-class-block {
   position: absolute;
-  left: 0.25rem;
-  right: 0.25rem;
+
+  /* ✅ 가로 여백을 줄여서 요일 컬럼 거의 꽉 차게 (거의 맞닿되 살짝만 띄움) */
+  left: 0.05rem;
+  right: 0.05rem;
 
   background-color: #c9a8ff;
-  padding: 0.18rem 0.28rem;  /* 🔽 패딩 줄여서 블록 높이도 살짝 감소 */
+  padding: 0.25rem 0.3rem;
 
   color: #ffffff;
   box-sizing: border-box;
@@ -309,16 +311,14 @@
 }
 
 /* 블록 안 텍스트 */
+/* ✅ 과목명(name)만 한 줄 + ... 처리 */
 .home-timetable-class-title {
   font-size: 0.7rem;
   font-weight: 600;
   line-height: 1.2;
-  margin-bottom: 0.08rem;
+  margin-bottom: 0.12rem;
 
-  /* ✅ 2줄까지 보여주고 넘어가면 ... 처리 */
-  display: -webkit-box;
-  -webkit-line-clamp: 2;        /* 최대 2줄 */
-  -webkit-box-orient: vertical;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -331,7 +331,7 @@
 .home-timetable-class-time {
   font-size: 0.62rem;
   opacity: 0.9;
-  margin-top: 0.03rem;
+  margin-top: 0.05rem;
 }
 
 /* =========================
