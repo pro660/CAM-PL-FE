@@ -6,8 +6,11 @@ import api from "../../api/axios";
 import { useLoading } from "../../context/LoadingContext.jsx";
 import MyTimetable from "../../components/mypage/MyTimetable.jsx";
 import CourseSearchBottomSheet from "../../components/mypage/SearchSheet.jsx";
+import LinkBox from "../../components/mypage/Link_Box.jsx";
 
-import PenImg from "../../images/mypage/pen.svg";
+// ✅ 아이콘 SVG는 형이 실제 파일 만들어서 경로만 맞춰주면 됨
+import NoticeIcon from "../../images/mypage/haksa.svg";
+import ShuttleIcon from "../../images/mypage/bus.svg";
 
 const WEEKDAY_KR_LONG = [
   "일요일",
@@ -19,10 +22,9 @@ const WEEKDAY_KR_LONG = [
   "토요일",
 ];
 
-
 export default function MyPage() {
   const [courses, setCourses] = useState([]);
-  const { showLoading, hideLoading } = useLoading(); // ✅ 전역 로더 훅 사용
+  const { showLoading, hideLoading } = useLoading();
   const navigate = useNavigate();
 
   const [isCourseSheetOpen, setIsCourseSheetOpen] = useState(false);
@@ -43,7 +45,7 @@ export default function MyPage() {
     }
   }, []);
 
-  // ⬇️ 전공/영역 / 학년 선택 후 돌아왔을 때 바텀시트 자동 오픈
+  // 전공/영역 / 학년 선택 후 돌아왔을 때 바텀시트 자동 오픈
   useEffect(() => {
     const flag = localStorage.getItem("mypage_open_course_sheet");
     if (flag === "1") {
@@ -65,7 +67,7 @@ export default function MyPage() {
     let cancelled = false;
 
     const fetchTimetable = async () => {
-      showLoading(); // ✅ 로더 ON
+      showLoading();
       try {
         const res = await api.get("/timetable");
         if (cancelled) return;
@@ -76,7 +78,7 @@ export default function MyPage() {
       } catch (e) {
         console.error(e);
       } finally {
-        hideLoading(); // ✅ 로더 OFF (언마운트 여부와 상관없이)
+        hideLoading();
       }
     };
 
@@ -85,10 +87,6 @@ export default function MyPage() {
       cancelled = true;
     };
   }, [showLoading, hideLoading]);
-
-  const handleEditProfile = () => {
-    console.log("개인정보 수정 클릭");
-  };
 
   const handleLogout = async () => {
     if (!window.confirm("로그아웃 하시겠습니까?")) return;
@@ -121,6 +119,21 @@ export default function MyPage() {
     setIsCourseSheetOpen((prev) => !prev);
   };
 
+  // 이 안에서 실제 이동 링크만 채워주면 됨
+  const handleGoNotice = () => {
+    // 예시
+    // navigate("/notice");
+    window.open("https://www.hanseo.ac.kr/boardCnts/list.do");
+    console.log("학사공지 바로가기 클릭");
+  };
+
+  const handleGoShuttle = () => {
+    // 예시
+    // navigate("/shuttle");
+    window.open("https://hsu.busro.net:456/");
+    console.log("셔틀 예약 바로가기 클릭");
+  };
+
   return (
     <div className="mypage-page">
       <section className="mypage-header-row">
@@ -133,9 +146,7 @@ export default function MyPage() {
 
         <button
           type="button"
-          className={`mypage-add-button ${
-            isCourseSheetOpen ? "open" : ""
-          }`}
+          className={`mypage-add-button ${isCourseSheetOpen ? "open" : ""}`}
           aria-label="시간표 강의 추가"
           onClick={handleToggleCourseSheet}
         >
@@ -147,17 +158,22 @@ export default function MyPage() {
         <MyTimetable courses={courses} />
       </section>
 
-      <section className="mypage-profile-card-wrapper">
-        <button
-          type="button"
-          className="mypage-profile-card"
-          onClick={handleEditProfile}
-        >
-          <div className="mypage-profile-icon">
-            <img src={PenImg} alt="개인정보 수정 아이콘" />
-          </div>
-          <span className="mypage-profile-text">개인정보 수정</span>
-        </button>
+      {/* 학사공지 / 셔틀 예약 링크 상자 */}
+      <section className="mypage-link-box-wrapper">
+        <LinkBox
+          label="학사공지 바로가기"
+          iconSrc={NoticeIcon}
+          iconAlt="학사공지 아이콘"
+          variant="light"
+          onClick={handleGoNotice}
+        />
+        <LinkBox
+          label="셔틀 예약 바로가기"
+          iconSrc={ShuttleIcon}
+          iconAlt="셔틀 예약 아이콘"
+          variant="gradient"
+          onClick={handleGoShuttle}
+        />
       </section>
 
       <section className="mypage-bottom-links">

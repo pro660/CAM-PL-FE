@@ -124,9 +124,9 @@ function AppRouter() {
           <Route
             path="/mypage"
             element={
-              <ProtectedRoute>
+              // <ProtectedRoute>
                 <MyPage />
-              </ProtectedRoute>
+              // </ProtectedRoute>
             }
           />
 

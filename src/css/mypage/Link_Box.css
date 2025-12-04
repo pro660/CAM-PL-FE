@@ -1,0 +1,103 @@
+/* 공통 카드 스타일 */
+.mypage-link-box {
+  position: relative;          /* ::before 기준 */
+  overflow: hidden;            /* 애니메이션이 모서리 밖으로 안 나가게 */
+  width: 100%;
+  height: 4.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1.1rem;
+  border-radius: 1rem;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.05);
+  margin-bottom: 0.7rem;
+}
+
+/* 기본 바탕색 (학사공지) */
+.mypage-link-box--light {
+  background: #ffffff;
+}
+
+/* 기본 바탕색 (셔틀)  */
+.mypage-link-box--gradient {
+  background: #ffffff;
+}
+
+/* === 그라디언트 "차오르는" 오버레이 (공통) === */
+.mypage-link-box::before {
+  content: "";
+  position: absolute;
+  inset: 0;  /* top:0; right:0; bottom:0; left:0; */
+  border-radius: inherit;
+  background: linear-gradient(90deg, #9ac5ed 0%, #c09ef1 100%);
+  transform: scaleX(0);               /* 처음에는 안 보이게 (왼쪽에서 0배) */
+  transform-origin: left center;       /* 왼쪽에서 오른쪽으로 자라나게 */
+  transition: transform 0.4s ease-out; /* 애니메이션 속도 */
+  z-index: 0;                          /* 내용보다 뒤에 와야 함 */
+}
+
+.mypage-link-box:hover::before {
+  transform: scaleX(1);                /* 전체 너비로 확장 */
+}
+
+/* 🔧 셔틀 카드만 오버레이를 세로로 살짝 키워서
+   애니메이션 중에 생기는 밑면 여백(틈) 가리기 */
+.mypage-link-box--gradient::before {
+  top: -1px;     /* 위로 1px 확장 (모서리 부드럽게) */
+  bottom: -1px;  /* 아래로 1px 확장 → 밑면 여백 사라짐 */
+}
+
+/* ===== 텍스트 + 밑줄 애니메이션 (width 기반) ===== */
+.mypage-link-box-label {
+  position: relative;        /* ::after 기준 */
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333333;
+  padding-bottom: 0.2rem;    /* 밑줄 공간 */
+  z-index: 1;                /* 그라디언트 오버레이 위에 표시 */
+}
+
+/* 기본 상태: width 0 */
+.mypage-link-box-label::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 0;
+  background-color: #333333;
+  transition: width 0.25s ease-out;
+}
+
+/* hover 시: 왼쪽 → 오른쪽으로 밑줄이 채워짐 */
+.mypage-link-box:hover .mypage-link-box-label::after {
+  width: 100%;
+}
+
+/* 셔틀 예약(gradient 카드)만 밑줄 더 두껍게 */
+.mypage-link-box--gradient .mypage-link-box-label::after {
+  height: 3px;
+}
+
+/* 오른쪽 둥근 아이콘 영역 */
+.mypage-link-box-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  z-index: 1;                /* 아이콘도 그라디언트 위에 */
+}
+
+/* 실제 SVG 이미지 크기 조절 */
+.mypage-link-box-icon-img {
+  width: 20px;
+  height: 20px;
+  display: block;
+}

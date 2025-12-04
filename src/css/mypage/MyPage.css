@@ -25,7 +25,7 @@
   color: #777777;
 }
 
-/* 오른쪽 + 버튼 (SVG 들어갈 자리) */
+/* 오른쪽 + 버튼 (시간표 강의 추가) */
 .mypage-add-button {
   border: none;
   outline: none;
@@ -48,7 +48,7 @@
   margin-bottom: 1.2rem;
 }
 
-/* 개인정보 수정 카드 */
+/* (예전 개인정보 카드 – 지금은 안 쓰더라도 남겨둠) */
 .mypage-profile-card-wrapper {
   margin-top: 1rem;
   margin-bottom: 0.8rem;
@@ -73,17 +73,21 @@
   width: 28px;
   height: 28px;
   border-radius: 999px;
-  
   display: flex;
   align-items: center;
   justify-content: center;
-  /* 여기에 SVG 아이콘 넣을 예정 */
 }
 
 .mypage-profile-text {
   font-size: 0.9rem;
   font-weight: 600;
   color: #333333;
+}
+
+/* 학사공지 / 셔틀 링크 상자 영역 */
+.mypage-link-box-wrapper {
+  margin-top: 1rem;
+  margin-bottom: 0.8rem;
 }
 
 /* 아래 로그아웃 / 탈퇴하기 */
