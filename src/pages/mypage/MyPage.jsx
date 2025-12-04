@@ -123,7 +123,7 @@ export default function MyPage() {
   const handleGoNotice = () => {
     // 예시
     // navigate("/notice");
-    window.open("https://www.hanseo.ac.kr/boardCnts/list.do");
+    window.open("https://www.hanseo.ac.kr/boardCnts/list.do?boardID=298&m=040101&s=hs");
     console.log("학사공지 바로가기 클릭");
   };
 
