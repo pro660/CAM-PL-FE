@@ -3,6 +3,13 @@
   padding: 0.8rem 1.2rem 0.5rem;
 }
 
+.cr-section-title {
+  margin: 0 0 0.45rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #333333;
+}
+
 .cr-write-textarea-wrap {
   border-radius: 0.9rem;
   border: 1px solid #e2d9ff;
@@ -37,4 +44,48 @@
 .cr-write-rating-text {
   font-size: 0.76rem;
   color: #888888;
+}
+
+/* ⭐ 입력용 별점 (0.5단위, 실제 반쪽 별) */
+.cr-star-input-row {
+  display: inline-flex;
+  gap: 0.15rem;
+}
+
+/* 버튼 하나 = 별 하나 */
+.cr-star-input {
+  position: relative;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+
+  font-size: 1.4rem;  /* 입력용은 헤더보다 살짝 크게 */
+  line-height: 1;
+  color: #e0e0e0;     /* 기본(빈 별) 색 */
+
+  outline: none;
+}
+
+/* 빈 별 */
+.cr-star-input::before {
+  content: "★";
+}
+
+/* 채워진 별 – 가로로 잘라서 일부만 보여줌 */
+.cr-star-input::after {
+  content: "★";
+  position: absolute;
+  left: 0;
+  top: 0;
+
+  color: #ffc94a;               /* 채워진 별 색 */
+  width: var(--star-fill, 0%);  /* 0 / 50 / 100% */
+  overflow: hidden;             /* 나머지 잘라내기 */
+}
+
+/* 살짝 터치 피드백 */
+.cr-star-input:active {
+  transform: scale(0.95);
 }

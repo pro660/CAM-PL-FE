@@ -1,17 +1,20 @@
-// src/pages/review/CourseReviewWriteSection.jsx
 import React from "react";
 import "../../css/review/CourseReviewWriteSection.css";
 
 /** 입력용 별점 (0.5 단위 클릭) */
 function StarRatingInput({ value = 0, onChange }) {
-  const safeValue = Math.max(0, Math.min(5, value));
+  const safeValue = Math.max(0, Math.min(5, value || 0));
 
   const handleClick = (index, e) => {
     if (!onChange) return;
+
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    const half = x <= rect.width / 2 ? 0.5 : 1;
-    const newValue = index - 1 + half;
+    const isLeftHalf = x <= rect.width / 2;
+
+    const half = isLeftHalf ? 0.5 : 1;
+    const newValue = index - 1 + half; // 1번째 별: 0.5 또는 1.0
+
     onChange(newValue);
   };
 
@@ -19,8 +22,9 @@ function StarRatingInput({ value = 0, onChange }) {
   for (let i = 1; i <= 5; i += 1) {
     let fill = 0;
     const diff = safeValue - (i - 1);
-    if (diff >= 1) fill = 100;
-    else if (diff >= 0.5) fill = 50;
+    if (diff >= 1) fill = 100;      // 꽉 찬 별
+    else if (diff >= 0.5) fill = 50; // 반 별
+    else fill = 0;                  // 빈 별
 
     stars.push(
       <button
@@ -28,15 +32,8 @@ function StarRatingInput({ value = 0, onChange }) {
         type="button"
         className="cr-star-input"
         onClick={(e) => handleClick(i, e)}
-      >
-        <span className="cr-star-base">★</span>
-        <span
-          className="cr-star-fill"
-          style={{ width: `${fill}%` }}
-        >
-          ★
-        </span>
-      </button>
+        style={{ "--star-fill": `${fill}%` }}
+      />
     );
   }
 

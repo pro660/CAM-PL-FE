@@ -16,7 +16,7 @@
 
 .cr-header-course-name {
   margin: 0 0 0.35rem;
-  font-size: 1.0rem;
+  font-size: 1rem;
   font-weight: 700;
   color: #333333;
 }
@@ -36,6 +36,36 @@
 .cr-header-rating-count {
   font-size: 0.75rem;
   color: #888888;
+}
+
+/* ⭐ 별점 표시 (읽기 전용) */
+.cr-star-row {
+  display: inline-flex;
+  gap: 0.1rem;
+}
+
+.cr-star {
+  position: relative;
+  display: inline-block;
+  font-size: 1.1rem; /* 별 크기 */
+  line-height: 1;
+  color: #e0e0e0;    /* 빈 별 색 */
+}
+
+/* 빈 별 */
+.cr-star::before {
+  content: "★";
+}
+
+/* 채워진 별 – 가로로 잘라서 일부만 보여줌 */
+.cr-star::after {
+  content: "★";
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: #ffc94a;                    /* 채운 별 색 */
+  width: var(--star-fill, 0%);       /* 0, 50, 100% */
+  overflow: hidden;                  /* 오른쪽 잘라내기 */
 }
 
 /* 과목 상세 카드 */
