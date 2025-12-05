@@ -330,7 +330,14 @@ export default function CalendarPage() {
         const events = Array.isArray(body)
           ? body
           : body.events || body.items || [];
-        setMonthEvents(events);
+
+        // description을 memo 필드에도 복사해서 메모 시트에서 사용
+        const normalized = events.map((ev) => ({
+          ...ev,
+          memo: ev.memo != null ? ev.memo : ev.description ?? "",
+        }));
+
+        setMonthEvents(normalized);
       })
       .catch((e) => {
         if (cancelled) return;
@@ -353,7 +360,7 @@ export default function CalendarPage() {
     const m = currentMonth.getMonth();
     setSelectedDate(new Date(y, m, day));
     setIsMemoOpen(false);
-    setSelectedMemoEvent(null);
+    // 선택 날짜 바뀔 때는 메모 시트 닫기만 하고, event 는 그대로 둬도 됨
   };
 
   // 새 일정 추가 버튼
@@ -383,24 +390,28 @@ export default function CalendarPage() {
     setEditingEvent(null);
   };
 
+  // 메모 버튼 클릭 시: description을 memo로 전달
   const handleOpenMemo = (event) => {
-    setSelectedMemoEvent(event);
+    const memoEvent = {
+      ...event,
+      memo: event.memo != null ? event.memo : event.description ?? "",
+    };
+    setSelectedMemoEvent(memoEvent);
     setIsMemoOpen(true);
   };
 
   const handleMemoClose = () => {
+    // 메모 시트만 닫고, event 는 그대로 두어서 뒤로가기 시 오류 방지
     setIsMemoOpen(false);
-    setSelectedMemoEvent(null);
   };
 
-  // 🔥 메모 저장: description 필드로 서버에 바로 저장
+  // 메모 저장: description 필드로 서버에 저장
   const handleMemoSaved = async (memoText) => {
     if (!selectedMemoEvent?.id) return;
     const ev = selectedMemoEvent;
     const id = ev.id;
 
     try {
-      // 캘린더 이벤트 수정 (description에 메모 반영)
       await api.put(`/calendar/events/${id}`, {
         title: ev.title,
         description: memoText,
@@ -410,12 +421,10 @@ export default function CalendarPage() {
         category: ev.category,
       });
 
-      // 로컬 상태도 동기화
+      // 로컬 상태도 동기화 (description + memo)
       setMonthEvents((prev) =>
         prev.map((e) =>
-          e.id === id
-            ? { ...e, description: memoText, memo: memoText }
-            : e
+          e.id === id ? { ...e, description: memoText, memo: memoText } : e
         )
       );
       setSelectedMemoEvent((prev) =>
@@ -427,12 +436,11 @@ export default function CalendarPage() {
     }
   };
 
-  // 🔥 메모 시트 → "수정" 아이콘 클릭 시
+  // 메모 시트 → "수정" 아이콘 클릭 시
   const handleRequestEditFromMemo = (event) => {
     if (!event) return;
 
     setIsMemoOpen(false);
-    setSelectedMemoEvent(null);
 
     if (event.startAt) {
       const d = new Date(event.startAt);
@@ -449,9 +457,13 @@ export default function CalendarPage() {
     setIsAddSheetOpen(true);
   };
 
-  // 🔥 삭제 완료 시: 프론트 목록에서 제거 + API 재호출 트리거
+  // 삭제 완료 시: 프론트 목록에서 제거 + 메모 시트도 닫기
   const handleEventDeleted = (deletedId) => {
     setMonthEvents((prev) => prev.filter((ev) => ev.id !== deletedId));
+    if (selectedMemoEvent?.id === deletedId) {
+      setIsMemoOpen(false);
+      setSelectedMemoEvent(null);
+    }
     setMonthReloadKey((v) => v + 1);
   };
 
