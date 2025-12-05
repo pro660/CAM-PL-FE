@@ -68,8 +68,8 @@ const STATIC_CENTER = { lat: 36.690621, lng: 126.581591 };
 
 const TimetableMapSection = ({
   onTodayLecturesChange,
-  markers = [],          // 🔥 홈에서 내려주는 마커 배열
-  placeEventsMap = {},   // 🔥 장소별 일정(강의/일정) 맵
+  markers = [], // 🔥 홈에서 내려주는 마커 배열
+  placeEventsMap = {}, // 🔥 장소별 일정(강의/일정) 맵
 }) => {
   const { showLoading, hideLoading } = useLoading(); // ✅ 전역 로더 제어
   const [activeView, setActiveView] = useState("timetable"); // "timetable" | "map"
@@ -89,26 +89,6 @@ const TimetableMapSection = ({
 
   // ✅ 지도 중심 상태 (초기값: 캠퍼스 고정 좌표)
   const [mapCenter, setMapCenter] = useState(() => ({ ...STATIC_CENTER }));
-
-  // ✅ 선택된 장소 키와 일치하는 마커 찾기
-  const selectedMarker = useMemo(() => {
-    if (!selectedPlaceKey) return null;
-    return (
-      markers.find(
-        (m) => (m.placeKey || m.name) === selectedPlaceKey
-      ) || null
-    );
-  }, [selectedPlaceKey, markers]);
-
-  // ✅ 선택된 마커가 바뀔 때마다 지도 중심을 그 마커로 이동
-  useEffect(() => {
-    if (selectedMarker) {
-      setMapCenter({
-        lat: selectedMarker.lat,
-        lng: selectedMarker.lng,
-      });
-    }
-  }, [selectedMarker]);
 
   // ✅ 선택된 장소에 대한 일정 카드들 (PlaceEventsBar 용)
   const selectedPlaceItems = useMemo(() => {
@@ -193,11 +173,29 @@ const TimetableMapSection = ({
   const isMap = activeView === "map";
 
   // ✅ 홈 지도에서 마커 클릭 시: 같은 곳을 다시 클릭하면 선택 해제
+  //    + 새 장소를 선택하는 순간에만 center를 그 마커로 이동
   const handleMarkerClick = (marker) => {
     if (!marker) return;
     const key = marker.placeKey || marker.name;
     if (!key) return;
-    setSelectedPlaceKey((prev) => (prev === key ? null : key));
+
+    setSelectedPlaceKey((prev) => {
+      // 이미 선택된 장소를 다시 클릭 → 선택 해제 (센터는 그대로 둠)
+      if (prev === key) {
+        return null;
+      }
+      // 새 장소 선택 시에만 지도 중심 이동
+      if (
+        typeof marker.lat === "number" &&
+        typeof marker.lng === "number"
+      ) {
+        setMapCenter({
+          lat: marker.lat,
+          lng: marker.lng,
+        });
+      }
+      return key;
+    });
   };
 
   // ✅ 오른쪽 하단 버튼 눌렀을 때 → 캠퍼스 고정 빨간 마커 위치로 이동
@@ -274,10 +272,7 @@ const TimetableMapSection = ({
                 <div className="home-timetable-header-row">
                   <div className="home-timetable-header-cell time-col" />
                   {weekdayLabels.map((day) => (
-                    <div
-                      key={day}
-                      className="home-timetable-header-cell"
-                    >
+                    <div key={day} className="home-timetable-header-cell">
                       {day}
                     </div>
                   ))}
@@ -288,10 +283,7 @@ const TimetableMapSection = ({
                   {/* 왼쪽 시간축 */}
                   <div className="home-timetable-time-col">
                     {TIME_LABELS.map((h) => (
-                      <div
-                        key={h}
-                        className="home-timetable-time-slot"
-                      >
+                      <div key={h} className="home-timetable-time-slot">
                         {formatHourLabel(h)}
                       </div>
                     ))}
@@ -331,8 +323,7 @@ const TimetableMapSection = ({
 
                               // 전체 높이(10시간)를 100%로 보고, 퍼센트로 위치 계산
                               const topPercent =
-                                ((clampedStart - minMinutes) /
-                                  TOTAL_MINUTES) *
+                                ((clampedStart - minMinutes) / TOTAL_MINUTES) *
                                 100;
                               const heightPercent =
                                 ((clampedEnd - clampedStart) /
