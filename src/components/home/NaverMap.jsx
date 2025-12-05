@@ -14,12 +14,14 @@ const STATIC_CENTER_LNG = 126.581591;
  * - markers: [{ id, name, placeKey, lat, lng, count }]
  * - center: { lat, lng } | null   // 선택된 장소가 있으면 그 좌표
  * - onMarkerClick: (marker) => void
+ * - onMapDrag: () => void         // 🔥 사용자가 지도를 드래그할 때 호출
  */
-const NaverMap = ({ markers = [], center, onMarkerClick }) => {
+const NaverMap = ({ markers = [], center, onMarkerClick, onMapDrag }) => {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
   const staticMarkerRef = useRef(null); // 🔴 정적 빨간 마커
+  const dragListenerRef = useRef(null); // 🔥 드래그 리스너
   const { showLoading, hideLoading } = useLoading();
 
   // ✅ 지도는 한 번만 생성
@@ -49,6 +51,17 @@ const NaverMap = ({ markers = [], center, onMarkerClick }) => {
         zoom: 16,
       });
 
+      // 🔥 지도 드래그 시작 시 콜백 (장소 정보 닫기 등)
+      if (onMapDrag) {
+        dragListenerRef.current = naver.maps.Event.addListener(
+          map,
+          "dragstart",
+          () => {
+            onMapDrag();
+          }
+        );
+      }
+
       mapInstanceRef.current = map;
       hideLoading();
     } catch (e) {
@@ -57,6 +70,7 @@ const NaverMap = ({ markers = [], center, onMarkerClick }) => {
     }
 
     return () => {
+      const { naver } = window || {};
       // 언마운트 시 장소 마커 제거
       markersRef.current.forEach((marker) => {
         marker.setMap(null);
@@ -67,6 +81,12 @@ const NaverMap = ({ markers = [], center, onMarkerClick }) => {
       if (staticMarkerRef.current) {
         staticMarkerRef.current.setMap(null);
         staticMarkerRef.current = null;
+      }
+
+      // 드래그 리스너 제거
+      if (dragListenerRef.current && naver?.maps?.Event) {
+        naver.maps.Event.removeListener(dragListenerRef.current);
+        dragListenerRef.current = null;
       }
 
       mapInstanceRef.current = null;

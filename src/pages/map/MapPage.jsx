@@ -166,7 +166,6 @@ export default function MapPage() {
   const [selectedPlace, setSelectedPlace] = useState(null);
 
   // ✅ 지도 중심 상태 (초기값: 정적 빨간 마커 위치)
-  //   STATIC_CENTER를 그대로 쓰지 말고, 한 번 펼쳐서 새 객체로 만들어두는 게 안전
   const [mapCenter, setMapCenter] = useState(() => ({ ...STATIC_CENTER }));
 
   // 최초 진입 시: /calendar/map 만 호출
@@ -429,10 +428,16 @@ export default function MapPage() {
     );
   };
 
+  // ✅ 지도 드래그 시 → 선택된 장소 정보 닫기
+  const handleMapDrag = () => {
+    if (selectedPlace !== null) {
+      setSelectedPlace(null);
+    }
+  };
+
   // ✅ 오른쪽 하단 동그란 버튼 클릭 → 정적 "사용자 위치(빨간 마커)"로 지도 중심 이동
   const handleRecenterToUser = () => {
-    setSelectedPlace(null); 
-    // 항상 새 객체를 만들어서 넣어줘야 React가 "아, 값이 바뀌었구나" 하고 인식함
+    setSelectedPlace(null);
     setMapCenter({ ...STATIC_CENTER });
   };
 
@@ -444,6 +449,7 @@ export default function MapPage() {
           markers={mapMarkers}
           center={mapCenter}
           onMarkerClick={handleMarkerClick}
+          onMapDrag={handleMapDrag}
         />
 
         <PlaceEventsBar
