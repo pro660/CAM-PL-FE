@@ -38,7 +38,6 @@ function Layout({ children }) {
     "/course-area",
     "/course-year", // 학년 선택 페이지
     "/course-credit", // 학점 선택 페이지
-    "/course-time", // 시간 선택 페이지
     "/course-review", // ✅ 강의평 페이지 -> 기본 Header 숨김
   ];
 
