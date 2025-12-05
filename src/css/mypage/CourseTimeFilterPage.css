@@ -1,7 +1,7 @@
 /* 전체 페이지 배경 + 상단 여백 */
 .time-filter-page {
   min-height: 100vh;
-  background-color: #d9d9d9;
+  background-color: #f5f5f7;
   padding: 4rem 1rem 1rem 1rem;
 }
 
@@ -72,7 +72,6 @@
   font-weight: 600;
   font-size: 0.72rem;
   color: #ffffff;
-  border-left: 0.0625rem solid rgba(255, 255, 255, 0.35); /* 1px */
 }
 
 .time-filter-header-cell:first-child {
@@ -80,7 +79,7 @@
 }
 
 .time-filter-header-cell-time {
-  border-right: 0.0625rem solid rgba(255, 255, 255, 0.45); /* 1px */
+  border-right: 0.0625rem solid #e2d4ff; /* 1px */
 }
 
 /* 본문: 왼쪽 시간축 + 오른쪽 그리드 */
