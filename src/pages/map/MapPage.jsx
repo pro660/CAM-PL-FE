@@ -362,22 +362,6 @@ export default function MapPage() {
     [tomorrowEvents]
   );
 
-  // ✅ 현재 선택된 장소 키와 일치하는 마커 찾기
-  const selectedPlaceMarker = useMemo(() => {
-    if (!selectedPlace) return null;
-    return mapMarkers.find((m) => m.placeKey === selectedPlace) || null;
-  }, [selectedPlace, mapMarkers]);
-
-  // ✅ 선택된 장소가 바뀔 때마다 지도 중심도 해당 장소로 이동
-  useEffect(() => {
-    if (selectedPlaceMarker) {
-      setMapCenter({
-        lat: selectedPlaceMarker.lat,
-        lng: selectedPlaceMarker.lng,
-      });
-    }
-  }, [selectedPlaceMarker]);
-
   const handleClickRecommend = () => {
     setShowRecommend(true);
   };
@@ -417,18 +401,46 @@ export default function MapPage() {
 
   // 오늘의 일정 칩 클릭 핸들러
   const handleSelectPlace = (placeName) => {
-    setSelectedPlace((prev) => (prev === placeName ? null : placeName));
+    if (!placeName) return;
+
+    // 이미 선택된 장소를 다시 클릭하면 해제 (센터는 그대로 둠)
+    if (selectedPlace === placeName) {
+      setSelectedPlace(null);
+      return;
+    }
+
+    // 새 장소 선택 시 선택 + 지도 중심 이동
+    setSelectedPlace(placeName);
+    const marker = mapMarkers.find((m) => m.placeKey === placeName);
+    if (marker && typeof marker.lat === "number" && typeof marker.lng === "number") {
+      setMapCenter({
+        lat: marker.lat,
+        lng: marker.lng,
+      });
+    }
   };
 
-  // ✅ 마커 클릭 시 → 해당 placeKey 선택
+  // ✅ 마커 클릭 시 → 해당 placeKey 선택 + center 이동
   const handleMarkerClick = (marker) => {
     if (!marker?.placeKey) return;
-    setSelectedPlace((prev) =>
-      prev === marker.placeKey ? null : marker.placeKey
-    );
+    const key = marker.placeKey;
+
+    // 이미 선택된 마커를 다시 클릭하면 해제
+    if (selectedPlace === key) {
+      setSelectedPlace(null);
+      return;
+    }
+
+    setSelectedPlace(key);
+    if (typeof marker.lat === "number" && typeof marker.lng === "number") {
+      setMapCenter({
+        lat: marker.lat,
+        lng: marker.lng,
+      });
+    }
   };
 
-  // ✅ 지도 드래그 시 → 선택된 장소 정보 닫기
+  // ✅ 지도 드래그 시 → 선택된 장소 정보 닫기 (센터는 유지)
   const handleMapDrag = () => {
     if (selectedPlace !== null) {
       setSelectedPlace(null);
