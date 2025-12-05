@@ -13,7 +13,7 @@ const STATIC_CENTER_LNG = 126.581591;
 /**
  * props:
  * - markers: [{ id, name, placeKey, lat, lng, count }]
- * - center: { lat, lng } | null   // 부모에서 선택된 장소가 있으면 그 좌표
+ * - center: { lat, lng } | null   // MapPage에서 선택된 장소가 있으면 그 좌표
  * - onMarkerClick: (marker) => void
  * - onMapDrag: () => void         // 지도 드래그 시작 시 호출 (선택 해제 등)
  */
@@ -208,11 +208,7 @@ const NaverMap = ({ markers = [], center, onMarkerClick, onMapDrag }) => {
     });
 
     staticMarkerRef.current = redMarker;
-  }, [
-    markers,
-    center,
-    // ⛔ onMarkerClick 제거: 부모 리렌더만으로는 다시 panTo 하지 않게
-  ]);
+  }, [markers, center, onMarkerClick]);
 
   return <div ref={mapRef} className="home-naver-map" />;
 };
