@@ -313,7 +313,7 @@ export default function CalendarPage() {
     });
   }, [currentMonth]);
 
-  /* ---------- 월 이벤트 로딩 ---------- */
+  /* ---------- 월 이벤트 로딩 (GET만 사용) ---------- */
   useEffect(() => {
     const ym = formatYearMonth(currentMonth);
     let cancelled = false;
@@ -405,35 +405,19 @@ export default function CalendarPage() {
     setIsMemoOpen(false);
   };
 
-  // 메모 저장: description 필드로 서버에 저장
-  const handleMemoSaved = async (memoText) => {
+  // 메모 저장: 서버 호출 없이, 프론트 상태만 업데이트 (GET 전용 페이지)
+  const handleMemoSaved = (memoText) => {
     if (!selectedMemoEvent?.id) return;
-    const ev = selectedMemoEvent;
-    const id = ev.id;
+    const id = selectedMemoEvent.id;
 
-    try {
-      await api.get(`/calendar/events/${id}`, {
-        title: ev.title,
-        description: memoText,
-        startAt: ev.startAt,
-        endAt: ev.endAt,
-        location: ev.location,
-        category: ev.category,
-      });
-
-      // 로컬 상태도 동기화 (description + memo)
-      setMonthEvents((prev) =>
-        prev.map((e) =>
-          e.id === id ? { ...e, description: memoText, memo: memoText } : e
-        )
-      );
-      setSelectedMemoEvent((prev) =>
-        prev ? { ...prev, description: memoText, memo: memoText } : prev
-      );
-    } catch (err) {
-      console.error("메모 저장 실패:", err);
-      alert("메모를 저장하는 중 오류가 발생했어요.");
-    }
+    setMonthEvents((prev) =>
+      prev.map((e) =>
+        e.id === id ? { ...e, description: memoText, memo: memoText } : e
+      )
+    );
+    setSelectedMemoEvent((prev) =>
+      prev ? { ...prev, description: memoText, memo: memoText } : prev
+    );
   };
 
   // 메모 시트 → "수정" 아이콘 클릭 시
