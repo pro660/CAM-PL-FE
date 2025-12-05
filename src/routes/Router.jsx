@@ -1,4 +1,4 @@
-// src/router/AppRouter.jsx (혹은 실제 경로에 맞게)
+// src/router/AppRouter.jsx
 
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import ProtectedRoute from "../ProtectedRoute";
@@ -29,22 +29,37 @@ function Layout({ children }) {
   const location = useLocation();
   const { isLoading } = useLoading();
 
-  // ✅ Header / Menu 숨길 경로들
-  const hiddenPaths = [
+  // ✅ 헤더 숨길 경로들 (기본 Header 대신 페이지 자체 헤더 쓰는 곳)
+  const headerHiddenPaths = [
     "/login",
     "/signup",
     "/oauth/signed-in",
     "/course-area",
     "/course-year",    // 학년 선택 페이지
     "/course-credit",  // 학점 선택 페이지
-    "/course-review",  // ✅ 강의평 페이지 (커스텀 헤더 사용)
+    "/course-review",  // ✅ 강의평 페이지 -> 기본 Header 숨김
   ];
 
-  const shouldHide = hiddenPaths.some((path) =>
+  // ✅ 메뉴바 숨길 경로들 (강의평은 넣지 않는다!)
+  const menuHiddenPaths = [
+    "/login",
+    "/signup",
+    "/oauth/signed-in",
+    "/course-area",
+    "/course-year",
+    "/course-credit",
+    // "/course-review" 는 안 넣음 → 강의평에서도 메뉴 보이게
+  ];
+
+  const hideHeader = headerHiddenPaths.some((path) =>
+    location.pathname.startsWith(path)
+  );
+  const hideMenu = menuHiddenPaths.some((path) =>
     location.pathname.startsWith(path)
   );
 
-  const mainBottomPadding = shouldHide ? "16px" : "72px";
+  // ✅ 메뉴바가 있을 때만 아래 패딩 크게
+  const mainBottomPadding = hideMenu ? "16px" : "72px";
 
   return (
     <>
@@ -64,7 +79,7 @@ function Layout({ children }) {
         </div>
       )}
 
-      {!shouldHide && <Header />}
+      {!hideHeader && <Header />}
       <main
         style={{
           minHeight: "100vh",
@@ -75,7 +90,7 @@ function Layout({ children }) {
       >
         {children}
       </main>
-      {!shouldHide && <Menu />}
+      {!hideMenu && <Menu />}
     </>
   );
 }
