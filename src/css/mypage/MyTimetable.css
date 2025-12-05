@@ -105,7 +105,7 @@
   box-sizing: border-box;
 
   pointer-events: none; /* 클릭 방해 X */
-  z-index: 0; /* 실제 강의 블록보다 뒤에 */
+  z-index: 2; 
 }
 
 /* 강의 블록 */
