@@ -2,22 +2,24 @@
 import React, { useMemo } from "react";
 import "../../css/review/CourseReviewListSection.css";
 
-/** 별점 표시용 (읽기 전용, 0.5 단위) */
+/** 별점 표시용 (읽기 전용, 0.5 단위, width + overflow 방식) */
 function StarRatingDisplay({ value = 0 }) {
+  const safeValue = Math.max(0, Math.min(5, value || 0));
   const stars = [];
-  const safeValue = Math.max(0, Math.min(5, value));
 
   for (let i = 1; i <= 5; i += 1) {
     let fill = 0;
     const diff = safeValue - (i - 1);
-    if (diff >= 1) fill = 100;
-    else if (diff >= 0.5) fill = 50;
+
+    if (diff >= 1) fill = 100;      // 꽉 찬 별
+    else if (diff >= 0.5) fill = 50; // 반 별
+    else fill = 0;                  // 빈 별
 
     stars.push(
-      <span key={i} className="cr-star">
-        <span className="cr-star-base">★</span>
+      <span key={i} className="cr-list-star">
+        <span className="cr-list-star-base">★</span>
         <span
-          className="cr-star-fill"
+          className="cr-list-star-fill"
           style={{ width: `${fill}%` }}
         >
           ★
@@ -26,7 +28,7 @@ function StarRatingDisplay({ value = 0 }) {
     );
   }
 
-  return <div className="cr-star-row">{stars}</div>;
+  return <div className="cr-list-star-row">{stars}</div>;
 }
 
 const formatSemesterLabel = (semesterCode) => {

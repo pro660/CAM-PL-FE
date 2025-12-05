@@ -34,6 +34,33 @@
   margin-bottom: 0.25rem;
 }
 
+/* ⭐ 리스트 전용 별점 표시 (width + overflow 방식) */
+.cr-list-star-row {
+  display: inline-flex;
+  gap: 0.1rem;
+}
+
+.cr-list-star {
+  position: relative;
+  display: inline-block;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.cr-list-star-base {
+  color: #e0e0e0; /* 빈 별 색 */
+}
+
+.cr-list-star-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: #ffc94a;        /* 채운 별 색 */
+  overflow: hidden;      /* width로 잘라낼 부분 숨기기 */
+  white-space: nowrap;   /* 별 문자 줄바꿈 방지 */
+}
+
+/* 학기, 내용 */
 .cr-review-semester {
   font-size: 0.75rem;
   color: #888888;
