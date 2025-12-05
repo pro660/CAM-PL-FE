@@ -157,7 +157,7 @@ const NaverMap = ({ markers = [], center, onMarkerClick }) => {
       map,
       icon: {
         content:
-          '<div style="width:18px;height:18px;border-radius:50%;background:#ff3b30;border:2px solid #ffffff;box-shadow:0 0 4px rgba(0,0,0,0.5);"></div>',
+          '<div style="width:13px;height:13px;border-radius:50%;background:#ff3b30;border:2px solid #ffffff;box-shadow:0 0 4px rgba(0,0,0,0.5);"></div>',
         anchor: new naver.maps.Point(9, 9),
       },
       clickable: false,
