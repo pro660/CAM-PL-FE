@@ -2,7 +2,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../css/mypage/SearchSheet.css";
+import "../../css/calendar/Delete_schdule.css"; // 🔥 팝업 스타일 재사용
 import api from "../../api/axios";
+import NosmileImg from "../../images/calendar/nosmile.svg";
 
 /** 요일 영문 → 한글 */
 const mapDayToKor = (dayOfWeek) => {
@@ -197,6 +199,58 @@ const applyClientSideFilters = (
   });
 };
 
+/** 🔔 강의 추가 / 충돌 / 에러용 팝업 (Delete_schdule 스타일 재사용) */
+const CourseAlertModal = ({ visible, mode, message, onConfirm, onCancel }) => {
+  if (!visible) return null;
+
+  const isConflict = mode === "conflict";
+
+  const confirmLabel = isConflict ? "교체하기" : "확인";
+  const cancelLabel = isConflict ? "유지하기" : "취소";
+
+  return (
+    <div className="delete-schedule-overlay">
+      <div className="delete-schedule-modal">
+        <div className="delete-schedule-icon-wrap">
+          <img
+            src={NosmileImg}
+            alt="안내 아이콘"
+            className="delete-schedule-icon"
+          />
+        </div>
+
+        <p className="delete-schedule-message">
+          {String(message || "").split("\n").map((line, idx) => (
+            <React.Fragment key={idx}>
+              {line}
+              <br />
+            </React.Fragment>
+          ))}
+        </p>
+
+        <div className="delete-schedule-buttons">
+          {isConflict && (
+            <button
+              type="button"
+              className="delete-schedule-cancel"
+              onClick={onCancel}
+            >
+              {cancelLabel}
+            </button>
+          )}
+          <button
+            type="button"
+            className="delete-schedule-confirm"
+            onClick={onConfirm}
+          >
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const CourseSearchBottomSheet = ({
   onClose,
   onCourseSelect,
@@ -244,6 +298,16 @@ const CourseSearchBottomSheet = ({
   // 🔥 선택된 강의 ID (보라색 하이라이트 + 시간표 미리보기용)
   const [selectedCourseId, setSelectedCourseId] = useState(null);
   const [addLoading, setAddLoading] = useState(false);
+
+  // 🔥 팝업 상태
+  const [modalState, setModalState] = useState({
+    visible: false,
+    mode: null, // 'conflict' | 'added' | 'notAdded' | 'alreadyExists' | 'error' | 'keep'
+    message: "",
+  });
+
+  // 🔥 충돌 해결용 courseId 보관
+  const [pendingCourseId, setPendingCourseId] = useState(null);
 
   // 바텀시트 열려있는 동안 배경 스크롤 막기
   useEffect(() => {
@@ -385,13 +449,98 @@ const CourseSearchBottomSheet = ({
     navigate(`/course-review/${courseId}`);
   };
 
+  /** 🔥 충돌 해소 API 호출 */
+  const resolveConflict = async (resolution) => {
+    const courseId = pendingCourseId;
+    if (!courseId) {
+      setModalState({ visible: false, mode: null, message: "" });
+      return;
+    }
+
+    setAddLoading(true);
+    try {
+      const resolveRes = await api.post("/timetable/items/resolve", {
+        courseId,
+        resolution,
+      });
+      const resolveData = resolveRes.data ?? {};
+
+      if (resolution === "REPLACE") {
+        if (resolveData.createdEventCount === 0) {
+          setModalState({
+            visible: true,
+            mode: "notAdded",
+            message: "강의가 추가되지 않았어요.",
+          });
+        } else {
+          setModalState({
+            visible: true,
+            mode: "added",
+            message: "시간표에 강의가 추가되었어요.",
+          });
+        }
+      } else {
+        // KEEP 선택 시
+        setModalState({
+          visible: true,
+          mode: "keep",
+          message: "기존 시간표를 유지했습니다.",
+        });
+      }
+    } catch (err) {
+      console.error("시간표 충돌 해결 실패:", err);
+      setModalState({
+        visible: true,
+        mode: "error",
+        message: "시간표 충돌을 해결하는 중 오류가 발생했어요.",
+      });
+    } finally {
+      setAddLoading(false);
+      setPendingCourseId(null);
+    }
+  };
+
+  /** 🔥 팝업 확인 버튼 */
+  const handleModalConfirm = () => {
+    const { mode } = modalState;
+
+    if (mode === "conflict") {
+      // 교체하기
+      setModalState((prev) => ({ ...prev, visible: false }));
+      resolveConflict("REPLACE");
+      return;
+    }
+
+    if (mode === "added") {
+      // 성공 안내 후 시간표 갱신 + 바텀시트 닫기
+      setModalState({ visible: false, mode: null, message: "" });
+      onTimetableAdded?.();
+      return;
+    }
+
+    // 나머지(에러, notAdded, alreadyExists, keep)는 단순 닫기
+    setModalState({ visible: false, mode: null, message: "" });
+  };
+
+  /** 🔥 팝업 취소 버튼 */
+  const handleModalCancel = () => {
+    const { mode } = modalState;
+
+    if (mode === "conflict") {
+      // 유지하기
+      setModalState((prev) => ({ ...prev, visible: false }));
+      resolveConflict("KEEP");
+      return;
+    }
+
+    setModalState({ visible: false, mode: null, message: "" });
+  };
+
   /** 🔥 시간표 추가 플로우
    * 1) /timetable/items/try-add 호출
-   *   - 200 + 성공: 바로 추가
-   *   - 409 에러: "이미 내 시간표에 존재합니다" 알림
-   *   - 200 + { conflict: true, ... }: 경고창 → /timetable/items/resolve 호출
-   *     - 추가 안함: resolution: "KEEP"
-   *     - 추가 함:  resolution: "REPLACE"
+   *   - 200 + 성공: added 모달
+   *   - 409 에러: alreadyExists 모달
+   *   - 200 + { conflict: true, ... }: conflict 모달 띄우고, 이후 resolveConflict
    */
   const handleAddToTimetable = async (courseId) => {
     if (!courseId) return;
@@ -407,64 +556,50 @@ const CourseSearchBottomSheet = ({
 
       // 1-1) 충돌 응답 (200 OK + conflict: true)
       if (data.conflict) {
-        const ok = window.confirm(
-          "해당 시간에 이미 다른 강의가 있습니다.\n" +
-            "기존 강의를 삭제하고 새 강의를 추가할까요?"
-        );
-
-        const resolution = ok ? "REPLACE" : "KEEP";
-
-        try {
-          const resolveRes = await api.post(
-            "/timetable/items/resolve",
-            {
-              courseId,
-              resolution,
-            }
-          );
-          const resolveData = resolveRes.data ?? {};
-
-          if (resolution === "REPLACE") {
-            // 백엔드에서 실제 교체/추가가 수행되었다고 가정
-            // createdEventCount 같은 필드가 있다면 참고
-            if (resolveData.createdEventCount === 0) {
-              // 혹시 생성된 이벤트가 없는 경우 방어적으로 안내
-              alert("강의가 추가되지 않았어요.");
-            } else {
-              alert("시간표에 강의가 추가되었어요.");
-              onTimetableAdded?.();
-            }
-          } else {
-            // KEEP 선택 시
-            alert("기존 시간표를 유지했습니다.");
-          }
-        } catch (err) {
-          console.error("시간표 충돌 해결 실패:", err);
-          alert("시간표 충돌을 해결하는 중 오류가 발생했어요.");
-        }
-
+        setPendingCourseId(courseId);
+        setModalState({
+          visible: true,
+          mode: "conflict",
+          message:
+            "해당 시간에 이미 다른 강의가 있습니다.\n기존 강의를 삭제하고 새 강의를 추가할까요?",
+        });
         return;
       }
 
       // 1-2) createdEventCount로 성공 여부 판단
       if (data.createdEventCount > 0 || !("conflict" in data)) {
-        alert("시간표에 강의가 추가되었어요.");
-        onTimetableAdded?.();
+        setModalState({
+          visible: true,
+          mode: "added",
+          message: "시간표에 강의가 추가되었어요.",
+        });
         return;
       }
 
       // 그 외 애매한 응답
-      alert("강의가 추가되지 않았어요.");
+      setModalState({
+        visible: true,
+        mode: "notAdded",
+        message: "강의가 추가되지 않았어요.",
+      });
     } catch (error) {
       // 409: 이미 내 시간표에 존재
       if (error.response?.status === 409) {
         const msg =
           error.response.data?.error ||
           "이미 내 시간표에 존재합니다.";
-        alert(msg);
+        setModalState({
+          visible: true,
+          mode: "alreadyExists",
+          message: msg,
+        });
       } else {
         console.error("시간표 추가 실패:", error);
-        alert("시간표 추가 중 오류가 발생했어요.");
+        setModalState({
+          visible: true,
+          mode: "error",
+          message: "시간표 추가 중 오류가 발생했어요.",
+        });
       }
     } finally {
       setAddLoading(false);
@@ -472,194 +607,207 @@ const CourseSearchBottomSheet = ({
   };
 
   return (
-    <div
-      className={`mypage-bottomsheet-backdrop ${
-        closing ? "closing" : ""
-      }`}
-      onClick={handleBackdropClick}
-    >
+    <>
       <div
-        className={`mypage-bottomsheet ${closing ? "closing" : ""}`}
-        onClick={(e) => e.stopPropagation()}
-        onAnimationEnd={handleSheetAnimationEnd}
+        className={`mypage-bottomsheet-backdrop ${
+          closing ? "closing" : ""
+        }`}
+        onClick={handleBackdropClick}
       >
-        {/* 상단 핸들 + 제목 */}
-        <div className="mypage-bottomsheet-header">
-          <div className="mypage-bottomsheet-handle" />
-          <div className="mypage-bottomsheet-title-row">
-            <h2 className="mypage-bottomsheet-title">강의 추가</h2>
-          </div>
-        </div>
-
-        <div className="mypage-bottomsheet-body">
-          {/* 필터 pill들 */}
-          <div className="mypage-bottomsheet-filter-row">
-            {FILTER_CONFIG.map((f) => (
-              <button
-                key={f.key}
-                type="button"
-                className={`mypage-bottomsheet-filter-pill ${
-                  activeFilter === f.key ? "active" : ""
-                }`}
-                onClick={() => handleFilterClick(f.key)}
-              >
-                <span className="mypage-bottomsheet-filter-label">
-                  {f.label}
-                </span>
-                <span className="mypage-bottomsheet-filter-value">
-                  {filterValues[f.key]}
-                </span>
-              </button>
-            ))}
+        <div
+          className={`mypage-bottomsheet ${closing ? "closing" : ""}`}
+          onClick={(e) => e.stopPropagation()}
+          onAnimationEnd={handleSheetAnimationEnd}
+        >
+          {/* 상단 핸들 + 제목 */}
+          <div className="mypage-bottomsheet-header">
+            <div className="mypage-bottomsheet-handle" />
+            <div className="mypage-bottomsheet-title-row">
+              <h2 className="mypage-bottomsheet-title">강의 추가</h2>
+            </div>
           </div>
 
-          {/* 전공/교양, 학년, 학점 제외한 필터 입력 박스 */}
-          {activeFilterConfig &&
-            activeFilterConfig.key !== "type" &&
-            activeFilterConfig.key !== "year" &&
-            activeFilterConfig.key !== "credit" && (
-              <div className="mypage-bottomsheet-filter-input-row">
-                <div className="mypage-bottomsheet-filter-input-box">
-                  <span className="mypage-bottomsheet-filter-input-label">
-                    {activeFilterConfig.label}
+          <div className="mypage-bottomsheet-body">
+            {/* 필터 pill들 */}
+            <div className="mypage-bottomsheet-filter-row">
+              {FILTER_CONFIG.map((f) => (
+                <button
+                  key={f.key}
+                  type="button"
+                  className={`mypage-bottomsheet-filter-pill ${
+                    activeFilter === f.key ? "active" : ""
+                  }`}
+                  onClick={() => handleFilterClick(f.key)}
+                >
+                  <span className="mypage-bottomsheet-filter-label">
+                    {f.label}
                   </span>
-                  <input
-                    type="text"
-                    className="mypage-bottomsheet-filter-input"
-                    placeholder={
-                      activeFilterConfig.key === "keyword"
-                        ? "검색어를 입력하세요"
-                        : "값을 입력하세요"
-                    }
-                    value={filterInput}
-                    onChange={(e) => setFilterInput(e.target.value)}
-                  />
+                  <span className="mypage-bottomsheet-filter-value">
+                    {filterValues[f.key]}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* 전공/교양, 학년, 학점 제외한 필터 입력 박스 */}
+            {activeFilterConfig &&
+              activeFilterConfig.key !== "type" &&
+              activeFilterConfig.key !== "year" &&
+              activeFilterConfig.key !== "credit" && (
+                <div className="mypage-bottomsheet-filter-input-row">
+                  <div className="mypage-bottomsheet-filter-input-box">
+                    <span className="mypage-bottomsheet-filter-input-label">
+                      {activeFilterConfig.label}
+                    </span>
+                    <input
+                      type="text"
+                      className="mypage-bottomsheet-filter-input"
+                      placeholder={
+                        activeFilterConfig.key === "keyword"
+                          ? "검색어를 입력하세요"
+                          : "값을 입력하세요"
+                      }
+                      value={filterInput}
+                      onChange={(e) => setFilterInput(e.target.value)}
+                    />
+                  </div>
+                  <div className="mypage-bottomsheet-filter-input-actions">
+                    <button
+                      type="button"
+                      className="mypage-bottomsheet-filter-reset-btn"
+                      onClick={handleFilterReset}
+                    >
+                      초기화
+                    </button>
+                    <button
+                      type="button"
+                      className="mypage-bottomsheet-filter-apply-btn"
+                      onClick={handleFilterApply}
+                    >
+                      적용
+                    </button>
+                  </div>
                 </div>
-                <div className="mypage-bottomsheet-filter-input-actions">
-                  <button
-                    type="button"
-                    className="mypage-bottomsheet-filter-reset-btn"
-                    onClick={handleFilterReset}
-                  >
-                    초기화
-                  </button>
-                  <button
-                    type="button"
-                    className="mypage-bottomsheet-filter-apply-btn"
-                    onClick={handleFilterApply}
-                  >
-                    적용
-                  </button>
-                </div>
-              </div>
-            )}
+              )}
 
-          {/* 강의 리스트 */}
-          <div className="mypage-bottomsheet-course-list">
-            {loading && !hasLoadedOnce ? (
-              <p className="mypage-bottomsheet-info-text">
-                강의를 불러오는 중이에요...
-              </p>
-            ) : !hasLoadedOnce ? (
-              <p className="mypage-bottomsheet-info-text">
-                강의 목록이 없어요.
-              </p>
-            ) : courses.length === 0 ? (
-              <p className="mypage-bottomsheet-info-text">
-                필터에 해당하는 강의가 없습니다.
-              </p>
-            ) : (
-              courses.map((course) => {
-                const isSelected = selectedCourseId === course.id;
-                return (
-                  <article
-                    key={course.id}
-                    className={
-                      "mypage-bottomsheet-course-card" +
-                      (isSelected ? " selected" : "")
-                    }
-                    onClick={() => handleCourseClick(course)}
-                  >
-                    <div className="mypage-bottomsheet-course-header">
-                      <h3 className="mypage-bottomsheet-course-name">
-                        {course.name}
-                      </h3>
-                      <button
-                        type="button"
-                        className="mypage-bottomsheet-review-btn"
-                        onClick={(e) => handleReviewClick(e, course.id)}
-                      >
-                        강의평
-                      </button>
-                    </div>
-
-                    <div className="mypage-bottomsheet-course-meta">
-                      <p className="mypage-bottomsheet-course-prof">
-                        {course.professor || "담당 교수 미정"}
-                      </p>
-                      <p className="mypage-bottomsheet-course-line">
-                        <span className="mypage-bottomsheet-course-label">
-                          수업 시간
-                        </span>
-                        <span>{formatTimes(course.times)}</span>
-                      </p>
-                      <p className="mypage-bottomsheet-course-line">
-                        <span className="mypage-bottomsheet-course-label">
-                          수업 장소
-                        </span>
-                        <span>
-                          {course.times?.[0]?.room || "장소 미정"}
-                        </span>
-                      </p>
-                      <p className="mypage-bottomsheet-course-line">
-                        <span className="mypage-bottomsheet-course-label">
-                          학년
-                        </span>
-                        <span>{course.year || "-"}</span>
-                      </p>
-                      <p className="mypage-bottomsheet-course-line">
-                        <span className="mypage-bottomsheet-course-label">
-                          학점
-                        </span>
-                        <span>{course.credit ?? "-"}</span>
-                      </p>
-                      <p className="mypage-bottomsheet-course-line">
-                        <span className="mypage-bottomsheet-course-label">
-                          과목 코드
-                        </span>
-                        <span>
-                          {course.courseCode}
-                          {course.section ? `-${course.section}` : ""}
-                        </span>
-                      </p>
-                    </div>
-
-                    {/* 🔥 선택된 카드에만 나오는 "시간표에 추가" 작은 버튼 */}
-                    {isSelected && (
-                      <div className="mypage-bottomsheet-course-add-inline">
+            {/* 강의 리스트 */}
+            <div className="mypage-bottomsheet-course-list">
+              {loading && !hasLoadedOnce ? (
+                <p className="mypage-bottomsheet-info-text">
+                  강의를 불러오는 중이에요...
+                </p>
+              ) : !hasLoadedOnce ? (
+                <p className="mypage-bottomsheet-info-text">
+                  강의 목록이 없어요.
+                </p>
+              ) : courses.length === 0 ? (
+                <p className="mypage-bottomsheet-info-text">
+                  필터에 해당하는 강의가 없습니다.
+                </p>
+              ) : (
+                courses.map((course) => {
+                  const isSelected = selectedCourseId === course.id;
+                  return (
+                    <article
+                      key={course.id}
+                      className={
+                        "mypage-bottomsheet-course-card" +
+                        (isSelected ? " selected" : "")
+                      }
+                      onClick={() => handleCourseClick(course)}
+                    >
+                      <div className="mypage-bottomsheet-course-header">
+                        <h3 className="mypage-bottomsheet-course-name">
+                          {course.name}
+                        </h3>
                         <button
                           type="button"
-                          className="mypage-bottomsheet-course-add-btn"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAddToTimetable(course.id);
-                          }}
-                          disabled={addLoading}
+                          className="mypage-bottomsheet-review-btn"
+                          onClick={(e) =>
+                            handleReviewClick(e, course.id)
+                          }
                         >
-                          {addLoading ? "추가 중..." : "시간표에 추가"}
+                          강의평
                         </button>
                       </div>
-                    )}
-                  </article>
-                );
-              })
-            )}
-          </div>
 
-          {/* 하단 공통 버튼은 사용하지 않음 */}
+                      <div className="mypage-bottomsheet-course-meta">
+                        <p className="mypage-bottomsheet-course-prof">
+                          {course.professor || "담당 교수 미정"}
+                        </p>
+                        <p className="mypage-bottomsheet-course-line">
+                          <span className="mypage-bottomsheet-course-label">
+                            수업 시간
+                          </span>
+                          <span>{formatTimes(course.times)}</span>
+                        </p>
+                        <p className="mypage-bottomsheet-course-line">
+                          <span className="mypage-bottomsheet-course-label">
+                            수업 장소
+                          </span>
+                          <span>
+                            {course.times?.[0]?.room || "장소 미정"}
+                          </span>
+                        </p>
+                        <p className="mypage-bottomsheet-course-line">
+                          <span className="mypage-bottomsheet-course-label">
+                            학년
+                          </span>
+                          <span>{course.year || "-"}</span>
+                        </p>
+                        <p className="mypage-bottomsheet-course-line">
+                          <span className="mypage-bottomsheet-course-label">
+                            학점
+                          </span>
+                          <span>{course.credit ?? "-"}</span>
+                        </p>
+                        <p className="mypage-bottomsheet-course-line">
+                          <span className="mypage-bottomsheet-course-label">
+                            과목 코드
+                          </span>
+                          <span>
+                            {course.courseCode}
+                            {course.section
+                              ? `-${course.section}`
+                              : ""}
+                          </span>
+                        </p>
+                      </div>
+
+                      {/* 🔥 선택된 카드에만 나오는 "시간표에 추가" 작은 버튼 */}
+                      {isSelected && (
+                        <div className="mypage-bottomsheet-course-add-inline">
+                          <button
+                            type="button"
+                            className="mypage-bottomsheet-course-add-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddToTimetable(course.id);
+                            }}
+                            disabled={addLoading}
+                          >
+                            {addLoading ? "추가 중..." : "시간표에 추가"}
+                          </button>
+                        </div>
+                      )}
+                    </article>
+                  );
+                })
+              )}
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* 🔔 강의 추가 / 충돌 / 에러 팝업 */}
+      <CourseAlertModal
+        visible={modalState.visible}
+        mode={modalState.mode}
+        message={modalState.message}
+        onConfirm={handleModalConfirm}
+        onCancel={handleModalCancel}
+      />
+    </>
   );
 };
 
