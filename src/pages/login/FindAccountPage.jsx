@@ -115,21 +115,26 @@ export default function FindAccountPage() {
 
     try {
       if (mode === "findId") {
-        // ✅ 아이디 찾기 API (한 번만 호출)
         const { data } = await api.post("/auth/recovery/find-id", {
           email: fullEmail,
           code: emailCode,
         });
 
-        if (data?.loginId) {
-          setFoundLoginId(data.loginId);
+        // ✅ data가 문자열이면 그걸 그대로 아이디로 사용
+        const loginId =
+          typeof data === "string"
+            ? data.trim()
+            : data?.loginId || "";
+
+        if (loginId) {
+          setFoundLoginId(loginId);
           setError("");
         } else {
           setFoundLoginId(null);
           setError("해당 이메일로 가입된 아이디를 찾을 수 없습니다.");
-          // 코드 자체는 유효하니 emailStep은 유지
         }
-      } else {
+      }
+else {
         // 비밀번호 재설정:
         // 여기서는 코드 유효성은 나중에 reset-password API에서 다시 검증한다고 가정
         navigate("/login/reset-password", {
