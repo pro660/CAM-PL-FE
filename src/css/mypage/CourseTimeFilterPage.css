@@ -74,6 +74,10 @@
   color: #ffffff;
 }
 
+.time-filter-header-cell:first-child {
+  border-left: none;
+}
+
 .time-filter-header-cell-time {
   border-right: 0.0625rem solid #e2d4ff; /* 1px */
 }
@@ -89,6 +93,8 @@
 /* 왼쪽 시간축 */
 .time-filter-time-col {
   background-color: #f0e3ff;
+  /* 경계선 제거 */
+  border-right: none;
 }
 
 .time-filter-time-slot {
@@ -100,6 +106,10 @@
   color: #9b8ac8;
   /* 훨씬 연한 보라색으로 변경 */
   border-top: 1px solid #f0e5ff;
+}
+
+.time-filter-time-slot:first-child {
+  border-top: none;
 }
 
 /* 오른쪽 요일 그리드 전체 */
@@ -116,11 +126,25 @@
   flex-direction: column;
 }
 
+.time-filter-day-column:first-child {
+  border-left: none;
+}
+
 /* 한 칸(1시간) 슬롯 */
 .time-filter-slot {
+  flex: 1 0 auto;
   height: 2.4rem;
+  /* 훨씬 연한 보라색으로 변경 */
+  border-top: 1px solid #f0e5ff;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  outline: none;
   cursor: pointer;
-  border-color: #e2d4ff;
+}
+
+.time-filter-slot:first-child {
+  border-top: none;
 }
 
 /* 선택된 칸 색 */
