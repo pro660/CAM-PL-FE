@@ -1,3 +1,4 @@
+// src/components/mypage/SearchSheet.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../css/mypage/SearchSheet.css";
@@ -151,21 +152,13 @@ const ALL_YEAR_KEYS = ["1", "2", "3", "4", "ETC"];
 const ALL_CREDIT_KEYS = ["1", "2", "3", "4"];
 
 /** 서버 결과에 학년/학점/시간 필터 적용 */
-const applyClientSideFilters = (
-  base,
-  filters,
-  selectedYears,
-  selectedCredits
-) => {
+const applyClientSideFilters = (base, filters, selectedYears, selectedCredits) => {
   if (!base || base.length === 0) return [];
 
   const years = Array.isArray(selectedYears) ? selectedYears : [];
-  const useYearFilter =
-    years.length > 0 && years.length < ALL_YEAR_KEYS.length;
+  const useYearFilter = years.length > 0 && years.length < ALL_YEAR_KEYS.length;
 
-  const credits = Array.isArray(selectedCredits)
-    ? selectedCredits
-    : [];
+  const credits = Array.isArray(selectedCredits) ? selectedCredits : [];
   const useCreditFilter =
     credits.length > 0 && credits.length < ALL_CREDIT_KEYS.length;
 
@@ -379,7 +372,7 @@ const CourseSearchBottomSheet = ({
     onCourseSelect?.(course);
   };
 
-    /** 🔥 시간표 추가 API 호출 (+ 겹치면 기존 강의 삭제 후 재추가) */
+  /** 🔥 시간표 추가 API 호출 (+ 겹치면 기존 강의 삭제 후 재추가) */
   const handleAddToTimetable = async () => {
     if (!selectedCourseId) return;
 
@@ -390,6 +383,8 @@ const CourseSearchBottomSheet = ({
       const res = await api.post("/timetable/items/try-add", {
         courseId: selectedCourseId,
       });
+      // 200 응답 예시:
+      // { conflict: true/false, itemId: null | number, createdEventCount: 0 | n }
       return res.data ?? {};
     };
 
@@ -397,17 +392,11 @@ const CourseSearchBottomSheet = ({
       // 1차 추가 시도
       let data = await tryAdd();
 
-      // 같은 과목이 이미 내 시간표에 있는 경우 (409 형식 응답)
-      if (data.status === 409) {
-        alert(data.error || "이미 내 시간표에 존재합니다.");
-        return;
-      }
-
-      // 시간이 겹치는 경우
+      // 시간이 겹치는 경우 (200 + conflict: true)
       if (data.conflict) {
         const itemId = data.itemId;
 
-        // itemId 가 없으면 삭제를 못하니까 그냥 안내만
+        // 현재 응답 스펙에서는 itemId 가 null 이라 삭제 불가 → 안내만
         if (!itemId) {
           alert("다른 강의와 시간이 겹쳐서 추가할 수 없어요.");
           return;
@@ -433,11 +422,6 @@ const CourseSearchBottomSheet = ({
 
         // 2) 다시 추가 시도
         data = await tryAdd();
-
-        if (data.status === 409) {
-          alert(data.error || "이미 내 시간표에 존재합니다.");
-          return;
-        }
 
         if (data.conflict) {
           // 이 경우는 뭔가 계속 꼬인 상황이니 그냥 안내만
@@ -465,6 +449,9 @@ const CourseSearchBottomSheet = ({
       // 그 외 애매한 응답
       alert("강의가 추가되지 않았어요.");
     } catch (error) {
+      // 409 에러 예시:
+      // status code: 409
+      // body: { "status": 409, "error": "이미 내 시간표에 존재합니다" }
       if (error.response?.status === 409) {
         const msg =
           error.response.data?.error || "이미 내 시간표에 존재합니다.";
@@ -477,7 +464,6 @@ const CourseSearchBottomSheet = ({
       setAddLoading(false);
     }
   };
-
 
   return (
     <div
