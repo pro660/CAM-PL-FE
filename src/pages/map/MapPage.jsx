@@ -184,7 +184,8 @@ export default function MapPage() {
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000,
+        timeout: 15000,
+        maximumAge: 0, // 🔥 캐시된 위치 쓰지 않도록
       }
     );
   }, []);
@@ -210,7 +211,6 @@ export default function MapPage() {
           : [];
 
         // ✅ 오늘의 일정(칩/슬라이더용) = 같은 날의 전체 일정(중복 제거)
-        //    + 제목( title || courseName || name )이 없는 건 아예 제외
         const mergedSource = [
           ...baseEvents,
           ...lectures,
@@ -225,14 +225,13 @@ export default function MapPage() {
           if (!raw) return;
 
           const title = getEventTitle(raw);
-          if (!title) return; // 🔥 제목이 실제로 없으면 오늘의 일정에서 제외
+          if (!title) return;
 
           const startAt = raw.startAt || raw.startTime || "";
-          // 🔥 id 대신 "제목 + 시작시간"을 기준으로 중복 제거
           const dedupKey = `${title}|${startAt || idx}`;
 
           if (seen.has(dedupKey)) {
-            return; // 동일한 강의/일정은 한 번만
+            return;
           }
           seen.add(dedupKey);
 
@@ -245,7 +244,7 @@ export default function MapPage() {
 
         setTodayEvents(mergedToday);
 
-        // ✅ 지난 일정 / 다음 일정 (같은 날짜 안에서 현재 시간 기준으로 나눠진 값)
+        // ✅ 지난 일정 / 다음 일정
         setYesterdayEvents(pastEvents);
         setTomorrowEvents(upcomingEvents);
 
@@ -264,7 +263,7 @@ export default function MapPage() {
           }))
         );
 
-        // ✅ 지도용 placeMarkers (이름 + 위도/경도 + count + placeKey)
+        // ✅ 지도용 placeMarkers
         const rawMarkers = Array.isArray(data.placeMarkers)
           ? data.placeMarkers
           : [];
@@ -280,7 +279,7 @@ export default function MapPage() {
             return {
               id: m.name ? `${m.name}-${idx}` : `marker-${idx}`,
               name: m.name,
-              placeKey, // 🔥 이벤트 쪽과 매칭할 키
+              placeKey,
               lat: m.latitude,
               lng: m.longitude,
               count: m.count,
@@ -303,7 +302,7 @@ export default function MapPage() {
     const map = {};
     todayEvents.forEach((ev) => {
       const title = ev._displayTitle || getEventTitle(ev);
-      if (!title) return; // 제목 없는 건 집계에서 제외 (이론상 이미 필터됨)
+      if (!title) return;
 
       const location = ev._displayLocation || getEventLocation(ev);
       if (!location) return;
@@ -386,17 +385,25 @@ export default function MapPage() {
     [tomorrowEvents]
   );
 
-  // ✅ 현재 선택된 장소 키와 일치하는 마커 찾기 (name이 아니라 placeKey로 비교)
+  // ✅ 현재 선택된 장소 키와 일치하는 마커 찾기
   const selectedPlaceMarker = useMemo(() => {
     if (!selectedPlace) return null;
     return mapMarkers.find((m) => m.placeKey === selectedPlace) || null;
   }, [selectedPlace, mapMarkers]);
 
-  // ✅ 지도에 넘길 center 값 (없으면 null → 기본 한서대 위치로)
+  // ✅ 지도 중심 계산:
+  // 1순위: 선택된 장소
+  // 2순위: 사용자 현재 위치(빨간 마커)
+  // 3순위: null → 컴포넌트 내부 기본값(한서대)
   const centerForMap = useMemo(() => {
-    if (!selectedPlaceMarker) return null;
-    return { lat: selectedPlaceMarker.lat, lng: selectedPlaceMarker.lng };
-  }, [selectedPlaceMarker]);
+    if (selectedPlaceMarker) {
+      return { lat: selectedPlaceMarker.lat, lng: selectedPlaceMarker.lng };
+    }
+    if (userLocation) {
+      return { lat: userLocation.lat, lng: userLocation.lng };
+    }
+    return null;
+  }, [selectedPlaceMarker, userLocation]);
 
   const handleClickRecommend = () => {
     setShowRecommend(true);
@@ -437,11 +444,10 @@ export default function MapPage() {
 
   // 오늘의 일정 칩 클릭 핸들러
   const handleSelectPlace = (placeName) => {
-    // placeName 자체가 이미 extractPlaceLabel 결과(= 키)
     setSelectedPlace((prev) => (prev === placeName ? null : placeName));
   };
 
-  // ✅ 마커 클릭 시 → 해당 placeKey 선택 (칩 클릭과 동일한 효과)
+  // ✅ 마커 클릭 시 → 해당 placeKey 선택
   const handleMarkerClick = (marker) => {
     if (!marker?.placeKey) return;
     setSelectedPlace((prev) =>
@@ -453,7 +459,6 @@ export default function MapPage() {
     <div className="map-page">
       {/* 상단 네이버 지도 + 건물별 일정 슬라이더 */}
       <div className="map-page-map-wrapper">
-        {/* ✅ placeMarkers로부터 받은 마커들을 지도에 넘김 */}
         <NaverMap
           markers={mapMarkers}
           center={centerForMap}
@@ -470,7 +475,6 @@ export default function MapPage() {
 
       {/* 아래 내용 영역 */}
       <div className="map-page-content">
-        {/* 오늘의 일정 - 장소 요약 */}
         <TodayPlaces
           items={todayPlaceItems}
           loading={loading}
@@ -478,21 +482,18 @@ export default function MapPage() {
           onSelectPlace={handleSelectPlace}
         />
 
-        {/* 지난 일정 (같은 날짜 안에서 이미 지나간 일정들) */}
         <ScheduleList
           title="지난 일정"
           items={prevItems}
           emptyText="지난 일정이 없어요."
         />
 
-        {/* 다음 일정 (같은 날짜 안에서 앞으로 남은 일정들) */}
         <ScheduleList
           title="다음 일정"
           items={nextItems}
           emptyText="다가오는 일정이 없어요."
         />
 
-        {/* 주변 시설 */}
         <NearbyPlaces
           places={nearbyPlaces}
           onClickAdd={handleClickAddPlace}
@@ -500,7 +501,6 @@ export default function MapPage() {
 
         {error && <div className="map-page-error">{error}</div>}
 
-        {/* 장소 추천받기 버튼 */}
         <div className="map-page-recommend-wrapper">
           <button
             type="button"
@@ -512,7 +512,6 @@ export default function MapPage() {
         </div>
       </div>
 
-      {/* 추천 모달 */}
       <RecommendModal
         visible={showRecommend}
         onClose={handleCloseRecommend}

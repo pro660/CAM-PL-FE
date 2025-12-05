@@ -8,7 +8,7 @@ import PlaceMarkerIcon from "../../images/map/marker-place.svg";
 /**
  * props:
  * - markers: [{ id, name, placeKey, lat, lng, count }]
- * - center: { lat, lng } | null   // 선택된 장소가 있을 때만 사용
+ * - center: { lat, lng } | null   // 선택된 장소 / 사용자 위치
  * - userLocation: { lat, lng } | null // 🔴 사용자 현재 위치
  * - onMarkerClick: (marker) => void
  */
@@ -36,7 +36,6 @@ const NaverMap = ({ markers = [], center, userLocation, onMarkerClick }) => {
 
       const { naver } = window;
 
-      // 한서대학교 기본 중심 (고정)
       const defaultCenter = new naver.maps.LatLng(36.69085, 126.58297);
 
       const map = new naver.maps.Map(mapRef.current, {
@@ -68,7 +67,7 @@ const NaverMap = ({ markers = [], center, userLocation, onMarkerClick }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showLoading, hideLoading]);
 
-  // ✅ markers / center / userLocation 변경될 때마다 부드럽게 이동 + 마커 재배치
+  // ✅ markers / center / userLocation 변경될 때마다 지도/마커 업데이트
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || !window.naver) return;
@@ -76,21 +75,19 @@ const NaverMap = ({ markers = [], center, userLocation, onMarkerClick }) => {
 
     const defaultCenter = new naver.maps.LatLng(36.69085, 126.58297);
 
-    // ------- 지도 중심 부드럽게 이동 (선택된 장소 기준) -------
+    // ------- 지도 중심 이동 -------
     if (
       center &&
       typeof center.lat === "number" &&
       typeof center.lng === "number"
     ) {
       const target = new naver.maps.LatLng(center.lat, center.lng);
-      // ✅ 선택된 장소가 있으면 그 위치로 부드럽게 이동
-      map.panTo(target);
+      map.panTo(target); // ✅ 선택된 장소 or 사용자 위치
     } else {
-      // ✅ 선택된 장소가 없으면 다시 한서대 기본 위치로 부드럽게 복귀
-      map.panTo(defaultCenter);
+      map.panTo(defaultCenter); // 기본: 한서대
     }
 
-    // ------- 기존 일정/장소 마커 제거 -------
+    // ------- 기존 장소 마커 제거 -------
     markersRef.current.forEach((marker) => {
       marker.setMap(null);
     });
@@ -101,10 +98,9 @@ const NaverMap = ({ markers = [], center, userLocation, onMarkerClick }) => {
       PlaceMarkerIcon && typeof PlaceMarkerIcon === "string"
         ? {
             url: PlaceMarkerIcon,
-            // 원본 비율 유지 + 화면 크기만 조절
             scaledSize: new naver.maps.Size(30, 30),
             origin: new naver.maps.Point(0, 0),
-            anchor: new naver.maps.Point(15, 30), // 30x30 기준 중앙 아래
+            anchor: new naver.maps.Point(15, 30),
           }
         : null;
 
@@ -127,7 +123,7 @@ const NaverMap = ({ markers = [], center, userLocation, onMarkerClick }) => {
 
         if (onMarkerClick) {
           naver.maps.Event.addListener(marker, "click", () => {
-            onMarkerClick(m); // MapPage에서 selectedPlace 세팅 → 정보 패널 + 지도 이동
+            onMarkerClick(m);
           });
         }
 
@@ -136,7 +132,6 @@ const NaverMap = ({ markers = [], center, userLocation, onMarkerClick }) => {
     }
 
     // ------- 사용자 현재 위치 마커 (빨간 동그라미) -------
-    // 이전 사용자 마커 제거
     if (userMarkerRef.current) {
       userMarkerRef.current.setMap(null);
       userMarkerRef.current = null;
