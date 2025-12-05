@@ -75,8 +75,8 @@ export default function FindAccountPage() {
     await handleSendCode();
   };
 
-  /* ---------- 인증번호 '확인' : 여기서 서버에 코드 검증 ---------- */
-  const handleVerifyCodeClick = async () => {
+  /* ---------- 인증번호 '확인' 버튼: 서버 호출 없이 상태만 변경 ---------- */
+  const handleVerifyCodeClick = () => {
     if (!emailCode) {
       setError("인증번호를 입력해주세요.");
       return;
@@ -86,25 +86,9 @@ export default function FindAccountPage() {
       return;
     }
 
+    // 여기서는 단순히 "사용자가 확인 버튼을 눌렀다"는 상태만 표시
     setError("");
-
-    try {
-      // 이메일 인증번호 검증 API
-      // 성공하면 에러 없이 응답, 실패하면 400 + { error: "..." }
-      await api.post("/auth/recovery/find-id", {
-        email: fullEmail,
-        code: emailCode,
-      });
-
-      // 여기까지 왔다는 건 코드가 유효하다는 뜻
-      setEmailStep("verified");
-    } catch (e) {
-      console.error(e);
-      const msg =
-        e.response?.data?.error || "인증번호 확인 중 오류가 발생했습니다.";
-      setError(msg);
-      setEmailStep("codeSent"); // 다시 시도 가능 상태
-    }
+    setEmailStep("verified");
   };
 
   /* ---------- 하단 메인 버튼(아이디 찾기 / 비번 재설정) ---------- */
@@ -121,7 +105,7 @@ export default function FindAccountPage() {
       setError("인증번호를 입력해주세요.");
       return;
     }
-    // ✅ 여기서 emailStep이 verified인지 체크 → 잘못된 코드면 아예 진행 불가
+    // ✅ 확인 버튼을 안 누르고 바로 제출하는 것을 방지
     if (emailStep !== "verified") {
       setError("먼저 인증번호 확인 버튼을 눌러, 코드를 검증해주세요.");
       return;
@@ -131,7 +115,7 @@ export default function FindAccountPage() {
 
     try {
       if (mode === "findId") {
-        // 아이디 찾기 API (코드 검증 + 아이디 반환)
+        // ✅ 아이디 찾기 API (한 번만 호출)
         const { data } = await api.post("/auth/recovery/find-id", {
           email: fullEmail,
           code: emailCode,
@@ -143,10 +127,11 @@ export default function FindAccountPage() {
         } else {
           setFoundLoginId(null);
           setError("해당 이메일로 가입된 아이디를 찾을 수 없습니다.");
+          // 코드 자체는 유효하니 emailStep은 유지
         }
       } else {
-        // 비밀번호 재설정: 여기까지 온 시점에 이미 코드 검증 완료
-        // → 비밀번호 설정 페이지로 이동
+        // 비밀번호 재설정:
+        // 여기서는 코드 유효성은 나중에 reset-password API에서 다시 검증한다고 가정
         navigate("/login/reset-password", {
           state: { email: fullEmail, code: emailCode },
         });
@@ -156,6 +141,8 @@ export default function FindAccountPage() {
       const msg =
         e.response?.data?.error || "요청 처리 중 오류가 발생했습니다.";
       setError(msg);
+      // 서버에서 "이미 사용된 코드" 등으로 실패하면 다시 시도할 수 있게 상태 롤백
+      setEmailStep("codeSent");
     } finally {
       setLoading(false);
     }

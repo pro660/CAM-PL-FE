@@ -3,7 +3,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../css/login/LoginFormPage.css";
 import LogoImg from "../../images/loginpage/logo.svg";
-import api, { setAuth } from "../../api/axios"; // ✅ 단일 camp_auth 저장용
+import api from "../../api/axios"; // <- axios 인스턴스만
+import { useAuth } from "../../context/AuthContext.jsx"; // ✅ 컨텍스트 사용
 
 // 눈 아이콘 이미지
 import EyeOpenIcon from "../../images/loginpage/icon-eye-open.svg";
@@ -11,6 +12,7 @@ import EyeClosedIcon from "../../images/loginpage/icon-eye-closed.svg";
 
 export default function LoginFormPage() {
   const navigate = useNavigate();
+  const { login } = useAuth(); // ✅ AuthContext에서 login 함수 받기
 
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
@@ -50,13 +52,9 @@ export default function LoginFormPage() {
       //   "provider": "LOCAL"
       // }
 
-      // ✅ 예전 키들 싹 정리 (한 번 정리해두면 스토리지 안 지저분해짐)
-      localStorage.removeItem("auth");
-      localStorage.removeItem("camp_access_token");
-      localStorage.removeItem("camp_user");
-
-      // ✅ camp_auth 하나에 accessToken + 유저 정보 통째로 저장
-      setAuth(data);
+      // ✅ 과거 키 정리는 AuthContext 내부(setAuth)에서 처리한다고 가정
+      //    여기서는 컨텍스트에게 "로그인해" 라고만 알려주면 됨
+      login(data); // <- AuthContext + localStorage + axios 헤더 모두 세팅
 
       // 로그인 성공 → 홈으로 이동
       navigate("/", { replace: true });
