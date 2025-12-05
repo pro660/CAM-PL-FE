@@ -365,10 +365,18 @@ const CourseSearchBottomSheet = ({
   const [closing, setClosing] = useState(false);
 
   // 서버 쿼리용 카테고리 ID / 학년 / 학점 선택값 / 시간 슬롯
-  const [selectedCategoryId] = useState(savedArea.categoryId);
-  const [selectedYears] = useState(savedYear.years || []);
-  const [selectedCredits] = useState(savedCredit.credits || []);
-  const [selectedTimeSlots] = useState(savedTime.slots || []);
+  const [selectedCategoryId, setSelectedCategoryId] = useState(
+    savedArea.categoryId
+  );
+  const [selectedYears, setSelectedYears] = useState(
+    savedYear.years || []
+  );
+  const [selectedCredits, setSelectedCredits] = useState(
+    savedCredit.credits || []
+  );
+  const [selectedTimeSlots, setSelectedTimeSlots] = useState(
+    savedTime.slots || []
+  );
 
   // 필터 UI 상태
   const [activeFilter, setActiveFilter] = useState(null); // type | time | year | credit | ...
@@ -381,7 +389,7 @@ const CourseSearchBottomSheet = ({
       } else if (f.key === "credit") {
         acc[f.key] = savedCredit.label; // 학점 라벨
       } else if (f.key === "time") {
-        acc[f.key] = savedTime.label || "전체"; // 🔥 시간 라벨 (CourseTimeFilterPage에서 설정)
+        acc[f.key] = savedTime.label || "전체"; // 시간 라벨
       } else {
         acc[f.key] = f.defaultValue;
       }
@@ -472,6 +480,31 @@ const CourseSearchBottomSheet = ({
     }
   };
 
+  /** 🔥 필터 pill 내부 X 클릭 → 해당 필터만 "전체"로 초기화 */
+  const handleFilterClearClick = (e, key) => {
+    e.stopPropagation(); // pill 클릭 이벤트 막기
+
+    const config = FILTER_CONFIG.find((f) => f.key === key);
+    if (!config) return;
+    const { defaultValue } = config;
+
+    setFilterValues((prev) => ({
+      ...prev,
+      [key]: defaultValue,
+    }));
+
+    // 실제 필터 상태도 함께 초기화
+    if (key === "type") {
+      setSelectedCategoryId(null);
+    } else if (key === "year") {
+      setSelectedYears([]);
+    } else if (key === "credit") {
+      setSelectedCredits([]);
+    } else if (key === "time") {
+      setSelectedTimeSlots([]);
+    }
+  };
+
   /** 필터 pill 클릭 */
   const handleFilterClick = (key) => {
     if (key === "type") {
@@ -496,7 +529,7 @@ const CourseSearchBottomSheet = ({
     }
 
     if (key === "time") {
-      // 🔥 시간 선택 페이지로 이동 (입력창 X)
+      // 시간 선택 페이지
       onClose?.();
       navigate("/course-time");
       return;
@@ -734,23 +767,37 @@ const CourseSearchBottomSheet = ({
           <div className="mypage-bottomsheet-body">
             {/* 필터 pill들 */}
             <div className="mypage-bottomsheet-filter-row">
-              {FILTER_CONFIG.map((f) => (
-                <button
-                  key={f.key}
-                  type="button"
-                  className={`mypage-bottomsheet-filter-pill ${
-                    activeFilter === f.key ? "active" : ""
-                  }`}
-                  onClick={() => handleFilterClick(f.key)}
-                >
-                  <span className="mypage-bottomsheet-filter-label">
-                    {f.label}
-                  </span>
-                  <span className="mypage-bottomsheet-filter-value">
-                    {filterValues[f.key]}
-                  </span>
-                </button>
-              ))}
+              {FILTER_CONFIG.map((f) => {
+                const isKeyword = f.key === "keyword";
+                const showClear =
+                  !isKeyword &&
+                  filterValues[f.key] !== f.defaultValue;
+                return (
+                  <button
+                    key={f.key}
+                    type="button"
+                    className={`mypage-bottomsheet-filter-pill ${
+                      activeFilter === f.key ? "active" : ""
+                    }`}
+                    onClick={() => handleFilterClick(f.key)}
+                  >
+                    <span className="mypage-bottomsheet-filter-label">
+                      {f.label}
+                    </span>
+                    <span className="mypage-bottomsheet-filter-value">
+                      {filterValues[f.key]}
+                    </span>
+                    {showClear && (
+                      <span
+                        className="mypage-bottomsheet-filter-clear"
+                        onClick={(e) => handleFilterClearClick(e, f.key)}
+                      >
+                        ×
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
 
             {/* 전공/교양, 학년, 학점, 시간 제외한 필터 입력 박스 (지금은 keyword만) */}

@@ -132,6 +132,7 @@
   justify-content: center;
 
   font-size: 0.74rem;
+  gap: 0.25rem; /* 값과 X 사이 간격 */
 }
 
 .mypage-bottomsheet-filter-pill.active {
@@ -333,4 +334,14 @@
 .mypage-bottomsheet-filter-apply-btn {
   background-color: #c09ef1;
   color: #ffffff;
+}
+
+/* 🔥 pill 안에 들어가는 X 버튼 */
+.mypage-bottomsheet-filter-clear {
+  font-size: 0.8rem;
+  line-height: 1;
+  color: #aaaaaa;
+  cursor: pointer;
+  padding-left: 0.1rem;
+  padding-right: 0.1rem;
 }
