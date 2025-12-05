@@ -59,17 +59,6 @@ const formatTimes = (times = []) => {
     .join(", ");
 };
 
-const timeStrToMinutes = (timeStr) => {
-  if (!timeStr) return 0;
-  const [hStr, mStr] = timeStr.split(":");
-  const h = Number(hStr) || 0;
-  const m = Number(mStr) || 0;
-  return h * 60 + m;
-};
-
-const rangesOverlap = (s1, e1, s2, e2) =>
-  Math.max(s1, s2) < Math.min(e1, e2);
-
 /** ===== 필터 정의 ===== */
 const FILTER_CONFIG = [
   { key: "type", label: "전공/교양", defaultValue: "전체" },
@@ -94,10 +83,7 @@ const readSavedAreaFilter = () => {
   }
 };
 
-/** 학년 필터 (course_year_filter)
- * years: ["1","2","3","4","ETC"] 중 일부
- * label: "1학년, 2학년" 같이 표시용 텍스트
- */
+/** 학년 필터 (course_year_filter) */
 const readSavedYearFilter = () => {
   try {
     const raw = localStorage.getItem("course_year_filter");
@@ -113,10 +99,7 @@ const readSavedYearFilter = () => {
   }
 };
 
-/** 학점 필터 (course_credit_filter)
- * credits: ["1","2","3","4"] 중 일부
- * label  : "1학점, 2학점" 같은 표시용 텍스트
- */
+/** 학점 필터 (course_credit_filter) */
 const readSavedCreditFilter = () => {
   try {
     const raw = localStorage.getItem("course_credit_filter");
@@ -134,7 +117,7 @@ const readSavedCreditFilter = () => {
 
 /** 시간 필터 (course_time_filter)
  * slots: [{ day: "월", startMinutes, endMinutes }, ...]
- * label: "월 9~11시 / 수 3~4시" 같은 표시용 텍스트
+ * label: "월 9~11시 / 화 13~15시" 같은 표시용 텍스트
  */
 const readSavedTimeFilter = () => {
   try {
@@ -183,13 +166,93 @@ const normalizeCourseYear = (year) => {
 const ALL_YEAR_KEYS = ["1", "2", "3", "4", "ETC"];
 const ALL_CREDIT_KEYS = ["1", "2", "3", "4"];
 
+/** 🔥 선택된 시간 슬롯들(slots) → 요일별 연속 구간으로 병합 */
+const buildTimeWindowsFromSlots = (slots = []) => {
+  const byDay = {};
+
+  slots.forEach((s) => {
+    if (!s || !s.day) return;
+    if (!byDay[s.day]) byDay[s.day] = [];
+    byDay[s.day].push({
+      startMinutes: s.startMinutes,
+      endMinutes: s.endMinutes,
+    });
+  });
+
+  Object.keys(byDay).forEach((day) => {
+    const arr = byDay[day].slice().sort((a, b) => a.startMinutes - b.startMinutes);
+    const merged = [];
+    let cur = arr[0];
+
+    for (let i = 1; i < arr.length; i++) {
+      const next = arr[i];
+      if (next.startMinutes === cur.endMinutes) {
+        // 연속 구간이면 병합
+        cur = {
+          startMinutes: cur.startMinutes,
+          endMinutes: next.endMinutes,
+        };
+      } else {
+        merged.push(cur);
+        cur = next;
+      }
+    }
+    merged.push(cur);
+    byDay[day] = merged;
+  });
+
+  return byDay; // { "월": [{startMinutes, endMinutes}, ...], ... }
+};
+
+/** 🔥 강의 1개가 선택한 시간 범위 안에 "완전히 포함"되는지 판단
+ *  - 부분 겹침 X
+ *  - 선택한 시간 안에서 "시작"하고 "끝나는" 강의만 true
+ */
+const matchTimeFilter = (course, timeSlots = []) => {
+  if (!timeSlots || timeSlots.length === 0) {
+    // 시간 필터 없으면 모든 강의 허용
+    return true;
+  }
+
+  const windowsByDay = buildTimeWindowsFromSlots(timeSlots);
+  if (Object.keys(windowsByDay).length === 0) return true;
+
+  const times = Array.isArray(course.times) ? course.times : [];
+  for (const t of times) {
+    if (!t || !t.dayOfWeek || !t.startTime || !t.endTime) continue;
+
+    const dayKor = mapDayToKor(t.dayOfWeek); // "월" ~ "금"
+    const windows = windowsByDay[dayKor];
+    if (!windows || windows.length === 0) continue;
+
+    const [sh, sm] = t.startTime.split(":").map(Number);
+    const [eh, em] = t.endTime.split(":").map(Number);
+    if (Number.isNaN(sh) || Number.isNaN(eh)) continue;
+
+    const startMinutes = sh * 60 + (Number.isNaN(sm) ? 0 : sm);
+    const endMinutes = eh * 60 + (Number.isNaN(em) ? 0 : em);
+
+    // 선택한 구간들 중 하나 안에 완전히 포함되는지 확인
+    for (const w of windows) {
+      if (
+        startMinutes >= w.startMinutes &&
+        endMinutes <= w.endMinutes
+      ) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+};
+
 /** 서버 결과에 학년/학점/시간 필터 적용 */
 const applyClientSideFilters = (
   base,
   filters,
   selectedYears,
   selectedCredits,
-  selectedTimeSlots
+  timeSlots
 ) => {
   if (!base || base.length === 0) return [];
 
@@ -201,10 +264,8 @@ const applyClientSideFilters = (
   const useCreditFilter =
     credits.length > 0 && credits.length < ALL_CREDIT_KEYS.length;
 
-  const timeSlots = Array.isArray(selectedTimeSlots)
-    ? selectedTimeSlots
-    : [];
-  const useTimeFilter = timeSlots.length > 0;
+  const useTimeFilter =
+    Array.isArray(timeSlots) && timeSlots.length > 0;
 
   return base.filter((course) => {
     // 학년 필터
@@ -223,24 +284,11 @@ const applyClientSideFilters = (
       }
     }
 
-    // 시간 필터: 선택한 슬롯과 하나라도 겹치는 강의만
+    // 🔥 시간 필터: 선택한 바운더리 안에서 "시작·종료가 모두 포함"되는 강의만 통과
     if (useTimeFilter) {
-      const times = Array.isArray(course.times) ? course.times : [];
-      const hasMatch = times.some((t) => {
-        const dayKor = mapDayToKor(t.dayOfWeek);
-        const startMin = timeStrToMinutes(t.startTime);
-        const endMin = timeStrToMinutes(t.endTime);
-
-        return timeSlots.some((slot) => {
-          if (slot.day !== dayKor) return false;
-          const s2 = Number(slot.startMinutes);
-          const e2 = Number(slot.endMinutes);
-          if (!Number.isFinite(s2) || !Number.isFinite(e2)) return false;
-          return rangesOverlap(startMin, endMin, s2, e2);
-        });
-      });
-
-      if (!hasMatch) return false;
+      if (!matchTimeFilter(course, timeSlots)) {
+        return false;
+      }
     }
 
     return true;
@@ -268,14 +316,12 @@ const CourseAlertModal = ({ visible, mode, message, onConfirm, onCancel }) => {
         </div>
 
         <p className="delete-schedule-message">
-          {String(message || "")
-            .split("\n")
-            .map((line, idx) => (
-              <React.Fragment key={idx}>
-                {line}
-                <br />
-              </React.Fragment>
-            ))}
+          {String(message || "").split("\n").map((line, idx) => (
+            <React.Fragment key={idx}>
+              {line}
+              <br />
+            </React.Fragment>
+          ))}
         </p>
 
         <div className="delete-schedule-buttons">
@@ -318,7 +364,7 @@ const CourseSearchBottomSheet = ({
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [closing, setClosing] = useState(false);
 
-  // 서버 쿼리용 카테고리 ID / 학년 / 학점 / 시간 선택값
+  // 서버 쿼리용 카테고리 ID / 학년 / 학점 선택값 / 시간 슬롯
   const [selectedCategoryId] = useState(savedArea.categoryId);
   const [selectedYears] = useState(savedYear.years || []);
   const [selectedCredits] = useState(savedCredit.credits || []);
@@ -335,7 +381,7 @@ const CourseSearchBottomSheet = ({
       } else if (f.key === "credit") {
         acc[f.key] = savedCredit.label; // 학점 라벨
       } else if (f.key === "time") {
-        acc[f.key] = savedTime.label; // 시간 라벨
+        acc[f.key] = savedTime.label || "전체"; // 🔥 시간 라벨 (CourseTimeFilterPage에서 설정)
       } else {
         acc[f.key] = f.defaultValue;
       }
@@ -349,18 +395,18 @@ const CourseSearchBottomSheet = ({
     [activeFilter]
   );
 
-  // 🔥 선택된 강의 ID (보라색 하이라이트 + 시간표 미리보기용)
+  // 선택된 강의 ID (보라색 하이라이트 + 시간표 미리보기용)
   const [selectedCourseId, setSelectedCourseId] = useState(null);
   const [addLoading, setAddLoading] = useState(false);
 
-  // 🔥 팝업 상태
+  // 팝업 상태
   const [modalState, setModalState] = useState({
     visible: false,
     mode: null, // 'conflict' | 'added' | 'notAdded' | 'alreadyExists' | 'error' | 'keep'
     message: "",
   });
 
-  // 🔥 충돌 해결용 courseId 보관
+  // 충돌 해결용 courseId 보관
   const [pendingCourseId, setPendingCourseId] = useState(null);
 
   // 바텀시트 열려있는 동안 배경 스크롤 막기
@@ -450,7 +496,7 @@ const CourseSearchBottomSheet = ({
     }
 
     if (key === "time") {
-      // 🔥 시간 선택 페이지로 이동 (입력창은 사용하지 않음)
+      // 🔥 시간 선택 페이지로 이동 (입력창 X)
       onClose?.();
       navigate("/course-time");
       return;
@@ -490,7 +536,7 @@ const CourseSearchBottomSheet = ({
     setFilterInput("");
   };
 
-  /** 필터 초기화 */
+  /** 필터 초기화(keyword 전용) */
   const handleFilterReset = () => {
     if (!activeFilterConfig) return;
     const { key, defaultValue } = activeFilterConfig;
@@ -504,13 +550,13 @@ const CourseSearchBottomSheet = ({
     setActiveFilter(null);
   };
 
-  /** 🔥 강의 카드 클릭 → 선택 + 상위에 미리보기 전달 */
+  /** 강의 카드 클릭 → 선택 + 상위에 미리보기 전달 */
   const handleCourseClick = (course) => {
     setSelectedCourseId(course.id);
     onCourseSelect?.(course);
   };
 
-  /** 🔥 강의평 버튼 클릭 → 강의평 페이지로 이동 */
+  /** 강의평 버튼 클릭 → 강의평 페이지로 이동 */
   const handleReviewClick = (e, courseId) => {
     e.stopPropagation(); // 카드 onClick 막기
     onClose?.(); // 바텀시트 닫기
@@ -568,7 +614,7 @@ const CourseSearchBottomSheet = ({
     }
   };
 
-  /** 🔥 팝업 확인 버튼 */
+  /** 팝업 확인 버튼 */
   const handleModalConfirm = () => {
     const { mode } = modalState;
 
@@ -590,7 +636,7 @@ const CourseSearchBottomSheet = ({
     setModalState({ visible: false, mode: null, message: "" });
   };
 
-  /** 🔥 팝업 취소 버튼 */
+  /** 팝업 취소 버튼 */
   const handleModalCancel = () => {
     const { mode } = modalState;
 
@@ -604,25 +650,18 @@ const CourseSearchBottomSheet = ({
     setModalState({ visible: false, mode: null, message: "" });
   };
 
-  /** 🔥 시간표 추가 플로우
-   * 1) /timetable/items/try-add 호출
-   *   - 200 + 성공: added 모달
-   *   - 409 에러: alreadyExists 모달
-   *   - 200 + { conflict: true, ... }: conflict 모달 띄우고, 이후 resolveConflict
-   */
+  /** 시간표에 추가 플로우 */
   const handleAddToTimetable = async (courseId) => {
     if (!courseId) return;
 
     setAddLoading(true);
 
     try {
-      // 1) 과목 추가 시도
       const res = await api.post("/timetable/items/try-add", {
         courseId,
       });
       const data = res.data ?? {};
 
-      // 1-1) 충돌 응답 (200 OK + conflict: true)
       if (data.conflict) {
         setPendingCourseId(courseId);
         setModalState({
@@ -634,7 +673,6 @@ const CourseSearchBottomSheet = ({
         return;
       }
 
-      // 1-2) createdEventCount로 성공 여부 판단
       if (data.createdEventCount > 0 || !("conflict" in data)) {
         setModalState({
           visible: true,
@@ -644,14 +682,12 @@ const CourseSearchBottomSheet = ({
         return;
       }
 
-      // 그 외 애매한 응답
       setModalState({
         visible: true,
         mode: "notAdded",
         message: "강의가 추가되지 않았어요.",
       });
     } catch (error) {
-      // 409: 이미 내 시간표에 존재
       if (error.response?.status === 409) {
         const msg =
           error.response.data?.error ||
@@ -717,7 +753,7 @@ const CourseSearchBottomSheet = ({
               ))}
             </div>
 
-            {/* 전공/교양, 학년, 학점, 시간 제외한 필터 입력 박스 (keyword만) */}
+            {/* 전공/교양, 학년, 학점, 시간 제외한 필터 입력 박스 (지금은 keyword만) */}
             {activeFilterConfig &&
               activeFilterConfig.key !== "type" &&
               activeFilterConfig.key !== "year" &&
@@ -843,7 +879,7 @@ const CourseSearchBottomSheet = ({
                         </p>
                       </div>
 
-                      {/* 🔥 선택된 카드에만 나오는 "시간표에 추가" 작은 버튼 */}
+                      {/* 선택된 카드에만 나오는 "시간표에 추가" 작은 버튼 */}
                       {isSelected && (
                         <div className="mypage-bottomsheet-course-add-inline">
                           <button
@@ -868,7 +904,7 @@ const CourseSearchBottomSheet = ({
         </div>
       </div>
 
-      {/* 🔔 강의 추가 / 충돌 / 에러 팝업 */}
+      {/* 강의 추가 / 충돌 / 에러 팝업 */}
       <CourseAlertModal
         visible={modalState.visible}
         mode={modalState.mode}
