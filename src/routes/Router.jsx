@@ -19,7 +19,8 @@ import MapPage from "../pages/map/MapPage";
 import MyPage from "../pages/mypage/MyPage";
 import CourseAreaSelectPage from "../pages/mypage/CourseSelectPage";
 import CourseYearSelectPage from "../pages/mypage/YearSelectPage"; // ✅ 학년 선택 페이지
-import CourseCreditSelectPage from "../pages/mypage/CreditSelectPage"; // ✅ 학점 선택 페이지 추가
+import CourseCreditSelectPage from "../pages/mypage/CreditSelectPage"; // ✅ 학점 선택 페이지
+import CourseReviewPage from "../pages/review/CourseReviewPage"; // ✅ 강의평 페이지
 
 import Loader from "../components/common/Loader";
 import { useLoading } from "../context/LoadingContext.jsx";
@@ -35,7 +36,8 @@ function Layout({ children }) {
     "/oauth/signed-in",
     "/course-area",
     "/course-year",    // 학년 선택 페이지
-    "/course-credit",  // ✅ 학점 선택 페이지
+    "/course-credit",  // 학점 선택 페이지
+    "/course-review",  // ✅ 강의평 페이지 (커스텀 헤더 사용)
   ];
 
   const shouldHide = hiddenPaths.some((path) =>
@@ -125,7 +127,7 @@ function AppRouter() {
             path="/mypage"
             element={
               // <ProtectedRoute>
-                <MyPage />
+              <MyPage />
               // </ProtectedRoute>
             }
           />
@@ -150,12 +152,22 @@ function AppRouter() {
             }
           />
 
-          {/* ✅ 학점 선택 */}
+          {/* 학점 선택 */}
           <Route
             path="/course-credit"
             element={
               <ProtectedRoute>
                 <CourseCreditSelectPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ✅ 강의평 페이지 */}
+          <Route
+            path="/course-review/:courseId"
+            element={
+              <ProtectedRoute>
+                <CourseReviewPage />
               </ProtectedRoute>
             }
           />

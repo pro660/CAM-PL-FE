@@ -1,0 +1,49 @@
+/* 강의평 리스트 섹션 */
+.cr-list-wrapper {
+  padding: 1.0rem 1.2rem 0.4rem;
+}
+
+.cr-section-title {
+  margin: 0 0 0.6rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #333333;
+}
+
+.cr-list-empty-text {
+  font-size: 0.8rem;
+  color: #999999;
+}
+
+.cr-review-list {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 개별 강의평 카드 */
+.cr-review-card {
+  padding: 0.7rem 0;
+  border-top: 1px solid #ececf2;
+}
+
+.cr-review-card:first-of-type {
+  border-top: none;
+}
+
+.cr-review-rating-row {
+  margin-bottom: 0.25rem;
+}
+
+.cr-review-semester {
+  font-size: 0.75rem;
+  color: #888888;
+  margin-bottom: 0.25rem;
+}
+
+.cr-review-content {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #444444;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}

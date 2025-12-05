@@ -1,0 +1,131 @@
+/* 페이지 전체 레이아웃 */
+.course-review-page {
+  min-height: 100vh;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 상단 헤더 */
+.course-review-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  height: 3rem;
+  padding: 0 1rem;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e8e8ee;
+}
+
+.course-review-back-btn {
+  position: absolute;
+  left: 1rem;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.course-review-back-icon {
+  font-size: 1.1rem;
+  color: #555555;
+}
+
+.course-review-topbar-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #333333;
+}
+
+/* 메인 콘텐츠 */
+.course-review-main {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 1.5rem;
+}
+
+.course-review-loading {
+  padding: 2rem 1.2rem;
+  font-size: 0.86rem;
+  color: #888888;
+}
+
+/* 하단 평가하기 버튼 영역 */
+.course-review-submit-wrap {
+  padding: 1rem 1.2rem 1.2rem;
+}
+
+.course-review-submit-btn {
+  width: 100%;
+  border: none;
+  border-radius: 999px;
+  padding: 0.8rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #c09ef1, #a78bff);
+  color: #ffffff;
+  box-shadow: 0 5px 14px rgba(160, 135, 246, 0.4);
+  cursor: pointer;
+  transition: transform 0.08s ease, box-shadow 0.08s ease,
+    opacity 0.08s ease;
+}
+
+.course-review-submit-btn:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 3px 10px rgba(160, 135, 246, 0.3);
+}
+
+.course-review-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ===== 공통 별점 스타일 (표시용 + 입력용) ===== */
+
+.cr-star-row,
+.cr-star-input-row {
+  display: inline-flex;
+  gap: 0.12rem;
+}
+
+.cr-star,
+.cr-star-input {
+  position: relative;
+  width: 1rem;
+  height: 1rem;
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: none;
+  cursor: default;
+}
+
+.cr-star-input {
+  cursor: pointer;
+}
+
+.cr-star-base,
+.cr-star-fill {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+.cr-star-base {
+  color: #e1e1ea; /* 빈 별 */
+}
+
+.cr-star-fill {
+  color: #c09ef1; /* 채워진 보라색 별 */
+  overflow: hidden; /* width 로 반 별표 표현 */
+}
