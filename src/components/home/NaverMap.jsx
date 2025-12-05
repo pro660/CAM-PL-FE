@@ -6,8 +6,8 @@ import { useLoading } from "../../context/LoadingContext.jsx";
 import PlaceMarkerIcon from "../../images/map/marker-place.svg";
 
 // 🔴 정적 기준 좌표 (빨간 마커 + 기본 중심)
-const STATIC_CENTER_LAT = 36.690711;
-const STATIC_CENTER_LNG = 126.581783;
+const STATIC_CENTER_LAT = 36.690621;
+const STATIC_CENTER_LNG = 126.581591;
 
 /**
  * props:

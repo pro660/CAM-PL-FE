@@ -11,8 +11,8 @@ import { useLoading } from "../../context/LoadingContext.jsx";
 import PlaceDetailModal from "../../components/home/PlaceDetailModal.jsx";
 
 // 🔴 위치 기반이 아니라, 항상 같은 캠퍼스 좌표를 사용
-const STATIC_LAT = 36.690711;
-const STATIC_LON = 126.581783;
+const STATIC_LAT = 36.690621;
+const STATIC_LON = 126.581591;
 
 // 카테고리 한글 라벨링 (캘린더랑 맞추기)
 function getCategoryLabel(category, origin) {
