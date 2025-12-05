@@ -56,7 +56,8 @@
   font-size: 0.9rem;
   font-weight: 600;
   color: #333333;
-  z-index: 1;                /* 그라디언트 오버레이 위에 표시 */
+  z-index: 1;        
+  margin-left: 1rem;       /* 아이콘과 간격 */
 }
 
 /* 기본 상태: width 0 */
@@ -69,16 +70,6 @@
   width: 0;
   background-color: #333333;
   transition: width 0.25s ease-out;
-}
-
-/* hover 시: 왼쪽 → 오른쪽으로 밑줄이 채워짐 */
-.mypage-link-box:hover .mypage-link-box-label::after {
-  width: 100%;
-}
-
-/* 셔틀 예약(gradient 카드)만 밑줄 더 두껍게 */
-.mypage-link-box--gradient .mypage-link-box-label::after {
-  height: 2px;
 }
 
 /* 오른쪽 둥근 아이콘 영역 */
