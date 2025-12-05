@@ -56,7 +56,6 @@
   font-size: 0.9rem;
   font-weight: 600;
   color: #333333;
-  padding-bottom: 0.2rem;    /* 밑줄 공간 */
   z-index: 1;                /* 그라디언트 오버레이 위에 표시 */
 }
 
