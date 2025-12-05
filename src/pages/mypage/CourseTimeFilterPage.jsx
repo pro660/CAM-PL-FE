@@ -15,16 +15,14 @@ const getUserNameFromCampAuth = () => {
     const raw = window.localStorage.getItem("camp_auth");
     if (!raw) return "사용자";
     const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed.name === "string" && parsed.name.trim()) {
-      return parsed.name.trim();
-    }
-    return "사용자";
+    const name = parsed?.name;
+    return typeof name === "string" && name.trim() ? name.trim() : "사용자";
   } catch {
     return "사용자";
   }
 };
 
-// 선택한 칸 → slot 배열
+// 선택된 칸 → slot 배열
 const buildSlotsFromSelectedCells = (selectedCells) => {
   const slots = [];
   for (const key of selectedCells) {
@@ -132,9 +130,14 @@ const CourseTimeFilterPage = () => {
       );
     }
 
+    // ✅ 마이페이지로 이동하면서 바텀시트 열기 + 시간정보도 함께 전달
     navigate("/mypage", {
       state: {
         openCourseSearchSheet: true,
+        fromTimeFilter: {
+          slots,
+          label,
+        },
       },
     });
   };

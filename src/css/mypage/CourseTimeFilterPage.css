@@ -5,7 +5,7 @@
   display: flex;
   justify-content: center;
   box-sizing: border-box;
-  padding: 32px 16px 16px; /* 상단 여백 조금 더 크게 */
+  padding: 40px 16px 16px; /* 상단 여백 조금 더 크게 */
 }
 
 /* 최대 너비 430px 정도로 중앙 정렬 */
@@ -43,13 +43,13 @@
   cursor: pointer;
 }
 
-/* 시간표 카드 (MyTimetable 색감과 동일하게) */
+/* 시간표 카드 – 모서리 둥글기 제거 */
 .time-filter-timetable-card {
-  margin-top: 10px;
+  margin-top: 14px;
   background-color: #ffffff;
-  border-radius: 16px;
+  border-radius: 0; /* 🔥 border radius 제거 */
   overflow: hidden;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  box-shadow: none; /* 필요 없으면 그림자도 제거 */
 }
 
 /* 오른쪽 선택 그리드: MyTimetable의 오른쪽 영역 대신 사용 */
@@ -64,7 +64,7 @@
   display: flex;
   flex-direction: column;
   background-color: #ffffff;
-  border-right: 1px solid #e4d9ff;
+  border-right: 1px solid #e3d7f4; /* 🔥 세로선 색 */
 }
 
 .time-filter-day-column:last-child {
@@ -74,7 +74,7 @@
 /* 한 칸(1시간) 슬롯 */
 .time-filter-slot {
   height: 2.4rem; /* MyTimetable 시간칸 높이와 동일 */
-  border-bottom: 1px solid #e4d9ff; /* 가로줄 추가 */
+  border-bottom: 1px solid #e3d7f4; /* 🔥 가로선 색 */
   background: transparent;
   padding: 0;
   margin: 0;
@@ -85,4 +85,14 @@
 /* 선택된 칸 색 */
 .time-filter-slot.selected {
   background-color: #e3d7f4; /* 요구한 색상 */
+}
+
+/* 🔥 이 페이지에서만 MyTimetable의 선 색을 덮어쓰기 */
+.time-filter-page .mypage-timetable-time-col {
+  background-color: #f0e3ff;
+  border-right: 1px solid #e3d7f4; /* 세로선 색統一 */
+}
+
+.time-filter-page .mypage-timetable-time-slot {
+  border-bottom: 1px solid #e3d7f4; /* 가로선 색統一 */
 }
