@@ -21,6 +21,7 @@ import CourseAreaSelectPage from "../pages/mypage/CourseSelectPage";
 import CourseYearSelectPage from "../pages/mypage/YearSelectPage"; // ✅ 학년 선택 페이지
 import CourseCreditSelectPage from "../pages/mypage/CreditSelectPage"; // ✅ 학점 선택 페이지
 import CourseReviewPage from "../pages/review/CourseReviewPage"; // ✅ 강의평 페이지
+import CourseTimeFilterPage from "../pages/mypage/CourseTimeFilterPage"; // ✅ 시간 선택 페이지
 
 import Loader from "../components/common/Loader";
 import { useLoading } from "../context/LoadingContext.jsx";
@@ -35,9 +36,10 @@ function Layout({ children }) {
     "/signup",
     "/oauth/signed-in",
     "/course-area",
-    "/course-year",    // 학년 선택 페이지
-    "/course-credit",  // 학점 선택 페이지
-    "/course-review",  // ✅ 강의평 페이지 -> 기본 Header 숨김
+    "/course-year", // 학년 선택 페이지
+    "/course-credit", // 학점 선택 페이지
+    "/course-time", // 시간 선택 페이지
+    "/course-review", // ✅ 강의평 페이지 -> 기본 Header 숨김
   ];
 
   // ✅ 메뉴바 숨길 경로들 (강의평은 넣지 않는다!)
@@ -48,6 +50,7 @@ function Layout({ children }) {
     "/course-area",
     "/course-year",
     "/course-credit",
+    "/course-time", // 시간 선택 페이지에서도 메뉴 숨김
     // "/course-review" 는 안 넣음 → 강의평에서도 메뉴 보이게
   ];
 
@@ -141,9 +144,9 @@ function AppRouter() {
           <Route
             path="/mypage"
             element={
-              // <ProtectedRoute>
+              <ProtectedRoute>
               <MyPage />
-              // </ProtectedRoute>
+              </ProtectedRoute>
             }
           />
 
@@ -173,6 +176,16 @@ function AppRouter() {
             element={
               <ProtectedRoute>
                 <CourseCreditSelectPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* 시간 선택 */}
+          <Route
+            path="/course-time"
+            element={
+              <ProtectedRoute>
+                <CourseTimeFilterPage />
               </ProtectedRoute>
             }
           />
