@@ -74,10 +74,6 @@
   color: #ffffff;
 }
 
-.time-filter-header-cell:first-child {
-  border-left: none;
-}
-
 .time-filter-header-cell-time {
   border-right: 0.0625rem solid #e2d4ff; /* 1px */
 }
@@ -134,10 +130,7 @@
 .time-filter-slot {
   height: 2.4rem;
   cursor: pointer;
-}
-
-.time-filter-slot:first-child {
-  border-top: none;
+  border-color: #e2d4ff;
 }
 
 /* 선택된 칸 색 */
