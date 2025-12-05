@@ -59,6 +59,17 @@ const formatTimes = (times = []) => {
     .join(", ");
 };
 
+const timeStrToMinutes = (timeStr) => {
+  if (!timeStr) return 0;
+  const [hStr, mStr] = timeStr.split(":");
+  const h = Number(hStr) || 0;
+  const m = Number(mStr) || 0;
+  return h * 60 + m;
+};
+
+const rangesOverlap = (s1, e1, s2, e2) =>
+  Math.max(s1, s2) < Math.min(e1, e2);
+
 /** ===== 필터 정의 ===== */
 const FILTER_CONFIG = [
   { key: "type", label: "전공/교양", defaultValue: "전체" },
@@ -121,6 +132,25 @@ const readSavedCreditFilter = () => {
   }
 };
 
+/** 시간 필터 (course_time_filter)
+ * slots: [{ day: "월", startMinutes, endMinutes }, ...]
+ * label: "월 9~11시 / 수 3~4시" 같은 표시용 텍스트
+ */
+const readSavedTimeFilter = () => {
+  try {
+    const raw = localStorage.getItem("course_time_filter");
+    if (!raw) return { slots: [], label: "전체" };
+    const parsed = JSON.parse(raw);
+    const slots = Array.isArray(parsed.slots) ? parsed.slots : [];
+    return {
+      slots,
+      label: parsed.label || "전체",
+    };
+  } catch {
+    return { slots: [], label: "전체" };
+  }
+};
+
 /**
  * /api/courses 에 넘길 쿼리 파라미터 빌드
  *  - categoryId : 전공/교양(카테고리)
@@ -158,7 +188,8 @@ const applyClientSideFilters = (
   base,
   filters,
   selectedYears,
-  selectedCredits
+  selectedCredits,
+  selectedTimeSlots
 ) => {
   if (!base || base.length === 0) return [];
 
@@ -169,6 +200,11 @@ const applyClientSideFilters = (
   const credits = Array.isArray(selectedCredits) ? selectedCredits : [];
   const useCreditFilter =
     credits.length > 0 && credits.length < ALL_CREDIT_KEYS.length;
+
+  const timeSlots = Array.isArray(selectedTimeSlots)
+    ? selectedTimeSlots
+    : [];
+  const useTimeFilter = timeSlots.length > 0;
 
   return base.filter((course) => {
     // 학년 필터
@@ -187,12 +223,24 @@ const applyClientSideFilters = (
       }
     }
 
-    // 시간 필터: "월 09:00~10:00" 이런 문자열에 포함 여부로 체크
-    if (filters.time && filters.time !== "전체") {
-      const timesText = formatTimes(course.times || []);
-      if (!timesText.includes(filters.time)) {
-        return false;
-      }
+    // 시간 필터: 선택한 슬롯과 하나라도 겹치는 강의만
+    if (useTimeFilter) {
+      const times = Array.isArray(course.times) ? course.times : [];
+      const hasMatch = times.some((t) => {
+        const dayKor = mapDayToKor(t.dayOfWeek);
+        const startMin = timeStrToMinutes(t.startTime);
+        const endMin = timeStrToMinutes(t.endTime);
+
+        return timeSlots.some((slot) => {
+          if (slot.day !== dayKor) return false;
+          const s2 = Number(slot.startMinutes);
+          const e2 = Number(slot.endMinutes);
+          if (!Number.isFinite(s2) || !Number.isFinite(e2)) return false;
+          return rangesOverlap(startMin, endMin, s2, e2);
+        });
+      });
+
+      if (!hasMatch) return false;
     }
 
     return true;
@@ -220,12 +268,14 @@ const CourseAlertModal = ({ visible, mode, message, onConfirm, onCancel }) => {
         </div>
 
         <p className="delete-schedule-message">
-          {String(message || "").split("\n").map((line, idx) => (
-            <React.Fragment key={idx}>
-              {line}
-              <br />
-            </React.Fragment>
-          ))}
+          {String(message || "")
+            .split("\n")
+            .map((line, idx) => (
+              <React.Fragment key={idx}>
+                {line}
+                <br />
+              </React.Fragment>
+            ))}
         </p>
 
         <div className="delete-schedule-buttons">
@@ -261,16 +311,18 @@ const CourseSearchBottomSheet = ({
   const savedArea = useMemo(readSavedAreaFilter, []);
   const savedYear = useMemo(readSavedYearFilter, []);
   const savedCredit = useMemo(readSavedCreditFilter, []);
+  const savedTime = useMemo(readSavedTimeFilter, []);
 
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [closing, setClosing] = useState(false);
 
-  // 서버 쿼리용 카테고리 ID / 학년 / 학점 선택값
+  // 서버 쿼리용 카테고리 ID / 학년 / 학점 / 시간 선택값
   const [selectedCategoryId] = useState(savedArea.categoryId);
   const [selectedYears] = useState(savedYear.years || []);
   const [selectedCredits] = useState(savedCredit.credits || []);
+  const [selectedTimeSlots] = useState(savedTime.slots || []);
 
   // 필터 UI 상태
   const [activeFilter, setActiveFilter] = useState(null); // type | time | year | credit | ...
@@ -282,6 +334,8 @@ const CourseSearchBottomSheet = ({
         acc[f.key] = savedYear.label; // 학년 라벨
       } else if (f.key === "credit") {
         acc[f.key] = savedCredit.label; // 학점 라벨
+      } else if (f.key === "time") {
+        acc[f.key] = savedTime.label; // 시간 라벨
       } else {
         acc[f.key] = f.defaultValue;
       }
@@ -318,7 +372,7 @@ const CourseSearchBottomSheet = ({
     };
   }, []);
 
-  // 필터 값/카테고리/학년/학점이 바뀔 때마다 서버 호출 + 클라이언트 필터
+  // 필터 값/카테고리/학년/학점/시간이 바뀔 때마다 서버 호출 + 클라이언트 필터
   useEffect(() => {
     let cancelled = false;
 
@@ -334,7 +388,8 @@ const CourseSearchBottomSheet = ({
           list,
           filterValues,
           selectedYears,
-          selectedCredits
+          selectedCredits,
+          selectedTimeSlots
         );
 
         setCourses(filtered);
@@ -351,7 +406,13 @@ const CourseSearchBottomSheet = ({
     return () => {
       cancelled = true;
     };
-  }, [filterValues, selectedCategoryId, selectedYears, selectedCredits]);
+  }, [
+    filterValues,
+    selectedCategoryId,
+    selectedYears,
+    selectedCredits,
+    selectedTimeSlots,
+  ]);
 
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -388,7 +449,14 @@ const CourseSearchBottomSheet = ({
       return;
     }
 
-    // 나머지(time, keyword)는 입력창 토글
+    if (key === "time") {
+      // 🔥 시간 선택 페이지로 이동 (입력창은 사용하지 않음)
+      onClose?.();
+      navigate("/course-time");
+      return;
+    }
+
+    // 나머지(keyword)는 입력창 토글
     if (activeFilter === key) {
       setActiveFilter(null);
       setFilterInput("");
@@ -405,7 +473,7 @@ const CourseSearchBottomSheet = ({
     );
   };
 
-  /** 필터 적용(time, keyword 전용) */
+  /** 필터 적용(keyword 전용) */
   const handleFilterApply = () => {
     if (!activeFilterConfig) return;
 
@@ -649,11 +717,12 @@ const CourseSearchBottomSheet = ({
               ))}
             </div>
 
-            {/* 전공/교양, 학년, 학점 제외한 필터 입력 박스 */}
+            {/* 전공/교양, 학년, 학점, 시간 제외한 필터 입력 박스 (keyword만) */}
             {activeFilterConfig &&
               activeFilterConfig.key !== "type" &&
               activeFilterConfig.key !== "year" &&
-              activeFilterConfig.key !== "credit" && (
+              activeFilterConfig.key !== "credit" &&
+              activeFilterConfig.key !== "time" && (
                 <div className="mypage-bottomsheet-filter-input-row">
                   <div className="mypage-bottomsheet-filter-input-box">
                     <span className="mypage-bottomsheet-filter-input-label">
