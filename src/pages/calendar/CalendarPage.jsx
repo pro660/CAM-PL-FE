@@ -393,15 +393,38 @@ export default function CalendarPage() {
     setSelectedMemoEvent(null);
   };
 
-  const handleMemoSaved = (memoText) => {
-    if (!selectedMemoEvent) return;
-    const id = selectedMemoEvent.id;
+  // 🔥 메모 저장: description 필드로 서버에 바로 저장
+  const handleMemoSaved = async (memoText) => {
+    if (!selectedMemoEvent?.id) return;
+    const ev = selectedMemoEvent;
+    const id = ev.id;
 
-    setMonthEvents((prev) =>
-      prev.map((ev) =>
-        ev.id === id ? { ...ev, memo: memoText, description: memoText } : ev
-      )
-    );
+    try {
+      // 캘린더 이벤트 수정 (description에 메모 반영)
+      await api.put(`/calendar/events/${id}`, {
+        title: ev.title,
+        description: memoText,
+        startAt: ev.startAt,
+        endAt: ev.endAt,
+        location: ev.location,
+        category: ev.category,
+      });
+
+      // 로컬 상태도 동기화
+      setMonthEvents((prev) =>
+        prev.map((e) =>
+          e.id === id
+            ? { ...e, description: memoText, memo: memoText }
+            : e
+        )
+      );
+      setSelectedMemoEvent((prev) =>
+        prev ? { ...prev, description: memoText, memo: memoText } : prev
+      );
+    } catch (err) {
+      console.error("메모 저장 실패:", err);
+      alert("메모를 저장하는 중 오류가 발생했어요.");
+    }
   };
 
   // 🔥 메모 시트 → "수정" 아이콘 클릭 시
@@ -612,7 +635,7 @@ export default function CalendarPage() {
         onClose={handleMemoClose}
         onSave={handleMemoSaved}
         onRequestEdit={handleRequestEditFromMemo}
-        onDeleted={handleEventDeleted}   
+        onDeleted={handleEventDeleted}
       />
     </div>
   );
