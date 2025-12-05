@@ -380,47 +380,39 @@ const CourseSearchBottomSheet = ({
     onCourseSelect?.(course);
   };
 
-  /** 🔥 시간표 추가 플로우 (reslove API 사용 안 함)
+  /** 🔥 시간표 추가 플로우 (try-add만 사용)
    * 1) /timetable/items/try-add 호출
-   * 2) conflict == true 이고 itemId 있으면 → 삭제 여부 확인
-   * 3) 예 → DELETE /timetable/items/{itemId} → 다시 try-add
+   * 2) conflict === true && itemId 있으면 → 삭제 여부 물어봄
+   * 3) 예 → 해당 item 삭제 → 다시 try-add
    */
-  const handleAddToTimetable = async () => {
-    if (!selectedCourseId) return;
+  const handleAddToTimetable = async (courseId) => {
+    if (!courseId) return;
 
     setAddLoading(true);
 
-    // 공통으로 쓸 추가 시도 함수
     const tryAdd = async () => {
       const res = await api.post("/timetable/items/try-add", {
-        courseId: selectedCourseId,
+        courseId,
       });
       return res.data ?? {};
     };
 
     try {
-      // 1차 추가 시도
+      // 1차 추가 시도 (실제로는 "충돌 체크" 역할도 함)
       let data = await tryAdd();
 
-      // 이미 존재(동일 과목)인 경우
+      // 백엔드에서 200에 { status:409, error: ... } 내려줄 수도 있어서 방어 코드
       if (data.status === 409) {
         alert(data.error || "이미 내 시간표에 존재합니다.");
         return;
       }
 
-      // 정상적으로 바로 추가된 경우
-      if (data.createdEventCount > 0) {
-        alert("시간표에 강의가 추가되었어요.");
-        onTimetableAdded?.();
-        return;
-      }
-
       // 시간이 겹치는 경우
       if (data.conflict) {
-        const conflictItemId = data.itemId;
+        const itemId = data.itemId;
 
-        // itemId 가 없으면 삭제를 못하니까 그냥 안내
-        if (!conflictItemId) {
+        if (!itemId) {
+          // 어떤 강의와 겹치는지 정보가 없으면, 삭제까지는 못함
           alert("다른 강의와 시간이 겹쳐서 추가할 수 없어요.");
           return;
         }
@@ -430,34 +422,28 @@ const CourseSearchBottomSheet = ({
             "기존 강의를 삭제하고 새 강의를 추가할까요?"
         );
         if (!ok) {
-          // 사용자가 취소
           return;
         }
 
-        // 1) 기존 강의 삭제
+        // 기존 강의 삭제
         try {
-          await api.delete(`/timetable/items/${conflictItemId}`);
+          await api.delete(`/timetable/items/${itemId}`);
         } catch (e) {
           console.error("기존 강의 삭제 실패:", e);
           alert("기존 강의를 삭제하는 중 오류가 발생했어요.");
           return;
         }
 
-        // 2) 다시 추가 시도
+        // 다시 추가 시도
         data = await tryAdd();
 
-        // 다시 시도했는데도 이미 동일 과목이 존재
         if (data.status === 409) {
           alert(data.error || "이미 내 시간표에 존재합니다.");
           return;
         }
 
-        // 다시 시도했는데도 또 conflict 라면 더 이상 자동 해결 X
         if (data.conflict) {
-          alert(
-            "다른 강의와 시간이 계속 겹쳐서 추가할 수 없어요.\n" +
-              "시간표에서 직접 정리해 주세요."
-          );
+          alert("다른 강의와 시간이 계속 겹쳐서 추가할 수 없어요.");
           return;
         }
 
@@ -471,10 +457,16 @@ const CourseSearchBottomSheet = ({
         return;
       }
 
+      // 정상적으로 바로 추가된 경우
+      if (data.createdEventCount > 0) {
+        alert("시간표에 강의가 추가되었어요.");
+        onTimetableAdded?.();
+        return;
+      }
+
       // 그 외 애매한 응답
       alert("강의가 추가되지 않았어요.");
     } catch (error) {
-      // HTTP 409 (에러 응답 형태일 때)
       if (error.response?.status === 409) {
         const msg =
           error.response.data?.error || "이미 내 시간표에 존재합니다.";
@@ -586,89 +578,99 @@ const CourseSearchBottomSheet = ({
                 필터에 해당하는 강의가 없습니다.
               </p>
             ) : (
-              courses.map((course) => (
-                <article
-                  key={course.id}
-                  className={
-                    "mypage-bottomsheet-course-card" +
-                    (selectedCourseId === course.id ? " selected" : "")
-                  }
-                  onClick={() => handleCourseClick(course)}
-                >
-                  <div className="mypage-bottomsheet-course-header">
-                    <h3 className="mypage-bottomsheet-course-name">
-                      {course.name}
-                    </h3>
-                    <button
-                      type="button"
-                      className="mypage-bottomsheet-review-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // TODO: 강의평 페이지 연결 시 여기서 처리
-                      }}
-                    >
-                      강의평
-                    </button>
-                  </div>
+              courses.map((course) => {
+                const isSelected = selectedCourseId === course.id;
+                return (
+                  <article
+                    key={course.id}
+                    className={
+                      "mypage-bottomsheet-course-card" +
+                      (isSelected ? " selected" : "")
+                    }
+                    onClick={() => handleCourseClick(course)}
+                  >
+                    <div className="mypage-bottomsheet-course-header">
+                      <h3 className="mypage-bottomsheet-course-name">
+                        {course.name}
+                      </h3>
+                      <button
+                        type="button"
+                        className="mypage-bottomsheet-review-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // TODO: 강의평 페이지 연결 시 여기서 처리
+                        }}
+                      >
+                        강의평
+                      </button>
+                    </div>
 
-                  <div className="mypage-bottomsheet-course-meta">
-                    <p className="mypage-bottomsheet-course-prof">
-                      {course.professor || "담당 교수 미정"}
-                    </p>
-                    <p className="mypage-bottomsheet-course-line">
-                      <span className="mypage-bottomsheet-course-label">
-                        수업 시간
-                      </span>
-                      <span>{formatTimes(course.times)}</span>
-                    </p>
-                    <p className="mypage-bottomsheet-course-line">
-                      <span className="mypage-bottomsheet-course-label">
-                        수업 장소
-                      </span>
-                      <span>
-                        {course.times?.[0]?.room || "장소 미정"}
-                      </span>
-                    </p>
-                    <p className="mypage-bottomsheet-course-line">
-                      <span className="mypage-bottomsheet-course-label">
-                        학년
-                      </span>
-                      <span>{course.year || "-"}</span>
-                    </p>
-                    <p className="mypage-bottomsheet-course-line">
-                      <span className="mypage-bottomsheet-course-label">
-                        학점
-                      </span>
-                      <span>{course.credit ?? "-"}</span>
-                    </p>
-                    <p className="mypage-bottomsheet-course-line">
-                      <span className="mypage-bottomsheet-course-label">
-                        과목 코드
-                      </span>
-                      <span>
-                        {course.courseCode}
-                        {course.section ? `-${course.section}` : ""}
-                      </span>
-                    </p>
-                  </div>
-                </article>
-              ))
+                    <div className="mypage-bottomsheet-course-meta">
+                      <p className="mypage-bottomsheet-course-prof">
+                        {course.professor || "담당 교수 미정"}
+                      </p>
+                      <p className="mypage-bottomsheet-course-line">
+                        <span className="mypage-bottomsheet-course-label">
+                          수업 시간
+                        </span>
+                        <span>{formatTimes(course.times)}</span>
+                      </p>
+                      <p className="mypage-bottomsheet-course-line">
+                        <span className="mypage-bottomsheet-course-label">
+                          수업 장소
+                        </span>
+                        <span>
+                          {course.times?.[0]?.room || "장소 미정"}
+                        </span>
+                      </p>
+                      <p className="mypage-bottomsheet-course-line">
+                        <span className="mypage-bottomsheet-course-label">
+                          학년
+                        </span>
+                        <span>{course.year || "-"}</span>
+                      </p>
+                      <p className="mypage-bottomsheet-course-line">
+                        <span className="mypage-bottomsheet-course-label">
+                          학점
+                        </span>
+                        <span>{course.credit ?? "-"}</span>
+                      </p>
+                      <p className="mypage-bottomsheet-course-line">
+                        <span className="mypage-bottomsheet-course-label">
+                          과목 코드
+                        </span>
+                        <span>
+                          {course.courseCode}
+                          {course.section ? `-${course.section}` : ""}
+                        </span>
+                      </p>
+                    </div>
+
+                    {/* 🔥 선택된 카드에만 나오는 "시간표에 추가" 작은 버튼 */}
+                    {isSelected && (
+                      <div className="mypage-bottomsheet-course-add-inline">
+                        <button
+                          type="button"
+                          className="mypage-bottomsheet-course-add-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddToTimetable(course.id);
+                          }}
+                          disabled={addLoading}
+                        >
+                          {addLoading
+                            ? "추가 중..."
+                            : "시간표에 추가"}
+                        </button>
+                      </div>
+                    )}
+                  </article>
+                );
+              })
             )}
           </div>
 
-          {/* 🔥 선택된 강의가 있을 때만 나오는 시간표 추가 버튼 */}
-          {selectedCourseId && (
-            <div className="mypage-bottomsheet-footer">
-              <button
-                type="button"
-                className="mypage-bottomsheet-add-btn"
-                onClick={handleAddToTimetable}
-                disabled={addLoading}
-              >
-                {addLoading ? "추가 중..." : "시간표에 추가"}
-              </button>
-            </div>
-          )}
+          {/* 🔥 하단 공통 버튼은 더 이상 사용하지 않음 */}
         </div>
       </div>
     </div>

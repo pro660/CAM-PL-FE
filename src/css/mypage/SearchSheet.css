@@ -161,7 +161,7 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding-bottom: 3rem; /* 하단 추가 버튼에 가리지 않도록 여유 */
+  padding-bottom: 0.6rem; /* 이제 하단 고정 버튼이 없으니 여유만 살짝 */
 }
 
 .mypage-bottomsheet-info-text {
@@ -176,7 +176,7 @@
   padding: 0.75rem 0.9rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   margin-bottom: 0.6rem;
-  cursor: pointer; /* 🔥 전체 카드 클릭 가능 */
+  cursor: pointer; /* 전체 카드 클릭 가능 */
 }
 
 /* 선택된 강의 카드 (연한 보라색 하이라이트) */
@@ -184,34 +184,6 @@
   background-color: #f1e7ff; /* 연한 보라색 */
   box-shadow: 0 2px 10px rgba(123, 86, 233, 0.18);
 }
-
-/* 맨 아래 시간표 추가 버튼 영역 */
-.mypage-bottomsheet-footer {
-  margin-top: 0.4rem;
-  padding-top: 0.6rem;
-  border-top: 1px solid #ededed;
-  display: flex;
-  justify-content: center;
-}
-
-.mypage-bottomsheet-add-btn {
-  width: 100%;
-  max-width: 14rem;
-  border-radius: 999px;
-  border: none;
-  padding: 0.55rem 1rem;
-  font-size: 0.8rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, #c09ef1, #8c6ce8);
-  color: #ffffff;
-  cursor: pointer;
-}
-
-.mypage-bottomsheet-add-btn:disabled {
-  opacity: 0.7;
-  cursor: default;
-}
-
 
 .mypage-bottomsheet-course-header {
   display: flex;
@@ -266,6 +238,37 @@
 .mypage-bottomsheet-course-label {
   min-width: 3.1rem;
   color: #9a8fba;
+}
+
+/* 카드 안에 들어가는 "시간표에 추가" 작은 버튼 영역 */
+.mypage-bottomsheet-course-add-inline {
+  margin-top: 0.45rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* 카드 안에 들어가는 작은 "시간표에 추가" 버튼 */
+.mypage-bottomsheet-course-add-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 0.22rem 0.7rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background-color: #c09ef1;
+  color: #ffffff;
+  cursor: pointer;
+  transition: opacity 0.12s ease, transform 0.08s ease,
+    box-shadow 0.08s ease;
+}
+
+.mypage-bottomsheet-course-add-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 6px rgba(140, 108, 232, 0.25);
+}
+
+.mypage-bottomsheet-course-add-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 /* 필터 입력 패널 */
@@ -330,33 +333,4 @@
 .mypage-bottomsheet-filter-apply-btn {
   background-color: #c09ef1;
   color: #ffffff;
-}
-
-/* 🔥 하단 시간표 추가 버튼 영역 */
-.mypage-bottomsheet-footer {
-  margin-top: 0.6rem;
-}
-
-.mypage-bottomsheet-add-btn {
-  width: 100%;
-  border: none;
-  border-radius: 0.9rem;
-  padding: 0.7rem 1rem;
-  font-size: 0.8rem;
-  font-weight: 700;
-  background: #c09ef1;
-  color: #ffffff;
-  box-shadow: 0 4px 10px rgba(140, 108, 232, 0.35);
-  cursor: pointer;
-  transition: transform 0.1s ease, box-shadow 0.1s ease, opacity 0.1s ease;
-}
-
-.mypage-bottomsheet-add-btn:active {
-  transform: translateY(1px);
-  box-shadow: 0 2px 6px rgba(140, 108, 232, 0.25);
-}
-
-.mypage-bottomsheet-add-btn:disabled {
-  opacity: 0.6;
-  cursor: default;
 }
