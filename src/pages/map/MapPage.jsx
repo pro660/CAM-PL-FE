@@ -162,6 +162,33 @@ export default function MapPage() {
   // 👉 오늘의 일정 칩/마커에서 선택된 장소 "키" (extractPlaceLabel 기준)
   const [selectedPlace, setSelectedPlace] = useState(null);
 
+  // 🔴 사용자 현재 위치 (위도/경도)
+  const [userLocation, setUserLocation] = useState(null);
+
+  // 브라우저에서 현재 위치 가져오기
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      console.warn("이 브라우저에서는 위치 정보를 사용할 수 없습니다.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserLocation({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        });
+      },
+      (err) => {
+        console.warn("위치 정보를 가져오지 못했어요:", err);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+      }
+    );
+  }, []);
+
   // 최초 진입 시: /calendar/map 만 호출
   useEffect(() => {
     (async () => {
@@ -416,9 +443,10 @@ export default function MapPage() {
 
   // ✅ 마커 클릭 시 → 해당 placeKey 선택 (칩 클릭과 동일한 효과)
   const handleMarkerClick = (marker) => {
-  if (!marker?.placeKey) return;
-  setSelectedPlace((prev) =>
-    prev === marker.placeKey ? null : marker.placeKey);
+    if (!marker?.placeKey) return;
+    setSelectedPlace((prev) =>
+      prev === marker.placeKey ? null : marker.placeKey
+    );
   };
 
   return (
@@ -430,6 +458,7 @@ export default function MapPage() {
           markers={mapMarkers}
           center={centerForMap}
           onMarkerClick={handleMarkerClick}
+          userLocation={userLocation} // 🔴 현재 위치 전달
         />
 
         <PlaceEventsBar
