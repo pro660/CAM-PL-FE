@@ -380,100 +380,108 @@ const CourseSearchBottomSheet = ({
     onCourseSelect?.(course);
   };
 
-  /** 🔥 시간표 추가 플로우
-   * 1) 과목 충돌 API로 겹치는지 먼저 확인
-   * 2) 겹치면 "삭제 후 추가" 여부를 물어봄
-   * 3) 예 → 기존 강의 삭제 API 호출 → 추가 API 호출
-   *    아니오 → 아무 것도 안 함
+  /** 🔥 시간표 추가 플로우 (reslove API 사용 안 함)
+   * 1) /timetable/items/try-add 호출
+   * 2) conflict == true 이고 itemId 있으면 → 삭제 여부 확인
+   * 3) 예 → DELETE /timetable/items/{itemId} → 다시 try-add
    */
   const handleAddToTimetable = async () => {
     if (!selectedCourseId) return;
 
     setAddLoading(true);
 
+    // 공통으로 쓸 추가 시도 함수
+    const tryAdd = async () => {
+      const res = await api.post("/timetable/items/try-add", {
+        courseId: selectedCourseId,
+      });
+      return res.data ?? {};
+    };
+
     try {
-      // 1) 먼저 충돌 여부 확인
-      let hasConflict = false;
-      let conflictItemId = null;
+      // 1차 추가 시도
+      let data = await tryAdd();
 
-      try {
-        const res = await api.post("/timetable/items/reslove", {
-          courseId: selectedCourseId,
-        });
-        const data = res.data ?? {};
-        // 백엔드에서 conflict / itemId 형태로 내려준다고 가정
-        hasConflict = !!data.conflict;
-        conflictItemId = data.itemId ?? null;
-      } catch (err) {
-        console.error("시간표 충돌 확인 실패:", err);
-        // 충돌 체크에 실패하면, 일단 백엔드에 맡기고 바로 추가 시도
-        hasConflict = false;
+      // 이미 존재(동일 과목)인 경우
+      if (data.status === 409) {
+        alert(data.error || "이미 내 시간표에 존재합니다.");
+        return;
       }
 
-      // 2) 충돌이 있는 경우 → 먼저 사용자에게 물어보기
-      if (hasConflict) {
-        if (conflictItemId) {
-          const ok = window.confirm(
-            "해당 시간에 이미 다른 강의가 있습니다.\n" +
-              "기존 강의를 삭제하고 새 강의를 추가할까요?"
-          );
-          if (!ok) {
-            // 사용자가 아니오 선택
-            return;
-          }
+      // 정상적으로 바로 추가된 경우
+      if (data.createdEventCount > 0) {
+        alert("시간표에 강의가 추가되었어요.");
+        onTimetableAdded?.();
+        return;
+      }
 
-          // 기존 강의 삭제
-          try {
-            await api.delete(`/timetable/items/${conflictItemId}`);
-          } catch (err) {
-            console.error("기존 강의 삭제 실패:", err);
-            alert("기존 강의를 삭제하는 중 오류가 발생했어요.");
-            return;
-          }
-        } else {
-          // itemId 정보가 없는 경우: 삭제까지는 못하고 안내만
-          const ok = window.confirm(
-            "해당 시간에 이미 다른 강의가 있을 수 있습니다.\n" +
-              "그래도 새 강의를 추가할까요?"
-          );
-          if (!ok) {
-            return;
-          }
+      // 시간이 겹치는 경우
+      if (data.conflict) {
+        const conflictItemId = data.itemId;
+
+        // itemId 가 없으면 삭제를 못하니까 그냥 안내
+        if (!conflictItemId) {
+          alert("다른 강의와 시간이 겹쳐서 추가할 수 없어요.");
+          return;
         }
-      }
 
-      // 3) 실제 추가 시도 (여기서부터는 try-add 만 사용)
-      try {
-        const resAdd = await api.post("/timetable/items/try-add", {
-          courseId: selectedCourseId,
-        });
-        const dataAdd = resAdd.data ?? {};
+        const ok = window.confirm(
+          "해당 시간에 이미 다른 강의가 있습니다.\n" +
+            "기존 강의를 삭제하고 새 강의를 추가할까요?"
+        );
+        if (!ok) {
+          // 사용자가 취소
+          return;
+        }
 
-        // 성공적으로 이벤트가 생성된 경우
-        if (dataAdd.createdEventCount > 0) {
+        // 1) 기존 강의 삭제
+        try {
+          await api.delete(`/timetable/items/${conflictItemId}`);
+        } catch (e) {
+          console.error("기존 강의 삭제 실패:", e);
+          alert("기존 강의를 삭제하는 중 오류가 발생했어요.");
+          return;
+        }
+
+        // 2) 다시 추가 시도
+        data = await tryAdd();
+
+        // 다시 시도했는데도 이미 동일 과목이 존재
+        if (data.status === 409) {
+          alert(data.error || "이미 내 시간표에 존재합니다.");
+          return;
+        }
+
+        // 다시 시도했는데도 또 conflict 라면 더 이상 자동 해결 X
+        if (data.conflict) {
+          alert(
+            "다른 강의와 시간이 계속 겹쳐서 추가할 수 없어요.\n" +
+              "시간표에서 직접 정리해 주세요."
+          );
+          return;
+        }
+
+        if (data.createdEventCount > 0) {
           alert("시간표에 강의가 추가되었어요.");
           onTimetableAdded?.();
           return;
         }
 
-        // 방어적으로 conflict 응답도 체크
-        if (dataAdd.conflict) {
-          alert("다른 강의와 시간이 겹쳐서 추가할 수 없어요.");
-          return;
-        }
-
         alert("강의가 추가되지 않았어요.");
-      } catch (error) {
-        // 409: 이미 내 시간표에 존재
-        if (error.response?.status === 409) {
-          const msg =
-            error.response.data?.error ||
-            "이미 내 시간표에 존재합니다.";
-          alert(msg);
-        } else {
-          console.error("시간표 추가 실패:", error);
-          alert("시간표 추가 중 오류가 발생했어요.");
-        }
+        return;
+      }
+
+      // 그 외 애매한 응답
+      alert("강의가 추가되지 않았어요.");
+    } catch (error) {
+      // HTTP 409 (에러 응답 형태일 때)
+      if (error.response?.status === 409) {
+        const msg =
+          error.response.data?.error || "이미 내 시간표에 존재합니다.";
+        alert(msg);
+      } else {
+        console.error("시간표 추가 실패:", error);
+        alert("시간표 추가 중 오류가 발생했어요.");
       }
     } finally {
       setAddLoading(false);
