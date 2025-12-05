@@ -1,7 +1,7 @@
 // src/pages/mypage/CourseTimeFilterPage.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "../../css/mypage/TimeFilterPage.css";
+import "../../css/mypage/CourseTimeFilterPage.css";
 
 const DAY_LABELS = ["월", "화", "수", "목", "금"];
 const START_HOUR = 9;              // 9시 시작
