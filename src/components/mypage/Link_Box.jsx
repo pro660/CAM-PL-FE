@@ -20,6 +20,7 @@ export default function LinkBox({
       onClick={onClick}
     >
       {/* 여기 텍스트 밑줄에 애니메이션 들어감 */}
+      <span className="mypage-link-box-label">{label}</span>
 
       <div className="mypage-link-box-icon">
         {iconSrc && (
@@ -30,7 +31,6 @@ export default function LinkBox({
           />
         )}
       </div>
-      <span className="mypage-link-box-label">{label}</span>
     </button>
   );
 }

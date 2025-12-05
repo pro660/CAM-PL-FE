@@ -6,7 +6,7 @@
   height: 4.2rem;
   display: flex;
   align-items: center;
-  justify-content: start;
+  justify-content: space-between;
   padding: 0.9rem 1.1rem;
   border-radius: 1rem;
   border: none;
@@ -56,8 +56,7 @@
   font-size: 0.9rem;
   font-weight: 600;
   color: #333333;
-  z-index: 1;        
-  margin-left: 1rem;       /* 아이콘과 간격 */
+  z-index: 1;                /* 그라디언트 오버레이 위에 표시 */
 }
 
 /* 기본 상태: width 0 */
