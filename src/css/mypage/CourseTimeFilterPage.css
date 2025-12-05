@@ -93,7 +93,7 @@
 /* 왼쪽 시간축 */
 .time-filter-time-col {
   background-color: #f0e3ff;
-  border-right: 0.0625rem solid #e2d4ff; /* 1px */
+  border-right: 1px solid #e2d4ff; /* 1px */
 }
 
 .time-filter-time-slot {
@@ -103,7 +103,7 @@
   justify-content: center;
   font-size: 0.7rem;
   color: #9b8ac8;
-  border-top: 0.0625rem solid #e2d4ff; /* 1px */
+  border-top: 1px solid #e2d4ff; /* 1px */
 }
 
 .time-filter-time-slot:first-child {
@@ -133,7 +133,7 @@
 .time-filter-slot {
   flex: 1 0 auto;
   height: 2.4rem;
-  border-top: 0.0625rem solid #e2d4ff; /* 시간 구분 가로선 1px */
+  border-top: 1px solid #e2d4ff; /* 시간 구분 가로선 1px */
   background: transparent;
   padding: 0;
   margin: 0;
