@@ -101,7 +101,8 @@
   right: 0.15rem;
   border-radius: 0.35rem;
 
-  background-color: lightgray; 
+  
+  background-color: rgba(0, 0, 0, 0.08); 
   box-sizing: border-box;
 
   pointer-events: none; /* 클릭 방해 X */
