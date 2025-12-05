@@ -122,7 +122,7 @@
   min-height: calc(2.4rem * 10); /* 10칸 */
   display: flex;
   flex-direction: column;
-  border-left: 0.0625rem solid #e2d4ff; /* 요일 구분 세로선 1px */
+  
 }
 
 .time-filter-day-column:first-child {
