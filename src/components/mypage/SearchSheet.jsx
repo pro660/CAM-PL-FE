@@ -164,9 +164,7 @@ const applyClientSideFilters = (
   const useYearFilter =
     years.length > 0 && years.length < ALL_YEAR_KEYS.length;
 
-  const credits = Array.isArray(selectedCredits)
-    ? selectedCredits
-    : [];
+  const credits = Array.isArray(selectedCredits) ? selectedCredits : [];
   const useCreditFilter =
     credits.length > 0 && credits.length < ALL_CREDIT_KEYS.length;
 
@@ -378,6 +376,13 @@ const CourseSearchBottomSheet = ({
   const handleCourseClick = (course) => {
     setSelectedCourseId(course.id);
     onCourseSelect?.(course);
+  };
+
+  /** 🔥 강의평 버튼 클릭 → 강의평 페이지로 이동 */
+  const handleReviewClick = (e, courseId) => {
+    e.stopPropagation(); // 카드 onClick 막기
+    onClose?.();         // 바텀시트 닫기
+    navigate(`/course-review/${courseId}`);
   };
 
   /** 🔥 시간표 추가 플로우 (try-add만 사용)
@@ -596,10 +601,7 @@ const CourseSearchBottomSheet = ({
                       <button
                         type="button"
                         className="mypage-bottomsheet-review-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // TODO: 강의평 페이지 연결 시 여기서 처리
-                        }}
+                        onClick={(e) => handleReviewClick(e, course.id)}
                       >
                         강의평
                       </button>
@@ -658,9 +660,7 @@ const CourseSearchBottomSheet = ({
                           }}
                           disabled={addLoading}
                         >
-                          {addLoading
-                            ? "추가 중..."
-                            : "시간표에 추가"}
+                          {addLoading ? "추가 중..." : "시간표에 추가"}
                         </button>
                       </div>
                     )}
@@ -670,7 +670,7 @@ const CourseSearchBottomSheet = ({
             )}
           </div>
 
-          {/* 🔥 하단 공통 버튼은 더 이상 사용하지 않음 */}
+          {/* 하단 공통 버튼은 사용하지 않음 */}
         </div>
       </div>
     </div>
