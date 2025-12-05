@@ -1,14 +1,14 @@
 // src/routes/ProtectedRoute.jsx
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "./context/AuthContext";
-import LoadingSpinner from "./components/common/Loader";
+import { useAuth } from "../context/AuthContext";        // <- 경로도 ../ 로
+import LoadingSpinner from "../components/common/Loader";
 
 export default function ProtectedRoute({ children }) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, loading } = useAuth();       // <- loading 으로 받기
   const location = useLocation();
 
-  if (isLoading) {
+  if (loading) {
     return <LoadingSpinner fullscreen />;
   }
 
@@ -18,4 +18,3 @@ export default function ProtectedRoute({ children }) {
 
   return children;
 }
-

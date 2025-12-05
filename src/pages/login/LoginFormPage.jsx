@@ -3,8 +3,9 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../css/login/LoginFormPage.css";
 import LogoImg from "../../images/loginpage/logo.svg";
-import api from "../../api/axios"; // <- axios 인스턴스만
-import { useAuth } from "../../context/AuthContext.jsx"; // ✅ 컨텍스트 사용
+
+// ✅ AuthContext 사용 (여기서 login 호출하면 camp_auth + Context 둘 다 갱신)
+import { useAuth } from "../../context/AuthContext.jsx";
 
 // 눈 아이콘 이미지
 import EyeOpenIcon from "../../images/loginpage/icon-eye-open.svg";
@@ -12,7 +13,7 @@ import EyeClosedIcon from "../../images/loginpage/icon-eye-closed.svg";
 
 export default function LoginFormPage() {
   const navigate = useNavigate();
-  const { login } = useAuth(); // ✅ AuthContext에서 login 함수 받기
+  const { login } = useAuth(); // ✅ 컨텍스트의 login 사용
 
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
@@ -36,35 +37,44 @@ export default function LoginFormPage() {
     setLoading(true);
 
     try {
-      // ✅ 실제 로그인 API 호출
-      const { data } = await api.post("/auth/login", {
+      // ✅ AuthContext.login 사용 → /auth/login 호출 + camp_auth 저장 + Context 갱신까지 처리
+      await login({
         loginId: id.trim(),
         password,
       });
-
-      // data 예시:
-      // {
-      //   "accessToken": "...",
-      //   "id": 8,
-      //   "loginId": "test1234",
-      //   "name": "test1234",
-      //   "email": "op9563_2@naver.com",
-      //   "provider": "LOCAL"
-      // }
-
-      // ✅ 과거 키 정리는 AuthContext 내부(setAuth)에서 처리한다고 가정
-      //    여기서는 컨텍스트에게 "로그인해" 라고만 알려주면 됨
-      login(data); // <- AuthContext + localStorage + axios 헤더 모두 세팅
 
       // 로그인 성공 → 홈으로 이동
       navigate("/", { replace: true });
     } catch (err) {
       console.error(err);
-      const msg =
-        err.response?.data?.error ||
-        err.response?.data?.message ||
-        "아이디 또는 비밀번호를 확인해주세요.";
-      setError(msg);
+
+      const status = err.response?.status;
+      const backendMsg =
+        err.response?.data?.error || err.response?.data?.message || "";
+
+      // ✅ 1) 아이디/비밀번호가 틀린 경우 (400/401)
+      if (status === 400 || status === 401) {
+        setError("아이디 또는 비밀번호가 올바르지 않습니다.");
+        setLoading(false);
+        return;
+      }
+
+      // ✅ 2) 리프레시 토큰 관련 내부 메시지는 사용자에게 안 보여줌
+      if (
+        typeof backendMsg === "string" &&
+        backendMsg.includes("리프레쉬 토큰")
+      ) {
+        setError("로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+        setLoading(false);
+        return;
+      }
+
+      // ✅ 3) 그 외에는 백엔드 메시지가 있으면 쓰되, 없으면 공통 메시지
+      if (backendMsg) {
+        setError(backendMsg);
+      } else {
+        setError("로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+      }
     } finally {
       setLoading(false);
     }
