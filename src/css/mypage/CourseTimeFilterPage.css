@@ -47,34 +47,34 @@
 .time-filter-timetable-card {
   margin-top: 14px;
   background-color: #ffffff;
-  border-radius: 0; /* 🔥 border radius 제거 */
+  border-radius: 0;         /* 🔥 border radius 제거 */
   overflow: hidden;
-  box-shadow: none; /* 필요 없으면 그림자도 제거 */
+  box-shadow: none;         /* 필요 없으면 그림자도 제거 */
 }
 
-/* 오른쪽 선택 그리드: MyTimetable의 오른쪽 영역 대신 사용 */
+/* 오른쪽 선택 그리드 */
 .time-filter-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   background-color: #f6f0ff; /* MyTimetable body 배경과 맞춤 */
 }
 
-/* 각 요일 컬럼 */
+/* 각 요일 컬럼 – 세로선은 여기서만 그리기 */
 .time-filter-day-column {
   display: flex;
   flex-direction: column;
   background-color: #ffffff;
-  border-right: 1px solid #e3d7f4; /* 🔥 세로선 색 */
+  border-left: 1px solid #e2d4ff;   /* 🔥 요일 구분 세로선 */
 }
 
-.time-filter-day-column:last-child {
-  border-right: none;
+.time-filter-day-column:first-child {
+  border-left: none; /* 맨 왼쪽은 선 없음 (시간축 오른쪽 선이랑 이어짐) */
 }
 
-/* 한 칸(1시간) 슬롯 */
+/* 한 칸(1시간) 슬롯 – 가로선은 여기서만 그리기 */
 .time-filter-slot {
-  height: 2.4rem; /* MyTimetable 시간칸 높이와 동일 */
-  border-bottom: 1px solid #e3d7f4; /* 🔥 가로선 색 */
+  height: 2.4rem;                    /* MyTimetable 시간칸 높이와 동일 */
+  border-top: 1px solid #e2d4ff;     /* 🔥 시간 구분 가로선 */
   background: transparent;
   padding: 0;
   margin: 0;
@@ -82,17 +82,29 @@
   cursor: pointer;
 }
 
+.time-filter-slot:first-child {
+  border-top: none; /* 맨 위는 선 없음 (헤더와 딱 붙게) */
+}
+
 /* 선택된 칸 색 */
 .time-filter-slot.selected {
-  background-color: #e3d7f4; /* 요구한 색상 */
+  background-color: #e3d7f4; /* 요구한 선택 색상 그대로 유지 */
 }
 
-/* 🔥 이 페이지에서만 MyTimetable의 선 색을 덮어쓰기 */
+/* 🔥 이 페이지에서만 MyTimetable의 선 색/겹침을 정리 */
+
+/* 시간축 오른쪽 세로선만 유지, 색 통일 */
 .time-filter-page .mypage-timetable-time-col {
   background-color: #f0e3ff;
-  border-right: 1px solid #e3d7f4; /* 세로선 색統一 */
+  border-right: 1px solid #e2d4ff;   /* 🔥 세로선 색 통일 */
 }
 
+/* 시간축 쪽 가로선은 없애고, 오른쪽 grid에서만 가로선 그리게 */
 .time-filter-page .mypage-timetable-time-slot {
-  border-bottom: 1px solid #e3d7f4; /* 가로선 색統一 */
+  border-bottom: none;
+}
+
+/* MyTimetable의 요일 컬럼 세로선은 제거 (겹침 방지) */
+.time-filter-page .mypage-timetable-day-column {
+  border-right: none;
 }
