@@ -77,7 +77,7 @@
 .cr-star-input::after {
   content: "★";
   position: absolute;
-  left: 1rem;
+  left: 0;
   top: 0;
 
   color: #ffc94a;               /* 채워진 별 색 */
