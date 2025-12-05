@@ -139,7 +139,7 @@ export default function MyPage() {
   // 이 안에서 실제 이동 링크만 채워주면 됨
   const handleGoNotice = () => {
     window.open(
-      "https://www.hanseo.ac.kr/boardCnts/list.do?boardID=298&m=040101&s=hs"
+      "https://nportal.hanseo.ac.kr/"
     );
   };
 
@@ -176,7 +176,7 @@ export default function MyPage() {
       {/* 학사공지 / 셔틀 예약 링크 상자 */}
       <section className="mypage-link-box-wrapper">
         <LinkBox
-          label="학사공지 바로가기"
+          label="한서 포탈 바로가기"
           iconSrc={NoticeIcon}
           iconAlt="학사공지 아이콘"
           variant="light"
