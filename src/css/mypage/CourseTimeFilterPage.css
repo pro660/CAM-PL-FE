@@ -105,7 +105,7 @@
   font-size: 0.7rem;
   color: #9b8ac8;
   /* 훨씬 연한 보라색으로 변경 */
-  border-top: 1px solid #f0e5ff;
+  border-top: 0.3px solid #f0e5ff;
 }
 
 .time-filter-time-slot:first-child {
@@ -130,21 +130,16 @@
   border-left: none;
 }
 
-/* 한 칸(1시간) 슬롯 */
+/* 한 칸(1시간) 슬롯 - 터치되는 부분: 경계선 제거 */
 .time-filter-slot {
   flex: 1 0 auto;
   height: 2.4rem;
-  /* 훨씬 연한 보라색으로 변경 */
-  border-top: 1px solid #f0e5ff;
+  border: none;          /* ✅ 모든 테두리 제거 */
   background: transparent;
   padding: 0;
   margin: 0;
   outline: none;
   cursor: pointer;
-}
-
-.time-filter-slot:first-child {
-  border-top: none;
 }
 
 /* 선택된 칸 색 */
