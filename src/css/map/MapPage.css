@@ -10,7 +10,7 @@
 
 /* 상단 지도 영역 */
 .map-page-map-wrapper {
-  position: relative;   /* ✅ 슬라이더를 지도 위에 올리기 위해 추가 */
+  position: relative;   /* ✅ 슬라이더/버튼을 지도 위에 올리기 위해 필요 */
   width: 100%;
   height: 30rem;
   overflow: hidden;
@@ -76,4 +76,48 @@
   color: #ffffff;
   background: linear-gradient(135deg, #c09ef1, #8c6ce8);
   cursor: pointer;
+}
+
+/* 🔘 오른쪽 하단 현재 위치(빨간 마커)로 이동 버튼 */
+.map-page-location-fab {
+  position: absolute;
+  right: 0.9rem;
+  bottom: 0.9rem;
+  width: 2.3rem;
+  height: 2.3rem;
+  border-radius: 50%;
+  border: none;
+  background-color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+}
+
+.map-page-location-fab:active {
+  transform: scale(0.96);
+}
+
+/* 작은 조준점 느낌의 아이콘 */
+.map-page-location-fab-dot {
+  width: 0.95rem;
+  height: 0.95rem;
+  border-radius: 50%;
+  border: 2px solid #8c6ce8;
+  box-shadow: 0 0 0 2px rgba(140, 108, 232, 0.12);
+  position: relative;
+}
+
+.map-page-location-fab-dot::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0.26rem;
+  height: 0.26rem;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background-color: #8c6ce8;
 }

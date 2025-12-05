@@ -165,6 +165,9 @@ export default function MapPage() {
   // 👉 오늘의 일정 칩/마커에서 선택된 장소 "키" (extractPlaceLabel 기준)
   const [selectedPlace, setSelectedPlace] = useState(null);
 
+  // ✅ 지도 중심 상태 (초기값: 정적 빨간 마커 위치)
+  const [mapCenter, setMapCenter] = useState(STATIC_CENTER);
+
   // 최초 진입 시: /calendar/map 만 호출
   useEffect(() => {
     (async () => {
@@ -365,14 +368,14 @@ export default function MapPage() {
     return mapMarkers.find((m) => m.placeKey === selectedPlace) || null;
   }, [selectedPlace, mapMarkers]);
 
-  // ✅ 지도 중심 계산:
-  // 1순위: 선택된 장소
-  // 2순위: STATIC_CENTER (항상 같은 위치)
-  const centerForMap = useMemo(() => {
+  // ✅ 선택된 장소가 바뀔 때마다 지도 중심도 해당 장소로 이동
+  useEffect(() => {
     if (selectedPlaceMarker) {
-      return { lat: selectedPlaceMarker.lat, lng: selectedPlaceMarker.lng };
+      setMapCenter({
+        lat: selectedPlaceMarker.lat,
+        lng: selectedPlaceMarker.lng,
+      });
     }
-    return STATIC_CENTER;
   }, [selectedPlaceMarker]);
 
   const handleClickRecommend = () => {
@@ -425,13 +428,19 @@ export default function MapPage() {
     );
   };
 
+  // ✅ 오른쪽 하단 동그란 버튼 클릭 → 정적 "사용자 위치(빨간 마커)"로 지도 중심 이동
+  const handleRecenterToUser = () => {
+    setSelectedPlace(null); // 선택 해제
+    setMapCenter(STATIC_CENTER); // 빨간 마커 위치로 중앙 이동
+  };
+
   return (
     <div className="map-page">
       {/* 상단 네이버 지도 + 건물별 일정 슬라이더 */}
       <div className="map-page-map-wrapper">
         <NaverMap
           markers={mapMarkers}
-          center={centerForMap}
+          center={mapCenter}
           onMarkerClick={handleMarkerClick}
         />
 
@@ -440,6 +449,16 @@ export default function MapPage() {
           items={selectedPlaceItems}
           onClose={() => setSelectedPlace(null)}
         />
+
+        {/* 🔘 오른쪽 하단 현재 위치(빨간 마커)로 이동 버튼 */}
+        <button
+          type="button"
+          className="map-page-location-fab"
+          onClick={handleRecenterToUser}
+          aria-label="현재 위치로 이동"
+        >
+          <span className="map-page-location-fab-dot" />
+        </button>
       </div>
 
       {/* 아래 내용 영역 */}
