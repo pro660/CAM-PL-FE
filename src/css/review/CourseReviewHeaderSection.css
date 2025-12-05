@@ -57,18 +57,15 @@
   content: "★";
 }
 
-/* 채워진 별 – scaleX로 반/전체 채우기 (오른쪽 안 잘림) */
+/* 채워진 별 – 가로로 잘라서 일부만 보여줌 */
 .cr-star::after {
   content: "★";
   position: absolute;
   left: 0;
   top: 0;
-  color: #ffc94a;                 /* 채운 별 색 */
-
-  transform-origin: left center;
-  transform: scaleX(var(--star-fill, 0)); /* 0, 0.5, 1 */
-
-  pointer-events: none;
+  color: #ffc94a;                    /* 채운 별 색 */
+  width: var(--star-fill, 0%);       /* 0, 50, 100% */
+  overflow: hidden;                  /* 오른쪽 잘라내기 */
 }
 
 /* 과목 상세 카드 */

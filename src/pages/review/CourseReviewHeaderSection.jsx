@@ -1,4 +1,3 @@
-// src/pages/review/CourseReviewHeaderSection.jsx
 import React, { useMemo } from "react";
 import "../../css/review/CourseReviewHeaderSection.css";
 
@@ -53,27 +52,26 @@ const formatCourseTime = (times = []) => {
     .join(", ");
 };
 
-/** ⭐ 별점 표시용 (읽기 전용, 0.5 단위, 진짜 반쪽 별) */
+/** ⭐ 별점 표시용 (읽기 전용, 0.5 단위) */
 function StarRatingDisplay({ value = 0 }) {
   const safeValue = Math.max(0, Math.min(5, value || 0));
-
   const stars = Array.from({ length: 5 }, (_, idx) => {
     const starIndex = idx + 1;
-    let fillRatio = 0; // 0, 0.5, 1
+    let fill = 0;
 
     if (safeValue >= starIndex) {
-      fillRatio = 1;
+      fill = 100; // 꽉 찬 별
     } else if (safeValue >= starIndex - 0.5) {
-      fillRatio = 0.5;
+      fill = 50; // 반 별
     } else {
-      fillRatio = 0;
+      fill = 0; // 빈 별
     }
 
     return (
       <span
         key={starIndex}
         className="cr-star"
-        style={{ "--star-fill": fillRatio }}
+        style={{ "--star-fill": `${fill}%` }}
       />
     );
   });
