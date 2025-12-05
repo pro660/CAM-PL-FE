@@ -88,13 +88,40 @@
   grid-template-columns: 2.4rem 1fr; /* 시간축 + 나머지 */
   column-gap: 0;
   background-color: #f6f0ff;
+
+  /* 🔥 가로 구분선(시간 구분선 9개)용 */
+  position: relative;
+}
+
+/* 🔥 시간 구분선: #c09ef1 색 가로줄 */
+.time-filter-body::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+
+  /* 10칸 기준으로 아래 방향으로 반복되는 얇은 라인 */
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(10% - 1px),
+    #c09ef1 calc(10% - 1px),
+    #c09ef1 10%
+  );
+}
+
+/* 그리드 내용은 라인 위에 올라오도록 */
+.time-filter-time-col,
+.time-filter-grid {
+  position: relative;
+  z-index: 1;
 }
 
 /* 왼쪽 시간축 */
 .time-filter-time-col {
   background-color: #f0e3ff;
-  /* 경계선 제거 */
-  border-right: none;
+  border-right: none; /* 검은 경계선 제거 */
 }
 
 .time-filter-time-slot {
@@ -104,12 +131,7 @@
   justify-content: center;
   font-size: 0.7rem;
   color: #9b8ac8;
-  /* 훨씬 연한 보라색으로 변경 */
-  border-top: 0.3px solid #f0e5ff;
-}
-
-.time-filter-time-slot:first-child {
-  border-top: none;
+  border: none; /* 여기서는 선 안 그림 (가로선은 ::before에서 처리) */
 }
 
 /* 오른쪽 요일 그리드 전체 */
@@ -124,17 +146,33 @@
   min-height: calc(2.4rem * 10); /* 10칸 */
   display: flex;
   flex-direction: column;
+
+  /* 🔥 세로 구분선용 */
+  position: relative;
 }
 
-.time-filter-day-column:first-child {
-  border-left: none;
+/* 🔥 요일 구분선: #c09ef1 세로줄 (총 4개) */
+.time-filter-day-column::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 1px;
+  background-color: #c09ef1;
+  pointer-events: none;
 }
 
-/* 한 칸(1시간) 슬롯 - 터치되는 부분: 경계선 제거 */
+/* 첫 번째 요일은 왼쪽 선 숨김 → 나머지 4개만 표시 */
+.time-filter-day-column:first-child::before {
+  display: none;
+}
+
+/* 한 칸(1시간) 슬롯 – 터치 영역 (선 없음) */
 .time-filter-slot {
   flex: 1 0 auto;
   height: 2.4rem;
-  border: none;          /* ✅ 모든 테두리 제거 */
+  border: none;          /* ✅ 모든 경계선 제거 */
   background: transparent;
   padding: 0;
   margin: 0;
