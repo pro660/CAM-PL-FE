@@ -1,4 +1,3 @@
-// src/components/mypage/SearchSheet.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../css/mypage/SearchSheet.css";
@@ -199,7 +198,11 @@ const applyClientSideFilters = (
   });
 };
 
-const CourseSearchBottomSheet = ({ onClose }) => {
+const CourseSearchBottomSheet = ({
+  onClose,
+  onCourseSelect,
+  onTimetableAdded,
+}) => {
   const navigate = useNavigate();
 
   const savedArea = useMemo(readSavedAreaFilter, []);
@@ -238,6 +241,10 @@ const CourseSearchBottomSheet = ({ onClose }) => {
     () => FILTER_CONFIG.find((f) => f.key === activeFilter) || null,
     [activeFilter]
   );
+
+  // 🔥 선택된 강의 ID (보라색 하이라이트 + 시간표 미리보기용)
+  const [selectedCourseId, setSelectedCourseId] = useState(null);
+  const [addLoading, setAddLoading] = useState(false);
 
   // 바텀시트 열려있는 동안 배경 스크롤 막기
   useEffect(() => {
@@ -366,6 +373,56 @@ const CourseSearchBottomSheet = ({ onClose }) => {
     setActiveFilter(null);
   };
 
+  /** 🔥 강의 카드 클릭 → 선택 + 상위에 미리보기 전달 */
+  const handleCourseClick = (course) => {
+    setSelectedCourseId(course.id);
+    onCourseSelect?.(course);
+  };
+
+  /** 🔥 시간표 추가 API 호출 */
+  const handleAddToTimetable = async () => {
+    if (!selectedCourseId) return;
+
+    setAddLoading(true);
+    try {
+      const res = await api.post("/timetable/items/try-add", {
+        courseId: selectedCourseId,
+      });
+      const data = res.data ?? {};
+
+      // 응답이 409 형식으로 내려오는 경우
+      if (data.status === 409) {
+        alert(data.error || "이미 내 시간표에 존재합니다.");
+        return;
+      }
+
+      if (data.conflict) {
+        alert("다른 강의와 시간이 겹쳐서 추가할 수 없어요.");
+        return;
+      }
+
+      if (data.createdEventCount > 0) {
+        alert("시간표에 강의가 추가되었어요.");
+        onTimetableAdded?.();
+        return;
+      }
+
+      // 애매한 경우
+      alert("강의가 추가되지 않았어요.");
+    } catch (error) {
+      if (error.response?.status === 409) {
+        const msg =
+          error.response.data?.error || "이미 내 시간표에 존재합니다.";
+        alert(msg);
+      } else {
+        console.error("시간표 추가 실패:", error);
+        alert("시간표 추가 중 오류가 발생했어요.");
+      }
+    } finally {
+      setAddLoading(false);
+    }
+  };
+
   return (
     <div
       className={`mypage-bottomsheet-backdrop ${
@@ -467,7 +524,11 @@ const CourseSearchBottomSheet = ({ onClose }) => {
               courses.map((course) => (
                 <article
                   key={course.id}
-                  className="mypage-bottomsheet-course-card"
+                  className={
+                    "mypage-bottomsheet-course-card" +
+                    (selectedCourseId === course.id ? " selected" : "")
+                  }
+                  onClick={() => handleCourseClick(course)}
                 >
                   <div className="mypage-bottomsheet-course-header">
                     <h3 className="mypage-bottomsheet-course-name">
@@ -476,6 +537,10 @@ const CourseSearchBottomSheet = ({ onClose }) => {
                     <button
                       type="button"
                       className="mypage-bottomsheet-review-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // TODO: 강의평 페이지 연결 시 여기서 처리
+                      }}
                     >
                       강의평
                     </button>
@@ -525,6 +590,20 @@ const CourseSearchBottomSheet = ({ onClose }) => {
               ))
             )}
           </div>
+
+          {/* 🔥 선택된 강의가 있을 때만 나오는 시간표 추가 버튼 */}
+          {selectedCourseId && (
+            <div className="mypage-bottomsheet-footer">
+              <button
+                type="button"
+                className="mypage-bottomsheet-add-btn"
+                onClick={handleAddToTimetable}
+                disabled={addLoading}
+              >
+                {addLoading ? "추가 중..." : "시간표에 추가"}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -161,7 +161,7 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding-bottom: 0.3rem;
+  padding-bottom: 3rem; /* 하단 추가 버튼에 가리지 않도록 여유 */
 }
 
 .mypage-bottomsheet-info-text {
@@ -176,7 +176,42 @@
   padding: 0.75rem 0.9rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   margin-bottom: 0.6rem;
+  cursor: pointer; /* 🔥 전체 카드 클릭 가능 */
 }
+
+/* 선택된 강의 카드 (연한 보라색 하이라이트) */
+.mypage-bottomsheet-course-card.selected {
+  background-color: #f1e7ff; /* 연한 보라색 */
+  box-shadow: 0 2px 10px rgba(123, 86, 233, 0.18);
+}
+
+/* 맨 아래 시간표 추가 버튼 영역 */
+.mypage-bottomsheet-footer {
+  margin-top: 0.4rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid #ededed;
+  display: flex;
+  justify-content: center;
+}
+
+.mypage-bottomsheet-add-btn {
+  width: 100%;
+  max-width: 14rem;
+  border-radius: 999px;
+  border: none;
+  padding: 0.55rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #c09ef1, #8c6ce8);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.mypage-bottomsheet-add-btn:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
 
 .mypage-bottomsheet-course-header {
   display: flex;
@@ -202,6 +237,12 @@
   background-color: #f3e7ff;
   color: #7b56e9;
   cursor: pointer;
+}
+
+/* 선택된 카드 안의 강의평 버튼은 살짝 반전 */
+.mypage-bottomsheet-course-card.selected .mypage-bottomsheet-review-btn {
+  background-color: #ffffff;
+  color: #7b56e9;
 }
 
 .mypage-bottomsheet-course-meta {
@@ -289,4 +330,33 @@
 .mypage-bottomsheet-filter-apply-btn {
   background-color: #c09ef1;
   color: #ffffff;
+}
+
+/* 🔥 하단 시간표 추가 버튼 영역 */
+.mypage-bottomsheet-footer {
+  margin-top: 0.6rem;
+}
+
+.mypage-bottomsheet-add-btn {
+  width: 100%;
+  border: none;
+  border-radius: 0.9rem;
+  padding: 0.7rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: #c09ef1;
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(140, 108, 232, 0.35);
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, opacity 0.1s ease;
+}
+
+.mypage-bottomsheet-add-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 6px rgba(140, 108, 232, 0.25);
+}
+
+.mypage-bottomsheet-add-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
 }

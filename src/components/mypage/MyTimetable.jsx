@@ -59,13 +59,32 @@ function buildDayColumns(courses = []) {
   return columns;
 }
 
-export default function MyTimetable({ courses = [] }) {
-  const dayColumns = useMemo(() => buildDayColumns(courses), [courses]);
+export default function MyTimetable({ courses = [], previewCourse = null }) {
+  // 실제 내 시간표 강의
+  const dayColumns = useMemo(
+    () => buildDayColumns(courses),
+    [courses]
+  );
+
+  // 🔥 선택된 강의 미리보기용 (흐릿한 블록)
+  const previewColumns = useMemo(() => {
+    if (!previewCourse) {
+      // DAY_ORDER 길이에 맞춰 빈 배열 유지
+      return DAY_ORDER.map(() => []);
+    }
+    return buildDayColumns([previewCourse]);
+  }, [previewCourse]);
 
   // ✅ 강의가 하나라도 있는지 여부
   const hasAnyLecture = useMemo(
     () => dayColumns.some((blocks) => blocks.length > 0),
     [dayColumns]
+  );
+
+  // ✅ 미리보기 블록이 있는지 여부
+  const hasPreview = useMemo(
+    () => previewColumns.some((blocks) => blocks.length > 0),
+    [previewColumns]
   );
 
   return (
@@ -96,41 +115,61 @@ export default function MyTimetable({ courses = [] }) {
           <div
             className={
               "mypage-timetable-grid" +
-              (hasAnyLecture ? "" : " mypage-timetable-grid-empty")
+              (!hasAnyLecture && !hasPreview
+                ? " mypage-timetable-grid-empty"
+                : "")
             }
           >
-            {dayColumns.map((blocks, dayIdx) => (
-              <div
-                key={DAY_ORDER[dayIdx]}
-                className="mypage-timetable-day-column"
-              >
-                {blocks.map((block) => (
-                  <div
-                    key={block.id}
-                    className="mypage-timetable-class-block"
-                    style={{
-                      top: `${block.topPercent}%`,
-                      height: `${block.heightPercent}%`,
-                    }}
-                  >
-                    <div className="mypage-timetable-class-title">
-                      {block.title}
-                    </div>
-                    {block.room && (
-                      <div className="mypage-timetable-class-location">
-                        {block.room}
-                      </div>
-                    )}
-                    <div className="mypage-timetable-class-time">
-                      {block.timeLabel}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ))}
+            {DAY_ORDER.map((dayKey, dayIdx) => {
+              const blocks = dayColumns[dayIdx] || [];
+              const previewBlocks = previewColumns[dayIdx] || [];
 
-            {/* ✅ 강의가 하나도 없을 때 표시되는 안내 문구 */}
-            {!hasAnyLecture && (
+              return (
+                <div
+                  key={dayKey}
+                  className="mypage-timetable-day-column"
+                >
+                  {/* 🔥 선택된 강의 미리보기 (흐릿한 블록) */}
+                  {previewBlocks.map((block) => (
+                    <div
+                      key={`preview-${block.id}`}
+                      className="mypage-timetable-preview-block"
+                      style={{
+                        top: `${block.topPercent}%`,
+                        height: `${block.heightPercent}%`,
+                      }}
+                    />
+                  ))}
+
+                  {/* 실제 시간표 강의 블록 */}
+                  {blocks.map((block) => (
+                    <div
+                      key={block.id}
+                      className="mypage-timetable-class-block"
+                      style={{
+                        top: `${block.topPercent}%`,
+                        height: `${block.heightPercent}%`,
+                      }}
+                    >
+                      <div className="mypage-timetable-class-title">
+                        {block.title}
+                      </div>
+                      {block.room && (
+                        <div className="mypage-timetable-class-location">
+                          {block.room}
+                        </div>
+                      )}
+                      <div className="mypage-timetable-class-time">
+                        {block.timeLabel}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+
+            {/* ✅ 강의도 없고 미리보기도 없을 때만 표시되는 안내 문구 */}
+            {!hasAnyLecture && !hasPreview && (
               <div className="mypage-timetable-empty-text">
                 강의를 추가해 나만의 시간표를 만드세요.
               </div>

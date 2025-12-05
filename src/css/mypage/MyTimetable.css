@@ -60,7 +60,7 @@
 .mypage-timetable-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  position: relative; /* ✅ 안내 문구 중앙 정렬용 기준 */
+  position: relative; /* ✅ 안내 문구/미리보기 중앙 정렬용 기준 */
 }
 
 /* 각 요일 칼럼 */
@@ -75,12 +75,12 @@
   border-right: none;
 }
 
-/* ✅ 강의가 없을 때: 요일 구분 세로줄 제거 */
+/* ✅ 강의가 없고 미리보기도 없을 때: 요일 구분 세로줄 제거 */
 .mypage-timetable-grid-empty .mypage-timetable-day-column {
   border-right: none;
 }
 
-/* ✅ 강의가 없을 때 중앙에 표시되는 문구 */
+/* ✅ 강의도 미리보기도 없을 때 중앙에 표시되는 문구 */
 .mypage-timetable-empty-text {
   position: absolute;
   inset: 0; /* top:0; right:0; bottom:0; left:0; */
@@ -92,6 +92,20 @@
   font-size: 0.8rem;
   color: #b0a0d5;
   pointer-events: none; /* 클릭 막지 않도록 */
+}
+
+/* 🔥 미리보기(선택된 강의) 블록 */
+.mypage-timetable-preview-block {
+  position: absolute;
+  left: 0.15rem;
+  right: 0.15rem;
+  border-radius: 0.35rem;
+
+  background-color: rgba(201, 168, 255, 0.35); /* 흐릿한 연보라 */
+  box-sizing: border-box;
+
+  pointer-events: none; /* 클릭 방해 X */
+  z-index: 0; /* 실제 강의 블록보다 뒤에 */
 }
 
 /* 강의 블록 */
@@ -108,6 +122,9 @@
   color: #ffffff;
   box-sizing: border-box;
   overflow: hidden;
+
+  border-radius: 0.35rem;
+  z-index: 1; /* 미리보기 위에 표시 */
 }
 
 /* 블록 안 텍스트 */

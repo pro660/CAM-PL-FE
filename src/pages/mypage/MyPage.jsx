@@ -1,4 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+  useCallback,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import "../../css/mypage/MyPage.css";
 
@@ -29,6 +34,9 @@ export default function MyPage() {
 
   const [isCourseSheetOpen, setIsCourseSheetOpen] = useState(false);
   const [userName, setUserName] = useState("CAM-PL 사용자");
+
+  // 🔥 바텀시트에서 선택된 강의(시간표 미리보기용)
+  const [previewCourse, setPreviewCourse] = useState(null);
 
   // camp_auth에서 사용자 이름 로드
   useEffect(() => {
@@ -62,31 +70,25 @@ export default function MyPage() {
     return `오늘은 ${month}월 ${date}일 ${weekday}입니다.`;
   }, [today]);
 
-  // 시간표 로딩
-  useEffect(() => {
-    let cancelled = false;
-
-    const fetchTimetable = async () => {
-      showLoading();
-      try {
-        const res = await api.get("/timetable");
-        if (cancelled) return;
-
-        const data = res.data ?? {};
-        const list = Array.isArray(data.courses) ? data.courses : [];
-        setCourses(list);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        hideLoading();
-      }
-    };
-
-    fetchTimetable();
-    return () => {
-      cancelled = true;
-    };
+  // 🔥 시간표 로딩 함수 (재사용)
+  const loadTimetable = useCallback(async () => {
+    showLoading();
+    try {
+      const res = await api.get("/timetable");
+      const data = res.data ?? {};
+      const list = Array.isArray(data.courses) ? data.courses : [];
+      setCourses(list);
+    } catch (e) {
+      console.error("시간표 불러오기 실패:", e);
+    } finally {
+      hideLoading();
+    }
   }, [showLoading, hideLoading]);
+
+  // 마운트 시 한 번 시간표 로딩
+  useEffect(() => {
+    loadTimetable();
+  }, [loadTimetable]);
 
   const handleLogout = async () => {
     if (!window.confirm("로그아웃 하시겠습니까?")) return;
@@ -115,23 +117,34 @@ export default function MyPage() {
     }
   };
 
+  // + 버튼 / 바텀시트 닫기
   const handleToggleCourseSheet = () => {
-    setIsCourseSheetOpen((prev) => !prev);
+    setIsCourseSheetOpen((prev) => {
+      const next = !prev;
+      // 닫힐 때는 미리보기 삭제
+      if (!next) {
+        setPreviewCourse(null);
+      }
+      return next;
+    });
+  };
+
+  // 🔥 바텀시트에서 "시간표 추가" 성공 시
+  const handleTimetableAdded = () => {
+    loadTimetable();        // 내 시간표 다시 불러오고
+    setPreviewCourse(null); // 미리보기 제거
+    setIsCourseSheetOpen(false); // 바텀시트 닫기
   };
 
   // 이 안에서 실제 이동 링크만 채워주면 됨
   const handleGoNotice = () => {
-    // 예시
-    // navigate("/notice");
-    window.open("https://www.hanseo.ac.kr/boardCnts/list.do?boardID=298&m=040101&s=hs");
-    console.log("학사공지 바로가기 클릭");
+    window.open(
+      "https://www.hanseo.ac.kr/boardCnts/list.do?boardID=298&m=040101&s=hs"
+    );
   };
 
   const handleGoShuttle = () => {
-    // 예시
-    // navigate("/shuttle");
     window.open("https://hsu.busro.net:456/");
-    console.log("셔틀 예약 바로가기 클릭");
   };
 
   return (
@@ -146,7 +159,9 @@ export default function MyPage() {
 
         <button
           type="button"
-          className={`mypage-add-button ${isCourseSheetOpen ? "open" : ""}`}
+          className={`mypage-add-button ${
+            isCourseSheetOpen ? "open" : ""
+          }`}
           aria-label="시간표 강의 추가"
           onClick={handleToggleCourseSheet}
         >
@@ -155,7 +170,7 @@ export default function MyPage() {
       </section>
 
       <section className="mypage-timetable-section">
-        <MyTimetable courses={courses} />
+        <MyTimetable courses={courses} previewCourse={previewCourse} />
       </section>
 
       {/* 학사공지 / 셔틀 예약 링크 상자 */}
@@ -194,7 +209,11 @@ export default function MyPage() {
       </section>
 
       {isCourseSheetOpen && (
-        <CourseSearchBottomSheet onClose={handleToggleCourseSheet} />
+        <CourseSearchBottomSheet
+          onClose={handleToggleCourseSheet}
+          onCourseSelect={setPreviewCourse}      // 🔥 클릭 시 미리보기
+          onTimetableAdded={handleTimetableAdded} // 🔥 추가 성공 시 콜백
+        />
       )}
     </div>
   );
