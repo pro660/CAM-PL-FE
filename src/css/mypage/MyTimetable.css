@@ -101,7 +101,7 @@
   right: 0.15rem;
   border-radius: 0.35rem;
 
-  background-color: rgba(201, 168, 255, 0.35); /* 흐릿한 연보라 */
+  background-color: lightgray; 
   box-sizing: border-box;
 
   pointer-events: none; /* 클릭 방해 X */

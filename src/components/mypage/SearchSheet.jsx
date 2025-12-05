@@ -379,35 +379,90 @@ const CourseSearchBottomSheet = ({
     onCourseSelect?.(course);
   };
 
-  /** 🔥 시간표 추가 API 호출 */
+    /** 🔥 시간표 추가 API 호출 (+ 겹치면 기존 강의 삭제 후 재추가) */
   const handleAddToTimetable = async () => {
     if (!selectedCourseId) return;
 
     setAddLoading(true);
-    try {
+
+    // 동일 로직 두 번 쓰지 않도록 내부 함수로 분리
+    const tryAdd = async () => {
       const res = await api.post("/timetable/items/try-add", {
         courseId: selectedCourseId,
       });
-      const data = res.data ?? {};
+      return res.data ?? {};
+    };
 
-      // 응답이 409 형식으로 내려오는 경우
+    try {
+      // 1차 추가 시도
+      let data = await tryAdd();
+
+      // 같은 과목이 이미 내 시간표에 있는 경우 (409 형식 응답)
       if (data.status === 409) {
         alert(data.error || "이미 내 시간표에 존재합니다.");
         return;
       }
 
+      // 시간이 겹치는 경우
       if (data.conflict) {
-        alert("다른 강의와 시간이 겹쳐서 추가할 수 없어요.");
+        const itemId = data.itemId;
+
+        // itemId 가 없으면 삭제를 못하니까 그냥 안내만
+        if (!itemId) {
+          alert("다른 강의와 시간이 겹쳐서 추가할 수 없어요.");
+          return;
+        }
+
+        const ok = window.confirm(
+          "해당 시간에 이미 다른 강의가 있습니다.\n" +
+            "기존 강의를 삭제하고 새 강의를 추가할까요?"
+        );
+        if (!ok) {
+          // 사용자가 취소
+          return;
+        }
+
+        // 1) 기존 강의 삭제
+        try {
+          await api.delete(`/timetable/items/${itemId}`);
+        } catch (e) {
+          console.error("기존 강의 삭제 실패:", e);
+          alert("기존 강의를 삭제하는 중 오류가 발생했어요.");
+          return;
+        }
+
+        // 2) 다시 추가 시도
+        data = await tryAdd();
+
+        if (data.status === 409) {
+          alert(data.error || "이미 내 시간표에 존재합니다.");
+          return;
+        }
+
+        if (data.conflict) {
+          // 이 경우는 뭔가 계속 꼬인 상황이니 그냥 안내만
+          alert("다른 강의와 시간이 계속 겹쳐서 추가할 수 없어요.");
+          return;
+        }
+
+        if (data.createdEventCount > 0) {
+          alert("시간표에 강의가 추가되었어요.");
+          onTimetableAdded?.();
+          return;
+        }
+
+        alert("강의가 추가되지 않았어요.");
         return;
       }
 
+      // 정상적으로 바로 추가된 경우
       if (data.createdEventCount > 0) {
         alert("시간표에 강의가 추가되었어요.");
         onTimetableAdded?.();
         return;
       }
 
-      // 애매한 경우
+      // 그 외 애매한 응답
       alert("강의가 추가되지 않았어요.");
     } catch (error) {
       if (error.response?.status === 409) {
@@ -422,6 +477,7 @@ const CourseSearchBottomSheet = ({
       setAddLoading(false);
     }
   };
+
 
   return (
     <div
