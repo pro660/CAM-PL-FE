@@ -117,7 +117,7 @@ function extractPlaceLabel(location) {
 const DAY_NAMES_SHORT = ["일", "월", "화", "수", "목", "금", "토"];
 
 // 🔴 정적 기본 중심 좌표 (빨간 마커 위치)
-const STATIC_CENTER = { lat: 36.690711, lng: 126.581783 };
+const STATIC_CENTER = { lat: 36.690621, lng: 126.581591 };
 
 function formatEventTimeRange(startIso, endIso) {
   if (!startIso) return "";
@@ -166,7 +166,8 @@ export default function MapPage() {
   const [selectedPlace, setSelectedPlace] = useState(null);
 
   // ✅ 지도 중심 상태 (초기값: 정적 빨간 마커 위치)
-  const [mapCenter, setMapCenter] = useState(STATIC_CENTER);
+  //   STATIC_CENTER를 그대로 쓰지 말고, 한 번 펼쳐서 새 객체로 만들어두는 게 안전
+  const [mapCenter, setMapCenter] = useState(() => ({ ...STATIC_CENTER }));
 
   // 최초 진입 시: /calendar/map 만 호출
   useEffect(() => {
@@ -430,8 +431,9 @@ export default function MapPage() {
 
   // ✅ 오른쪽 하단 동그란 버튼 클릭 → 정적 "사용자 위치(빨간 마커)"로 지도 중심 이동
   const handleRecenterToUser = () => {
-    setSelectedPlace(null); // 선택 해제
-    setMapCenter(STATIC_CENTER); // 빨간 마커 위치로 중앙 이동
+    setSelectedPlace(null); 
+    // 항상 새 객체를 만들어서 넣어줘야 React가 "아, 값이 바뀌었구나" 하고 인식함
+    setMapCenter({ ...STATIC_CENTER });
   };
 
   return (
