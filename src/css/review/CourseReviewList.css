@@ -1,0 +1,140 @@
+.course-review-list-section {
+  padding: 0.9rem 0 0.8rem;
+}
+
+.course-review-list-title {
+  margin: 0 0 0.6rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #222222;
+}
+
+.course-review-list-empty {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #777777;
+}
+
+/* 리스트 박스 */
+.course-review-list-items {
+  background-color: #ffffff;
+  border-radius: 0.7rem;
+  padding: 0.3rem 0.75rem;
+}
+
+/* 각 강의평 상자 + 중간중간 얇은 검은색 선 */
+.course-review-item {
+  padding: 0.6rem 0 0.7rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08); /* 얇은 검은색 선 */
+}
+
+.course-review-item:last-child {
+  border-bottom: none;
+}
+
+.course-review-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.25rem;
+}
+
+.course-review-item-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.course-review-item-rating-value {
+  font-size: 0.75rem;
+  color: #555555;
+}
+
+/* 삭제 아이콘 버튼 (SVG는 안에 직접 넣어주면 됨) */
+.course-review-item-delete-btn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.course-review-item-delete-btn svg,
+.course-review-item-delete-btn img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.course-review-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  color: #777777;
+  margin-bottom: 0.25rem;
+}
+
+.course-review-item-meta-dot {
+  color: #bbbbbb;
+}
+
+.course-review-item-content {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #333333;
+  line-height: 1.5;
+}
+
+/* 별 (표시용) */
+.course-star-row {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.course-star {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+}
+
+.course-star-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.course-star-base {
+  color: #e0e0e0;
+}
+
+.course-star-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+.course-star-fill-text {
+  color: #ffb400;
+}
+
+/* 스크린리더용 텍스트 숨기기 */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}

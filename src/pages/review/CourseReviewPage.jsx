@@ -1,162 +1,232 @@
-// src/pages/review/CourseReviewPage.jsx
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import "../../css/review/CourseReviewPage.css";
 
 import api from "../../api/axios";
 import { useLoading } from "../../context/LoadingContext.jsx";
 
-import CourseReviewHeaderSection from "./CourseReviewHeaderSection.jsx";
-import CourseReviewListSection from "./CourseReviewListSection.jsx";
-import CourseReviewWriteSection from "./CourseReviewWriteSection.jsx";
+import CourseInfoSection from "./CourseReviewHeaderSection.jsx";
+import CourseReviewList from "./CourseReviewList.jsx";
+import CourseReviewWrite from "./CourseReviewWrite.jsx";
 
 export default function CourseReviewPage() {
-  const { courseId } = useParams(); // ex) /course-review/:courseId
+  const { courseId } = useParams();
   const navigate = useNavigate();
   const { showLoading, hideLoading } = useLoading();
 
   const [course, setCourse] = useState(null);
-  const [reviews, setReviews] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loadingCourse, setLoadingCourse] = useState(false);
 
-  const [newContent, setNewContent] = useState("");
-  const [newRating, setNewRating] = useState(0); // 0 ~ 5, 0.5 단위
-  const [submitting, setSubmitting] = useState(false);
+  const [hasMyReview, setHasMyReview] = useState(false);
+  const [submitLoading, setSubmitLoading] = useState(false);
 
-  const courseName = course?.name || "강의명";
+  const [reviewContent, setReviewContent] = useState("");
+  const [reviewRating, setReviewRating] = useState(0);
 
-  const loadCourse = useCallback(async () => {
-    if (!courseId) return;
-
-    setLoading(true);
-    showLoading();
-    try {
-      const res = await api.get(`/courses/${courseId}`);
-      const data = res.data ?? {};
-      setCourse(data);
-      setReviews(Array.isArray(data.reviews) ? data.reviews : []);
-    } catch (err) {
-      console.error("강의 정보 조회 실패:", err);
-      alert("강의 정보를 불러오는 중 오류가 발생했어요.");
-    } finally {
-      hideLoading();
-      setLoading(false);
-    }
-  }, [courseId, showLoading, hideLoading]);
-
+  // 강의 정보 불러오기
   useEffect(() => {
-    loadCourse();
-  }, [loadCourse]);
+    const fetchCourse = async () => {
+      setLoadingCourse(true);
+      showLoading();
+      try {
+        const res = await api.get(`/courses/${courseId}`);
+        const data = res.data;
+        setCourse(data);
+
+        // 서버가 hasMyReview 또는 isMine 같은 필드를 내려줄 경우 대비
+        const hasMine =
+          data?.hasMyReview === true ||
+          (Array.isArray(data?.reviews) &&
+            data.reviews.some((r) => r.isMine));
+        if (hasMine) {
+          setHasMyReview(true);
+        }
+      } catch (e) {
+        console.error("강의 정보 불러오기 실패:", e);
+      } finally {
+        setLoadingCourse(false);
+        hideLoading();
+      }
+    };
+
+    fetchCourse();
+  }, [courseId, showLoading, hideLoading]);
 
   const handleBack = () => {
     navigate(-1);
   };
 
-  const canSubmit = useMemo(() => {
-    return newRating > 0 && newContent.trim().length > 0 && !submitting;
-  }, [newRating, newContent, submitting]);
-
-  /** 평가하기 버튼 클릭 */
+  // 강의평 등록
   const handleSubmitReview = async () => {
-    if (!courseId) return;
-    if (!newRating || !newContent.trim()) {
-      alert("별점과 내용을 모두 입력해주세요.");
+    if (!course) return;
+
+    if (hasMyReview) {
+      alert("한 개의 강의평만 작성 가능합니다.");
       return;
     }
 
-    setSubmitting(true);
+    if (!reviewRating || reviewRating < 0.5) {
+      alert("별점을 선택해주세요.");
+      return;
+    }
+
+    if (!reviewContent.trim()) {
+      alert("내용을 입력해주세요.");
+      return;
+    }
+
+    setSubmitLoading(true);
     try {
-      const body = {
-        rating: newRating,
-        content: newContent.trim(),
-      };
+      const res = await api.post(`/courses/reviews/${course.id}`, {
+        rating: reviewRating,
+        content: reviewContent.trim(),
+      });
 
-      const res = await api.post(`/courses/reviews/${courseId}`, body);
-      const created = res.data ?? body;
+      const newReview = res.data;
 
-      // 로컬 리뷰 목록 맨 위에 추가
-      setReviews((prev) => [created, ...prev]);
-
-      // 평균 / 개수 갱신 (대략적으로 계산)
       setCourse((prev) => {
         if (!prev) return prev;
-        const prevCount = prev.ratingCount || 0;
-        const prevAvg = prev.ratingAvg || 0;
-        const newCount = prevCount + 1;
-        const newAvg =
-          (prevAvg * prevCount + (created.rating ?? newRating)) / newCount;
+        const prevReviews = Array.isArray(prev.reviews)
+          ? prev.reviews
+          : [];
+        const nextReviews = [newReview, ...prevReviews];
+
+        const nextCount = nextReviews.length;
+        const sumRating = nextReviews.reduce(
+          (sum, r) => sum + (r.rating || 0),
+          0
+        );
+        const nextAvg =
+          nextCount > 0 ? sumRating / nextCount : 0;
+
         return {
           ...prev,
-          ratingCount: newCount,
-          ratingAvg: newAvg,
+          reviews: nextReviews,
+          ratingCount: nextCount,
+          ratingAvg: nextAvg,
         };
       });
 
-      setNewContent("");
-      setNewRating(0);
-      alert("강의평이 등록되었어요.");
-    } catch (err) {
-      console.error("강의평 등록 실패:", err);
-      alert("강의평 등록 중 오류가 발생했어요.");
+      setHasMyReview(true);
+      setReviewContent("");
+      setReviewRating(0);
+      alert("강의평이 등록되었습니다.");
+    } catch (e) {
+      if (e.response?.status === 409) {
+        // 이미 강의평이 있는 경우
+        alert("한 개의 강의평만 작성 가능합니다.");
+        setHasMyReview(true);
+      } else {
+        console.error("강의평 등록 실패:", e);
+        alert("강의평 등록 중 오류가 발생했어요.");
+      }
     } finally {
-      setSubmitting(false);
+      setSubmitLoading(false);
     }
   };
 
+  // 강의평 삭제
+  const handleDeleteReview = async (reviewId) => {
+    if (!window.confirm("이 강의평을 삭제하시겠습니까?")) {
+      return;
+    }
+
+    try {
+      await api.delete(`/courses/reviews/${reviewId}`);
+
+      setCourse((prev) => {
+        if (!prev) return prev;
+        const prevReviews = Array.isArray(prev.reviews)
+          ? prev.reviews
+          : [];
+
+        const nextReviews = prevReviews.filter(
+          (r) => r.id !== reviewId
+        );
+
+        const nextCount = nextReviews.length;
+        const sumRating = nextReviews.reduce(
+          (sum, r) => sum + (r.rating || 0),
+          0
+        );
+        const nextAvg =
+          nextCount > 0 ? sumRating / nextCount : 0;
+
+        return {
+          ...prev,
+          reviews: nextReviews,
+          ratingCount: nextCount,
+          ratingAvg: nextAvg,
+        };
+      });
+
+      // 삭제된 리뷰가 내 것이라고 가정하고 다시 작성 가능하게
+      setHasMyReview(false);
+    } catch (e) {
+      console.error("강의평 삭제 실패:", e);
+      alert("강의평 삭제 중 오류가 발생했어요.");
+    }
+  };
+
+  const ratingAvg = course?.ratingAvg ?? 0;
+  const ratingCount = course?.ratingCount ?? 0;
+  const reviews = course?.reviews ?? [];
+
   return (
     <div className="course-review-page">
-      {/* 상단 헤더 */}
-      <header className="course-review-topbar">
+      {/* 상단 커스텀 헤더 */}
+      <header className="course-review-header">
         <button
           type="button"
-          className="course-review-back-btn"
+          className="course-review-back-button"
           onClick={handleBack}
           aria-label="이전 페이지로"
         >
-          {/* 간단한 화살표 (←) */}
-          <span className="course-review-back-icon">←</span>
+          {/* 여기 SVG 화살표 아이콘 넣어도 됨 */}
+          <span className="course-review-back-arrow">←</span>
         </button>
-        <h1 className="course-review-topbar-title">강의평</h1>
+        <h1 className="course-review-header-title">강의평</h1>
+        <div className="course-review-header-right" />
       </header>
 
-      <main className="course-review-main">
-        {loading && !course ? (
-          <div className="course-review-loading">강의 정보를 불러오는 중이에요...</div>
-        ) : !course ? (
-          <div className="course-review-loading">강의 정보를 찾을 수 없어요.</div>
-        ) : (
-          <>
-            {/* 1. 과목 정보 섹션 */}
-            <CourseReviewHeaderSection course={course} />
+      <div className="course-review-page-content">
+        <CourseInfoSection
+          course={course}
+          loading={loadingCourse}
+          ratingAvg={ratingAvg}
+          ratingCount={ratingCount}
+        />
 
-            {/* 2. 강의평 리스트 섹션 */}
-            <CourseReviewListSection
-              reviews={reviews}
-              semesterCode={course.semesterCode}
-            />
+        <CourseReviewList
+          reviews={reviews}
+          semesterCode={course?.semesterCode}
+          onDeleteReview={handleDeleteReview}
+        />
 
-            {/* 3. 강의평 쓰기 섹션 */}
-            <CourseReviewWriteSection
-              content={newContent}
-              onContentChange={setNewContent}
-              rating={newRating}
-              onRatingChange={setNewRating}
-            />
+        <CourseReviewWrite
+          rating={reviewRating}
+          onRatingChange={setReviewRating}
+          content={reviewContent}
+          onContentChange={setReviewContent}
+          hasMyReview={hasMyReview}
+        />
+      </div>
 
-            {/* 하단 평가하기 버튼 */}
-            <div className="course-review-submit-wrap">
-              <button
-                type="button"
-                className="course-review-submit-btn"
-                onClick={handleSubmitReview}
-                disabled={!canSubmit}
-              >
-                {submitting ? "등록 중..." : "평가하기"}
-              </button>
-            </div>
-          </>
-        )}
-      </main>
+      {/* 화면 하단 평가하기 버튼 */}
+      <div className="course-review-submit-bar">
+        <button
+          type="button"
+          className="course-review-submit-button"
+          onClick={handleSubmitReview}
+          disabled={submitLoading || hasMyReview}
+        >
+          {hasMyReview
+            ? "이미 강의평을 작성하셨습니다"
+            : submitLoading
+            ? "등록 중..."
+            : "평가하기"}
+        </button>
+      </div>
     </div>
   );
 }
