@@ -132,14 +132,7 @@
 
 /* 한 칸(1시간) 슬롯 */
 .time-filter-slot {
-  flex: 1 0 auto;
   height: 2.4rem;
-  /* 훨씬 연한 보라색으로 변경 */
-  border-top: 1px solid #f0e5ff;
-  background: transparent;
-  padding: 0;
-  margin: 0;
-  outline: none;
   cursor: pointer;
 }
 
