@@ -93,7 +93,8 @@
 /* 왼쪽 시간축 */
 .time-filter-time-col {
   background-color: #f0e3ff;
-  border-right: 1px solid #e2d4ff; /* 1px */
+  /* 경계선 제거 */
+  border-right: none;
 }
 
 .time-filter-time-slot {
@@ -103,7 +104,8 @@
   justify-content: center;
   font-size: 0.7rem;
   color: #9b8ac8;
-  border-top: 1px solid #e2d4ff; /* 1px */
+  /* 훨씬 연한 보라색으로 변경 */
+  border-top: 1px solid #f0e5ff;
 }
 
 .time-filter-time-slot:first-child {
@@ -122,7 +124,6 @@
   min-height: calc(2.4rem * 10); /* 10칸 */
   display: flex;
   flex-direction: column;
-  
 }
 
 .time-filter-day-column:first-child {
@@ -133,7 +134,8 @@
 .time-filter-slot {
   flex: 1 0 auto;
   height: 2.4rem;
-  border-top: 1px solid #e2d4ff; /* 시간 구분 가로선 1px */
+  /* 훨씬 연한 보라색으로 변경 */
+  border-top: 1px solid #f0e5ff;
   background: transparent;
   padding: 0;
   margin: 0;
