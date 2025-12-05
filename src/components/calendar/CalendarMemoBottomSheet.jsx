@@ -53,13 +53,16 @@ export default function CalendarMemoBottomSheet({
   onClose,
   onSave,
   onRequestEdit,
-  // 🔥 삭제 완료 시 CalendarPage에 알려줄 콜백
+  // 삭제 완료 시 CalendarPage에 알려줄 콜백
   onDeleted,
 }) {
   const [memoText, setMemoText] = useState("");
-  const [showDeleteModal, setShowDeleteModal] = useState(false); // 삭제 팝업 on/off
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  // 팝업 열릴 때 기본 메모값 설정 (서버에서 온 description/memo만 사용)
+  // MANUAL 일정만 수정/삭제 가능하게
+  const canModify = !!event && event.origin === "MANUAL";
+
+  // 팝업 열릴 때 기본 메모값 설정 (description 우선)
   useEffect(() => {
     if (!visible || !event) return;
     const base = event.description ?? event.memo ?? "";
@@ -69,31 +72,40 @@ export default function CalendarMemoBottomSheet({
   if (!visible || !event) return null;
 
   const handleChange = (e) => {
-    // 지금은 readOnly지만 혹시 몰라 그대로 둠
+    // 현재는 readOnly지만, 혹시 나중을 위해 그대로 둠
     setMemoText(e.target.value);
   };
 
-  const commitAndClose = () => {
-    const trimmed = memoText.trim();
-    if (onSave) onSave(trimmed);
-    if (onClose) onClose();
-  };
-
+  // 바깥 영역 클릭 → 저장 없이 그냥 닫기
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
-      commitAndClose();
+      if (onClose) onClose();
     }
+  };
+
+  const handleBackClick = () => {
+    if (onClose) onClose();
   };
 
   const isEmpty = memoText.trim().length === 0;
 
+  // 수정 아이콘 클릭 → (필요하면 저장) 후 일정 수정 시트로 이동
   const handleClickEdit = () => {
     const trimmed = memoText.trim();
-    if (onSave) onSave(trimmed);
 
-    if (onRequestEdit) {
-      onRequestEdit(event);
+    if (canModify && onSave) {
+      onSave(trimmed); // CalendarPage에서 description 업데이트 + API 호출
+    }
+
+    if (canModify && onRequestEdit) {
+      const nextEvent = {
+        ...event,
+        description: trimmed,
+        memo: trimmed,
+      };
+      onRequestEdit(nextEvent);
     } else if (onClose) {
+      // 수정 불가 일정이면 그냥 닫기
       onClose();
     }
   };
@@ -101,6 +113,7 @@ export default function CalendarMemoBottomSheet({
   // 쓰레기통 아이콘 클릭 → 삭제 확인 팝업 열기
   const handleClickDelete = (e) => {
     e.stopPropagation();
+    if (!canModify) return;
     setShowDeleteModal(true);
   };
 
@@ -132,7 +145,7 @@ export default function CalendarMemoBottomSheet({
                 <button
                   type="button"
                   className="calendar-memo-back-button"
-                  onClick={commitAndClose}
+                  onClick={handleBackClick}
                 >
                   뒤로
                 </button>
@@ -156,24 +169,26 @@ export default function CalendarMemoBottomSheet({
                 해당 일정의 메모입니다.
               </span>
 
-              {/* 아이콘 영역 */}
-              <div className="calendar-memo-actions">
-                {/* 삭제 아이콘 */}
-                <img
-                  src={Trash_ICON}
-                  alt="메모 삭제"
-                  className="calendar-memo-delete-icon"
-                  onClick={handleClickDelete}
-                />
+              {/* 아이콘 영역 (MANUAL 일정에서만 노출) */}
+              {canModify && (
+                <div className="calendar-memo-actions">
+                  {/* 삭제 아이콘 */}
+                  <img
+                    src={Trash_ICON}
+                    alt="메모 삭제"
+                    className="calendar-memo-delete-icon"
+                    onClick={handleClickDelete}
+                  />
 
-                {/* 수정 아이콘 */}
-                <img
-                  src={EDIT_ICON}
-                  alt="메모 수정"
-                  className="calendar-memo-edit-icon"
-                  onClick={handleClickEdit}
-                />
-              </div>
+                  {/* 수정 아이콘 */}
+                  <img
+                    src={EDIT_ICON}
+                    alt="메모 수정"
+                    className="calendar-memo-edit-icon"
+                    onClick={handleClickEdit}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="calendar-memo-textbox-wrapper">
@@ -200,7 +215,7 @@ export default function CalendarMemoBottomSheet({
         </div>
       </div>
 
-      {/* 🔥 삭제 확인 팝업 실제 렌더링 */}
+      {/* 삭제 확인 팝업 */}
       <Delete_schdule
         visible={showDeleteModal}
         eventId={event.id}

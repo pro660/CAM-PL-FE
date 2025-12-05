@@ -412,7 +412,7 @@ export default function CalendarPage() {
     const id = ev.id;
 
     try {
-      await api.put(`/calendar/events/${id}`, {
+      await api.get(`/calendar/events/${id}`, {
         title: ev.title,
         description: memoText,
         startAt: ev.startAt,
