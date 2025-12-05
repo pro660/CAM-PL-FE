@@ -77,11 +77,11 @@
 .cr-star-input::after {
   content: "★";
   position: absolute;
-  left: 0;
+  left: 1rem;
   top: 0;
 
   color: #ffc94a;               /* 채워진 별 색 */
-  width: var(--star-fill, 50%);  /* 0 / 50 / 100% */
+  width: var(--star-fill, 0%);  /* 0 / 50 / 100% */
   overflow: hidden;             /* 나머지 잘라내기 */
 }
 
