@@ -1,10 +1,10 @@
+// src/pages/mypage/MyPage.jsx
 import React, {
   useEffect,
   useMemo,
   useState,
   useCallback,
 } from "react";
-import { useNavigate } from "react-router-dom";
 import "../../css/mypage/MyPage.css";
 
 import api from "../../api/axios";
@@ -12,6 +12,7 @@ import { useLoading } from "../../context/LoadingContext.jsx";
 import MyTimetable from "../../components/mypage/MyTimetable.jsx";
 import CourseSearchBottomSheet from "../../components/mypage/SearchSheet.jsx";
 import LinkBox from "../../components/mypage/Link_Box.jsx";
+import AccountConfirmModal from "../../components/mypage/AccountConfirmModal.jsx"; // 🔥 추가
 
 // ✅ 아이콘 SVG는 형이 실제 파일 만들어서 경로만 맞춰주면 됨
 import NoticeIcon from "../../images/mypage/haksa.svg";
@@ -30,13 +31,16 @@ const WEEKDAY_KR_LONG = [
 export default function MyPage() {
   const [courses, setCourses] = useState([]);
   const { showLoading, hideLoading } = useLoading();
-  const navigate = useNavigate();
 
   const [isCourseSheetOpen, setIsCourseSheetOpen] = useState(false);
   const [userName, setUserName] = useState("CAM-PL 사용자");
 
   // 🔥 바텀시트에서 선택된 강의(시간표 미리보기용)
   const [previewCourse, setPreviewCourse] = useState(null);
+
+  // 🔥 로그아웃 / 탈퇴 확인 팝업 상태
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showUnregisterModal, setShowUnregisterModal] = useState(false);
 
   // camp_auth에서 사용자 이름 로드
   useEffect(() => {
@@ -90,33 +94,6 @@ export default function MyPage() {
     loadTimetable();
   }, [loadTimetable]);
 
-  const handleLogout = async () => {
-    if (!window.confirm("로그아웃 하시겠습니까?")) return;
-
-    try {
-      await api.post("/auth/logout");
-    } catch (e) {
-      console.error(e);
-    } finally {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      navigate("/login", { replace: true });
-    }
-  };
-
-  const handleUnregister = async () => {
-    if (!window.confirm("정말 탈퇴하시겠습니까?")) return;
-
-    try {
-      await api.delete("/auth/unregister");
-    } catch (e) {
-      console.error(e);
-    } finally {
-      localStorage.clear();
-      navigate("/login", { replace: true });
-    }
-  };
-
   // + 버튼 / 바텀시트 닫기
   const handleToggleCourseSheet = () => {
     setIsCourseSheetOpen((prev) => {
@@ -131,20 +108,27 @@ export default function MyPage() {
 
   // 🔥 바텀시트에서 "시간표 추가" 성공 시
   const handleTimetableAdded = () => {
-    loadTimetable();        // 내 시간표 다시 불러오고
+    loadTimetable(); // 내 시간표 다시 불러오고
     setPreviewCourse(null); // 미리보기 제거
     setIsCourseSheetOpen(false); // 바텀시트 닫기
   };
 
   // 이 안에서 실제 이동 링크만 채워주면 됨
   const handleGoNotice = () => {
-    window.open(
-      "https://nportal.hanseo.ac.kr/"
-    );
+    window.open("https://nportal.hanseo.ac.kr/");
   };
 
   const handleGoShuttle = () => {
     window.open("https://hsu.busro.net:456/");
+  };
+
+  // 🔥 기존 window.confirm 대신 팝업만 열어주기
+  const handleLogoutClick = () => {
+    setShowLogoutModal(true);
+  };
+
+  const handleUnregisterClick = () => {
+    setShowUnregisterModal(true);
   };
 
   return (
@@ -195,14 +179,14 @@ export default function MyPage() {
         <button
           type="button"
           className="mypage-link-button"
-          onClick={handleLogout}
+          onClick={handleLogoutClick} // 🔥 팝업 오픈
         >
           로그아웃
         </button>
         <button
           type="button"
           className="mypage-link-button mypage-link-danger"
-          onClick={handleUnregister}
+          onClick={handleUnregisterClick} // 🔥 팝업 오픈
         >
           탈퇴하기
         </button>
@@ -211,10 +195,24 @@ export default function MyPage() {
       {isCourseSheetOpen && (
         <CourseSearchBottomSheet
           onClose={handleToggleCourseSheet}
-          onCourseSelect={setPreviewCourse}      // 🔥 클릭 시 미리보기
+          onCourseSelect={setPreviewCourse} // 🔥 클릭 시 미리보기
           onTimetableAdded={handleTimetableAdded} // 🔥 추가 성공 시 콜백
         />
       )}
+
+      {/* 🔥 로그아웃 확인 팝업 */}
+      <AccountConfirmModal
+        mode="logout"
+        visible={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+      />
+
+      {/* 🔥 회원탈퇴 확인 팝업 */}
+      <AccountConfirmModal
+        mode="unregister"
+        visible={showUnregisterModal}
+        onClose={() => setShowUnregisterModal(false)}
+      />
     </div>
   );
 }
