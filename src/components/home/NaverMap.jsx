@@ -2,6 +2,7 @@
 import React, { useEffect, useRef } from "react";
 import "../../css/home/HomePage.css";
 import { useLoading } from "../../context/LoadingContext.jsx";
+import { useLocation } from "react-router-dom";
 
 import PlaceMarkerIcon from "../../images/map/marker-place.svg";
 
@@ -12,16 +13,19 @@ const STATIC_CENTER_LNG = 126.581591;
 /**
  * props:
  * - markers: [{ id, name, placeKey, lat, lng, count }]
- * - center: { lat, lng } | null   // 선택된 장소가 있으면 그 좌표
+ * - center: { lat, lng } | null   // MapPage에서 선택된 장소가 있으면 그 좌표
  * - onMarkerClick: (marker) => void
- * - onMapDrag: () => void         // 🔥 사용자가 지도를 드래그할 때 호출
+ * - onMapDrag: () => void         // 지도 드래그 시작 시 호출 (선택 해제 등)
  */
 const NaverMap = ({ markers = [], center, onMarkerClick, onMapDrag }) => {
+  const location = useLocation();
+  const isHomeMap = location.pathname === "/"; // 홈에서만 재센터 이벤트 사용
+
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
   const staticMarkerRef = useRef(null); // 🔴 정적 빨간 마커
-  const dragListenerRef = useRef(null); // 🔥 드래그 리스너
+  const dragListenerRef = useRef(null); // 드래그 리스너
   const { showLoading, hideLoading } = useLoading();
 
   // ✅ 지도는 한 번만 생성
@@ -51,7 +55,7 @@ const NaverMap = ({ markers = [], center, onMarkerClick, onMapDrag }) => {
         zoom: 16,
       });
 
-      // 🔥 지도 드래그 시작 시 콜백 (장소 정보 닫기 등)
+      // 지도 드래그 시작 시 콜백
       if (onMapDrag) {
         dragListenerRef.current = naver.maps.Event.addListener(
           map,
@@ -63,14 +67,15 @@ const NaverMap = ({ markers = [], center, onMarkerClick, onMapDrag }) => {
       }
 
       mapInstanceRef.current = map;
-      hideLoading();
     } catch (e) {
       console.error(e);
+    } finally {
       hideLoading();
     }
 
     return () => {
       const { naver } = window || {};
+
       // 언마운트 시 장소 마커 제거
       markersRef.current.forEach((marker) => {
         marker.setMap(null);
@@ -91,8 +96,27 @@ const NaverMap = ({ markers = [], center, onMarkerClick, onMapDrag }) => {
 
       mapInstanceRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showLoading, hideLoading]);
+  }, [showLoading, hideLoading, onMapDrag]);
+
+  // ✅ 홈 페이지에서만: 전역 이벤트로 캠퍼스 위치로 재중심
+  useEffect(() => {
+    if (!isHomeMap) return;
+
+    const handler = () => {
+      if (!window.naver || !mapInstanceRef.current) return;
+      const { naver } = window;
+      const staticPos = new naver.maps.LatLng(
+        STATIC_CENTER_LAT,
+        STATIC_CENTER_LNG
+      );
+      mapInstanceRef.current.panTo(staticPos);
+    };
+
+    window.addEventListener("campl-recenter-home", handler);
+    return () => {
+      window.removeEventListener("campl-recenter-home", handler);
+    };
+  }, [isHomeMap]);
 
   // ✅ markers / center 변경될 때마다 지도/마커 업데이트
   useEffect(() => {

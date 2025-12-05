@@ -465,6 +465,20 @@ const HomePage = () => {
           onClose={handleClosePlaceModal}
         />
       )}
+
+      {/* 🔘 홈 지도 - 캠퍼스 기본 위치(빨간 마커)로 이동 버튼 */}
+      <button
+        type="button"
+        className="home-location-fab"
+        onClick={() => {
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new Event("campl-recenter-home"));
+          }
+        }}
+        aria-label="캠퍼스 위치로 이동"
+      >
+        <span className="home-location-fab-dot" />
+      </button>
     </div>
   );
 };
