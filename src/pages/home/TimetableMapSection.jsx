@@ -1,4 +1,3 @@
-// src/pages/home/TimetableMapSection.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import NaverMap from "../../components/home/NaverMap";
 import api from "../../api/axios";
@@ -64,6 +63,9 @@ const mapApiDayToKor = (dayStr) => {
   }
 };
 
+// 🔴 홈에서도 사용할 정적 캠퍼스 중심(빨간 마커 위치와 동일하게 맞춰줌)
+const STATIC_CENTER = { lat: 36.690621, lng: 126.581591 };
+
 const TimetableMapSection = ({
   onTodayLecturesChange,
   markers = [],          // 🔥 홈에서 내려주는 마커 배열
@@ -85,21 +87,27 @@ const TimetableMapSection = ({
   // ✅ 지도에서 선택된 장소 키 (extractPlaceLabel 결과와 동일한 값)
   const [selectedPlaceKey, setSelectedPlaceKey] = useState(null);
 
+  // ✅ 지도 중심 상태 (초기값: 캠퍼스 고정 좌표)
+  const [mapCenter, setMapCenter] = useState(() => ({ ...STATIC_CENTER }));
+
   // ✅ 선택된 장소 키와 일치하는 마커 찾기
   const selectedMarker = useMemo(() => {
     if (!selectedPlaceKey) return null;
     return (
       markers.find(
-        (m) =>
-          (m.placeKey || m.name) === selectedPlaceKey
+        (m) => (m.placeKey || m.name) === selectedPlaceKey
       ) || null
     );
   }, [selectedPlaceKey, markers]);
 
-  // ✅ 지도에 내려보낼 center 값 (없으면 null → 한서대 기본 위치로 부드럽게 복귀)
-  const centerForMap = useMemo(() => {
-    if (!selectedMarker) return null;
-    return { lat: selectedMarker.lat, lng: selectedMarker.lng };
+  // ✅ 선택된 마커가 바뀔 때마다 지도 중심을 그 마커로 이동
+  useEffect(() => {
+    if (selectedMarker) {
+      setMapCenter({
+        lat: selectedMarker.lat,
+        lng: selectedMarker.lng,
+      });
+    }
   }, [selectedMarker]);
 
   // ✅ 선택된 장소에 대한 일정 카드들 (PlaceEventsBar 용)
@@ -184,12 +192,18 @@ const TimetableMapSection = ({
 
   const isMap = activeView === "map";
 
-  // ✅ 홈 지도에서 마커 클릭 시: 같은 곳을 다시 클릭하면 선택 해제(→ 기본 좌표로 복귀)
+  // ✅ 홈 지도에서 마커 클릭 시: 같은 곳을 다시 클릭하면 선택 해제
   const handleMarkerClick = (marker) => {
     if (!marker) return;
     const key = marker.placeKey || marker.name;
     if (!key) return;
     setSelectedPlaceKey((prev) => (prev === key ? null : key));
+  };
+
+  // ✅ 오른쪽 하단 버튼 눌렀을 때 → 캠퍼스 고정 빨간 마커 위치로 이동
+  const handleRecenterToUser = () => {
+    setSelectedPlaceKey(null);
+    setMapCenter({ ...STATIC_CENTER }); // 항상 새 객체로 넣어서 재렌더 유도
   };
 
   return (
@@ -223,11 +237,11 @@ const TimetableMapSection = ({
 
       <div className="home-timetable-map-content">
         {isMap ? (
-          // ===== 네이버 지도 화면 (홈용 마커 + 장소 정보 패널) =====
+          // ===== 네이버 지도 화면 (홈용 마커 + 장소 정보 패널 + 캠퍼스 이동 버튼) =====
           <div className="map-page-map-wrapper">
             <NaverMap
               markers={markers}
-              center={centerForMap}
+              center={mapCenter}
               onMarkerClick={handleMarkerClick}
             />
 
@@ -236,6 +250,16 @@ const TimetableMapSection = ({
               items={selectedPlaceItems}
               onClose={() => setSelectedPlaceKey(null)}
             />
+
+            {/* 🔘 지도 내 우측 하단: 캠퍼스(빨간 마커) 위치로 이동 버튼 */}
+            <button
+              type="button"
+              className="map-page-location-fab"
+              onClick={handleRecenterToUser}
+              aria-label="캠퍼스 위치로 이동"
+            >
+              <span className="map-page-location-fab-dot" />
+            </button>
           </div>
         ) : (
           // ===== 시간표 화면 =====
