@@ -1,17 +1,15 @@
 /* 전체 페이지 배경 + 상단 여백 */
 .time-filter-page {
   min-height: 100vh;
-  background-color: #f5f5f7;
-  display: flex;
-  justify-content: center;
-  box-sizing: border-box;
-  padding: 40px 16px 16px; /* 상단 여백 조금 더 크게 */
+  background-color: #d9d9d9;
+  padding: 4rem 1rem 1rem 1rem;
 }
 
-/* 최대 너비 430px 정도로 중앙 정렬 */
+/* 최대 너비 430px 정도를 rem으로 환산 (약 27rem) */
 .time-filter-inner {
   width: 100%;
-  max-width: 430px;
+  max-width: 27rem;
+  margin: 0 auto;
 }
 
 /* 상단 인사 / 날짜 / 확인 버튼 */
@@ -19,62 +17,124 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 0.75rem;
 }
 
 .time-filter-hello {
-  font-size: 14px;
+  margin: 0;
+  font-size: 0.875rem; /* 약 14px */
   font-weight: 600;
   color: #333333;
 }
 
 .time-filter-date {
-  margin-top: 4px;
-  font-size: 12px;
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem; /* 약 12px */
   color: #666666;
 }
 
 .time-filter-confirm-btn {
-  border-radius: 999px;
-  border: 1px solid #b5b5b5;
+  border-radius: 9999rem;
+  border: 0.0625rem solid #b5b5b5; /* 1px */
   background-color: #ffffff;
-  padding: 6px 14px;
-  font-size: 12px;
+  padding: 0.375rem 0.875rem;
+  font-size: 0.75rem;
   cursor: pointer;
 }
 
 /* 시간표 카드 – 모서리 둥글기 제거 */
 .time-filter-timetable-card {
-  margin-top: 14px;
+  margin-top: 0.875rem;
   background-color: #ffffff;
-  border-radius: 0;         /* 🔥 border radius 제거 */
+  border-radius: 0;
   overflow: hidden;
-  box-shadow: none;         /* 필요 없으면 그림자도 제거 */
+  box-shadow: none;
 }
 
-/* 오른쪽 선택 그리드 */
+/* 실제 시간표 래퍼 */
+.time-filter-timetable {
+  padding: 0;
+  box-sizing: border-box;
+  font-size: 0.7rem;
+}
+
+/* 상단 요일 헤더 줄 */
+.time-filter-header-row {
+  display: grid;
+  grid-template-columns: 2.4rem repeat(5, 1fr); /* 시간축 + 평일 5칸 */
+  column-gap: 0;
+  background-color: #c9a8ff; /* 상단 보라색 바 */
+}
+
+.time-filter-header-cell {
+  padding: 0.4rem 0;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.72rem;
+  color: #ffffff;
+  border-left: 0.0625rem solid rgba(255, 255, 255, 0.35); /* 1px */
+}
+
+.time-filter-header-cell:first-child {
+  border-left: none;
+}
+
+.time-filter-header-cell-time {
+  border-right: 0.0625rem solid rgba(255, 255, 255, 0.45); /* 1px */
+}
+
+/* 본문: 왼쪽 시간축 + 오른쪽 그리드 */
+.time-filter-body {
+  display: grid;
+  grid-template-columns: 2.4rem 1fr; /* 시간축 + 나머지 */
+  column-gap: 0;
+  background-color: #f6f0ff;
+}
+
+/* 왼쪽 시간축 */
+.time-filter-time-col {
+  background-color: #f0e3ff;
+  border-right: 0.0625rem solid #e2d4ff; /* 1px */
+}
+
+.time-filter-time-slot {
+  height: 2.4rem; /* 1시간 칸 높이 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: #9b8ac8;
+  border-top: 0.0625rem solid #e2d4ff; /* 1px */
+}
+
+.time-filter-time-slot:first-child {
+  border-top: none;
+}
+
+/* 오른쪽 요일 그리드 전체 */
 .time-filter-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  background-color: #f6f0ff; /* MyTimetable body 배경과 맞춤 */
+  background-color: #ffffff;
 }
 
-/* 각 요일 컬럼 – 세로선은 여기서만 그리기 */
+/* 각 요일 칼럼 */
 .time-filter-day-column {
+  min-height: calc(2.4rem * 10); /* 10칸 */
   display: flex;
   flex-direction: column;
-  background-color: #ffffff;
-  border-left: 1px solid #e2d4ff;   /* 🔥 요일 구분 세로선 */
+  border-left: 0.0625rem solid #e2d4ff; /* 요일 구분 세로선 1px */
 }
 
 .time-filter-day-column:first-child {
-  border-left: none; /* 맨 왼쪽은 선 없음 (시간축 오른쪽 선이랑 이어짐) */
+  border-left: none;
 }
 
-/* 한 칸(1시간) 슬롯 – 가로선은 여기서만 그리기 */
+/* 한 칸(1시간) 슬롯 */
 .time-filter-slot {
-  height: 2.4rem;                    /* MyTimetable 시간칸 높이와 동일 */
-  border-top: 1px solid #e2d4ff;     /* 🔥 시간 구분 가로선 */
+  flex: 1 0 auto;
+  height: 2.4rem;
+  border-top: 0.0625rem solid #e2d4ff; /* 시간 구분 가로선 1px */
   background: transparent;
   padding: 0;
   margin: 0;
@@ -83,28 +143,10 @@
 }
 
 .time-filter-slot:first-child {
-  border-top: none; /* 맨 위는 선 없음 (헤더와 딱 붙게) */
+  border-top: none;
 }
 
 /* 선택된 칸 색 */
 .time-filter-slot.selected {
-  background-color: #e3d7f4; /* 요구한 선택 색상 그대로 유지 */
-}
-
-/* 🔥 이 페이지에서만 MyTimetable의 선 색/겹침을 정리 */
-
-/* 시간축 오른쪽 세로선만 유지, 색 통일 */
-.time-filter-page .mypage-timetable-time-col {
-  background-color: #f0e3ff;
-  border-right: 1px solid #e2d4ff;   /* 🔥 세로선 색 통일 */
-}
-
-/* 시간축 쪽 가로선은 없애고, 오른쪽 grid에서만 가로선 그리게 */
-.time-filter-page .mypage-timetable-time-slot {
-  border-bottom: none;
-}
-
-/* MyTimetable의 요일 컬럼 세로선은 제거 (겹침 방지) */
-.time-filter-page .mypage-timetable-day-column {
-  border-right: none;
+  background-color: #e3d7f4;
 }
