@@ -1,120 +1,90 @@
-import React from "react";
-import "../../css/review/CourseReviewList.css";
+// src/pages/review/CourseReviewListSection.jsx
+import React, { useMemo } from "react";
+import "../../css/review/CourseReviewListSection.css";
 
-// 별 표시 (리뷰별 점수)
-const StarRatingDisplay = ({ value }) => {
-  const safe = Math.max(0, Math.min(5, value ?? 0));
+/** 별점 표시용 (읽기 전용, 0.5 단위) */
+function StarRatingDisplay({ value = 0 }) {
   const stars = [];
+  const safeValue = Math.max(0, Math.min(5, value));
 
-  for (let i = 1; i <= 5; i++) {
-    let fillPercent = 0;
-    if (safe >= i) fillPercent = 100;
-    else if (safe >= i - 0.5) fillPercent = 50;
+  for (let i = 1; i <= 5; i += 1) {
+    let fill = 0;
+    const diff = safeValue - (i - 1);
+    if (diff >= 1) fill = 100;
+    else if (diff >= 0.5) fill = 50;
 
     stars.push(
-      <span className="course-star" key={i}>
-        <span className="course-star-text course-star-base">
-          ★
-        </span>
+      <span key={i} className="cr-star">
+        <span className="cr-star-base">★</span>
         <span
-          className="course-star-fill"
-          style={{ width: `${fillPercent}%` }}
+          className="cr-star-fill"
+          style={{ width: `${fill}%` }}
         >
-          <span className="course-star-text course-star-fill-text">
-            ★
-          </span>
+          ★
         </span>
       </span>
     );
   }
 
-  return <div className="course-star-row">{stars}</div>;
-};
+  return <div className="cr-star-row">{stars}</div>;
+}
 
 const formatSemesterLabel = (semesterCode) => {
   if (!semesterCode) return "";
-  const [year, term] = semesterCode.split("-");
-  let termText = "";
-  if (term === "1") termText = "1학기";
-  else if (term === "2") termText = "2학기";
-  else termText = `${term}학기`;
-  return `${year}년 ${termText}`;
+  const [yearStr, semStr] = semesterCode.split("-");
+  if (!yearStr || !semStr) return "";
+  const shortYear = yearStr.slice(2); // 2025 -> 25
+  const semLabel =
+    semStr === "1"
+      ? "1학기"
+      : semStr === "2"
+      ? "2학기"
+      : `${semStr}학기`;
+  return `${shortYear}년 ${semLabel} 수강자`;
 };
 
-const formatDate = (isoStr) => {
-  if (!isoStr) return "";
-  const d = new Date(isoStr);
-  if (Number.isNaN(d.getTime())) return "";
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}.${m}.${day}`;
-};
-
-export default function CourseReviewList({
+export default function CourseReviewListSection({
   reviews = [],
   semesterCode,
-  onDeleteReview,
 }) {
-  const semesterLabel = formatSemesterLabel(semesterCode);
+  const semesterLabel = useMemo(
+    () => formatSemesterLabel(semesterCode),
+    [semesterCode]
+  );
+
+  const sortedReviews = useMemo(() => {
+    return [...reviews].sort((a, b) => {
+      const aTime = new Date(a.createdAt || 0).getTime();
+      const bTime = new Date(b.createdAt || 0).getTime();
+      return bTime - aTime; // 최신순
+    });
+  }, [reviews]);
 
   return (
-    <section className="course-review-list-section">
-      <h2 className="course-review-list-title">강의평</h2>
+    <section className="cr-list-wrapper">
+      <h3 className="cr-section-title">강의평</h3>
 
-      {reviews.length === 0 ? (
-        <p className="course-review-list-empty">
-          아직 등록된 강의평이 없습니다.
+      {sortedReviews.length === 0 ? (
+        <p className="cr-list-empty-text">
+          아직 등록된 강의평이 없어요.
         </p>
       ) : (
-        <div className="course-review-list-items">
-          {reviews.map((review) => (
+        <div className="cr-review-list">
+          {sortedReviews.map((review) => (
             <article
-              key={review.id}
-              className="course-review-item"
+              key={review.id || review.createdAt}
+              className="cr-review-card"
             >
-              <div className="course-review-item-header">
-                <div className="course-review-item-rating">
-                  <StarRatingDisplay value={review.rating} />
-                  <span className="course-review-item-rating-value">
-                    {review.rating?.toFixed(1)}점
-                  </span>
+              <div className="cr-review-rating-row">
+                <StarRatingDisplay value={review.rating || 0} />
+              </div>
+              {semesterLabel && (
+                <div className="cr-review-semester">
+                  {semesterLabel}
                 </div>
-
-                <button
-                  type="button"
-                  className="course-review-item-delete-btn"
-                  onClick={() =>
-                    onDeleteReview && onDeleteReview(review.id)
-                  }
-                >
-                  {/* 여기 안에 SVG 아이콘 넣으면 됨 */}
-                  <span className="visually-hidden">
-                    강의평 삭제
-                  </span>
-                </button>
-              </div>
-
-              <div className="course-review-item-meta">
-                {semesterLabel && (
-                  <span className="course-review-item-meta-text">
-                    {semesterLabel} 수강자
-                  </span>
-                )}
-                {review.createdAt && semesterLabel && (
-                  <span className="course-review-item-meta-dot">
-                    ·
-                  </span>
-                )}
-                {review.createdAt && (
-                  <span className="course-review-item-meta-text">
-                    {formatDate(review.createdAt)}
-                  </span>
-                )}
-              </div>
-
-              <p className="course-review-item-content">
-                {review.content}
+              )}
+              <p className="cr-review-content">
+                {review.content || ""}
               </p>
             </article>
           ))}

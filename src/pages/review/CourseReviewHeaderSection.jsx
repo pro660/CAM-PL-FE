@@ -53,34 +53,25 @@ const formatCourseTime = (times = []) => {
     .join(", ");
 };
 
-/** ⭐ 별점 표시용 (읽기 전용, 0.5 단위 / 세로로 반 잘라서 채우기) */
+/** 별점 표시용 (읽기 전용, 0.5 단위) */
 function StarRatingDisplay({ value = 0 }) {
-  const safeValue = Math.max(0, Math.min(5, value));
   const stars = [];
+  const safeValue = Math.max(0, Math.min(5, value));
 
   for (let i = 1; i <= 5; i += 1) {
-    let fillPercent = 0;
-
-    if (safeValue >= i) {
-      // 꽉 찬 별
-      fillPercent = 100;
-    } else if (safeValue >= i - 0.5) {
-      // 반 개짜리 별
-      fillPercent = 50;
-    }
+    let fill = 0;
+    const diff = safeValue - (i - 1);
+    if (diff >= 1) fill = 100;
+    else if (diff >= 0.5) fill = 50;
 
     stars.push(
       <span key={i} className="cr-star">
-        {/* 회색 베이스 별 */}
-        <span className="cr-star-text cr-star-base">★</span>
-        {/* 색 채워지는 별 (width로 세로 절반 자르기) */}
+        <span className="cr-star-base">★</span>
         <span
           className="cr-star-fill"
-          style={{ width: `${fillPercent}%` }}
+          style={{ width: `${fill}%` }}
         >
-          <span className="cr-star-text cr-star-fill-text">
-            ★
-          </span>
+          ★
         </span>
       </span>
     );
@@ -114,10 +105,7 @@ export default function CourseReviewHeaderSection({ course }) {
     [ratingCount]
   );
 
-  const timeText = useMemo(
-    () => formatCourseTime(times || []),
-    [times]
-  );
+  const timeText = useMemo(() => formatCourseTime(times || []), [times]);
   const roomText = useMemo(
     () => (times && times[0]?.room) || "-",
     [times]

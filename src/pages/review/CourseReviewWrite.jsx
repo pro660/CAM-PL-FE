@@ -1,102 +1,81 @@
+// src/pages/review/CourseReviewWriteSection.jsx
 import React from "react";
-import "../../css/review/CourseReviewWrite.css";
+import "../../css/review/CourseReviewWriteSection.css";
 
-// 인터랙티브 별점 (0.5 단위, 왼쪽 = 반개, 오른쪽 = 한 개)
-const InteractiveStarRating = ({
-  value,
-  onChange,
-  disabled,
-}) => {
-  const safe = Math.max(0, Math.min(5, value ?? 0));
+/** 입력용 별점 (0.5 단위 클릭) */
+function StarRatingInput({ value = 0, onChange }) {
+  const safeValue = Math.max(0, Math.min(5, value));
 
-  const handleStarClick = (index, event) => {
-    if (disabled || !onChange) return;
-
-    const rect = event.currentTarget.getBoundingClientRect();
-    const clickX = event.clientX - rect.left;
-    const isHalf = clickX < rect.width / 2;
-
-    const newValue = isHalf ? index - 0.5 : index;
+  const handleClick = (index, e) => {
+    if (!onChange) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const half = x <= rect.width / 2 ? 0.5 : 1;
+    const newValue = index - 1 + half;
     onChange(newValue);
   };
 
   const stars = [];
-  for (let i = 1; i <= 5; i++) {
-    let fillPercent = 0;
-    if (safe >= i) fillPercent = 100;
-    else if (safe >= i - 0.5) fillPercent = 50;
+  for (let i = 1; i <= 5; i += 1) {
+    let fill = 0;
+    const diff = safeValue - (i - 1);
+    if (diff >= 1) fill = 100;
+    else if (diff >= 0.5) fill = 50;
 
     stars.push(
       <button
         key={i}
         type="button"
-        className="course-star-button"
-        onClick={(e) => handleStarClick(i, e)}
-        disabled={disabled}
+        className="cr-star-input"
+        onClick={(e) => handleClick(i, e)}
       >
-        <span className="course-star">
-          <span className="course-star-text course-star-base">
-            ★
-          </span>
-          <span
-            className="course-star-fill"
-            style={{ width: `${fillPercent}%` }}
-          >
-            <span className="course-star-text course-star-fill-text">
-              ★
-            </span>
-          </span>
+        <span className="cr-star-base">★</span>
+        <span
+          className="cr-star-fill"
+          style={{ width: `${fill}%` }}
+        >
+          ★
         </span>
       </button>
     );
   }
 
-  return <div className="course-star-row">{stars}</div>;
-};
+  return <div className="cr-star-input-row">{stars}</div>;
+}
 
-export default function CourseReviewWrite({
-  rating,
-  onRatingChange,
+export default function CourseReviewWriteSection({
   content,
   onContentChange,
-  hasMyReview,
+  rating,
+  onRatingChange,
 }) {
-  const disabled = hasMyReview;
+  const handleTextChange = (e) => {
+    onContentChange?.(e.target.value);
+  };
+
+  const ratingText =
+    rating && rating > 0 ? `${rating.toFixed(1)} / 5.0` : "0 / 5.0";
 
   return (
-    <section className="course-review-write-section">
-      <h2 className="course-review-write-title">강의평 쓰기</h2>
+    <section className="cr-write-wrapper">
+      <h3 className="cr-section-title">강의평쓰기</h3>
 
-      <div className="course-review-write-box">
+      <div className="cr-write-textarea-wrap">
         <textarea
-          className="course-review-write-textarea"
+          className="cr-write-textarea"
           placeholder="내용을 입력해주세요"
           value={content}
-          onChange={(e) =>
-            onContentChange && onContentChange(e.target.value)
-          }
-          disabled={disabled}
+          onChange={handleTextChange}
           maxLength={1000}
         />
+      </div>
 
-        <div className="course-review-write-bottom-row">
-          <div className="course-review-write-stars">
-            <InteractiveStarRating
-              value={rating}
-              onChange={onRatingChange}
-              disabled={disabled}
-            />
-            <span className="course-review-write-rating-text">
-              {rating > 0 ? `${rating.toFixed(1)} / 5` : "0.0 / 5"}
-            </span>
-          </div>
-
-          {hasMyReview && (
-            <p className="course-review-write-info">
-              한 개의 강의평만 작성 가능합니다.
-            </p>
-          )}
-        </div>
+      <div className="cr-write-rating-row">
+        <StarRatingInput
+          value={rating}
+          onChange={onRatingChange}
+        />
+        <span className="cr-write-rating-text">{ratingText}</span>
       </div>
     </section>
   );

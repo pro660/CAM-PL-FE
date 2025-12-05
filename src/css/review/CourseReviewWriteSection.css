@@ -1,0 +1,40 @@
+/* 강의평 쓰기 섹션 */
+.cr-write-wrapper {
+  padding: 0.8rem 1.2rem 0.5rem;
+}
+
+.cr-write-textarea-wrap {
+  border-radius: 0.9rem;
+  border: 1px solid #e2d9ff;
+  background-color: #fbf9ff;
+  padding: 0.55rem 0.6rem;
+}
+
+.cr-write-textarea {
+  width: 100%;
+  min-height: 5rem;
+  border: none;
+  background: transparent;
+  resize: vertical;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: #333333;
+  outline: none;
+}
+
+.cr-write-textarea::placeholder {
+  color: #b9b3d2;
+}
+
+/* 별점 입력 줄 */
+.cr-write-rating-row {
+  margin-top: 0.55rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cr-write-rating-text {
+  font-size: 0.76rem;
+  color: #888888;
+}
