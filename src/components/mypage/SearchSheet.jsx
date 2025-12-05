@@ -381,89 +381,73 @@ const CourseSearchBottomSheet = ({
   /** 🔥 강의평 버튼 클릭 → 강의평 페이지로 이동 */
   const handleReviewClick = (e, courseId) => {
     e.stopPropagation(); // 카드 onClick 막기
-    onClose?.();         // 바텀시트 닫기
+    onClose?.(); // 바텀시트 닫기
     navigate(`/course-review/${courseId}`);
   };
 
-  /** 🔥 시간표 추가 플로우 (try-add만 사용)
+  /** 🔥 시간표 추가 플로우
    * 1) /timetable/items/try-add 호출
-   * 2) conflict === true && itemId 있으면 → 삭제 여부 물어봄
-   * 3) 예 → 해당 item 삭제 → 다시 try-add
+   *   - 200 + 성공: 바로 추가
+   *   - 409 에러: "이미 내 시간표에 존재합니다" 알림
+   *   - 200 + { conflict: true, ... }: 경고창 → /timetable/items/resolve 호출
+   *     - 추가 안함: resolution: "KEEP"
+   *     - 추가 함:  resolution: "REPLACE"
    */
   const handleAddToTimetable = async (courseId) => {
     if (!courseId) return;
 
     setAddLoading(true);
 
-    const tryAdd = async () => {
+    try {
+      // 1) 과목 추가 시도
       const res = await api.post("/timetable/items/try-add", {
         courseId,
       });
-      return res.data ?? {};
-    };
+      const data = res.data ?? {};
 
-    try {
-      // 1차 추가 시도 (실제로는 "충돌 체크" 역할도 함)
-      let data = await tryAdd();
-
-      // 백엔드에서 200에 { status:409, error: ... } 내려줄 수도 있어서 방어 코드
-      if (data.status === 409) {
-        alert(data.error || "이미 내 시간표에 존재합니다.");
-        return;
-      }
-
-      // 시간이 겹치는 경우
+      // 1-1) 충돌 응답 (200 OK + conflict: true)
       if (data.conflict) {
-        const itemId = data.itemId;
-
-        if (!itemId) {
-          // 어떤 강의와 겹치는지 정보가 없으면, 삭제까지는 못함
-          alert("다른 강의와 시간이 겹쳐서 추가할 수 없어요.");
-          return;
-        }
-
         const ok = window.confirm(
           "해당 시간에 이미 다른 강의가 있습니다.\n" +
             "기존 강의를 삭제하고 새 강의를 추가할까요?"
         );
-        if (!ok) {
-          return;
-        }
 
-        // 기존 강의 삭제
+        const resolution = ok ? "REPLACE" : "KEEP";
+
         try {
-          await api.delete(`/timetable/items/${itemId}`);
-        } catch (e) {
-          console.error("기존 강의 삭제 실패:", e);
-          alert("기존 강의를 삭제하는 중 오류가 발생했어요.");
-          return;
+          const resolveRes = await api.post(
+            "/timetable/items/resolve",
+            {
+              courseId,
+              resolution,
+            }
+          );
+          const resolveData = resolveRes.data ?? {};
+
+          if (resolution === "REPLACE") {
+            // 백엔드에서 실제 교체/추가가 수행되었다고 가정
+            // createdEventCount 같은 필드가 있다면 참고
+            if (resolveData.createdEventCount === 0) {
+              // 혹시 생성된 이벤트가 없는 경우 방어적으로 안내
+              alert("강의가 추가되지 않았어요.");
+            } else {
+              alert("시간표에 강의가 추가되었어요.");
+              onTimetableAdded?.();
+            }
+          } else {
+            // KEEP 선택 시
+            alert("기존 시간표를 유지했습니다.");
+          }
+        } catch (err) {
+          console.error("시간표 충돌 해결 실패:", err);
+          alert("시간표 충돌을 해결하는 중 오류가 발생했어요.");
         }
 
-        // 다시 추가 시도
-        data = await tryAdd();
-
-        if (data.status === 409) {
-          alert(data.error || "이미 내 시간표에 존재합니다.");
-          return;
-        }
-
-        if (data.conflict) {
-          alert("다른 강의와 시간이 계속 겹쳐서 추가할 수 없어요.");
-          return;
-        }
-
-        if (data.createdEventCount > 0) {
-          alert("시간표에 강의가 추가되었어요.");
-          onTimetableAdded?.();
-          return;
-        }
-
-        alert("강의가 추가되지 않았어요.");
         return;
       }
 
-      // 정상적으로 바로 추가된 경우
-      if (data.createdEventCount > 0) {
+      // 1-2) createdEventCount로 성공 여부 판단
+      if (data.createdEventCount > 0 || !("conflict" in data)) {
         alert("시간표에 강의가 추가되었어요.");
         onTimetableAdded?.();
         return;
@@ -472,9 +456,11 @@ const CourseSearchBottomSheet = ({
       // 그 외 애매한 응답
       alert("강의가 추가되지 않았어요.");
     } catch (error) {
+      // 409: 이미 내 시간표에 존재
       if (error.response?.status === 409) {
         const msg =
-          error.response.data?.error || "이미 내 시간표에 존재합니다.";
+          error.response.data?.error ||
+          "이미 내 시간표에 존재합니다.";
         alert(msg);
       } else {
         console.error("시간표 추가 실패:", error);
