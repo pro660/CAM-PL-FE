@@ -102,13 +102,7 @@
   z-index: 0;
 
   /* 10칸 기준으로 아래 방향으로 반복되는 얇은 라인 */
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0,
-    transparent calc(10% - 1px),
-    #c09ef1 calc(10% - 1px),
-    #c09ef1 10%
-  );
+  border-bottom: 1px solid #c09ef1;
 }
 
 /* 그리드 내용은 라인 위에 올라오도록 */
