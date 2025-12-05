@@ -7,12 +7,12 @@ import TodayScheduleList from "./TodayScheduleList";
 import StudyPlaceList from "./StudyPlaceList";
 import "../../css/home/HomePage.css";
 import api from "../../api/axios";
-import { useLoading } from "../../context/LoadingContext.jsx"; // ✅ 전역 로더 훅 추가
+import { useLoading } from "../../context/LoadingContext.jsx";
 import PlaceDetailModal from "../../components/home/PlaceDetailModal.jsx";
 
-// ✅ 사용자 기준 위치 기본값 (캠퍼스 좌표, 위치 권한 거부 시 사용)
-const DEFAULT_LAT = 36.691274;
-const DEFAULT_LON = 126.584492;
+// 🔴 위치 기반이 아니라, 항상 같은 캠퍼스 좌표를 사용
+const STATIC_LAT = 36.690711;
+const STATIC_LON = 126.581783;
 
 // 카테고리 한글 라벨링 (캘린더랑 맞추기)
 function getCategoryLabel(category, origin) {
@@ -93,7 +93,7 @@ function extractPlaceLabel(location) {
 }
 
 const HomePage = () => {
-  const { showLoading, hideLoading } = useLoading(); // ✅ 전역 로더 제어
+  const { showLoading, hideLoading } = useLoading();
 
   // TimetableMapSection에서 내려주는 오늘의 강의 리스트
   const [todayLectures, setTodayLectures] = useState([]);
@@ -120,15 +120,9 @@ const HomePage = () => {
   // ✅ 장소별 일정(강의/일정) 맵 → 지도에서 마커 클릭 시 쓸 데이터
   const [homePlaceEventsMap, setHomePlaceEventsMap] = useState({});
 
-  // ✅ 사용자 좌표 (기본값은 캠퍼스)
-  const [coords, setCoords] = useState({
-    lat: DEFAULT_LAT,
-    lon: DEFAULT_LON,
-  });
-
   // 오늘 날짜/요일 계산
   const today = new Date();
-  const month = today.getMonth() + 1; // 실제 월 (1~12)
+  const month = today.getMonth() + 1;
   const date = today.getDate();
   const weekdayNamesFull = [
     "일요일",
@@ -149,46 +143,13 @@ const HomePage = () => {
       : null;
 
   /* =========================
-     0. 브라우저에서 현재 위치 가져오기
-        - 성공: 사용자 좌표로 업데이트
-        - 실패/거부/미지원: 기본 캠퍼스 좌표 그대로 사용
-     ========================= */
-  useEffect(() => {
-    if (typeof navigator === "undefined" || !navigator.geolocation) {
-      console.warn("Geolocation not supported; using default coords.");
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        setCoords({
-          lat: latitude,
-          lon: longitude,
-        });
-      },
-      (error) => {
-        console.warn("Geolocation error; using default coords.", error);
-        // 실패해도 DEFAULT_LAT / DEFAULT_LON 그대로 사용
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 5000,
-        maximumAge: 1000 * 60 * 10,
-      }
-    );
-  }, []);
-
-  /* =========================
      1. 오늘의 일정 + 중요 D-Day + 과제하기 좋은 장소 + 홈 지도 마커
         GET /calendar/summary/today?lat=&lon=
-        - coords(lat, lon)이 바뀔 때마다 호출
-        - 초기: 캠퍼스 좌표로 한 번
-        - 위치 허용 시: 사용자 좌표로 한 번 더
+        🔴 사용자 위치와 상관없이 STATIC_LAT / STATIC_LON 사용
      ========================= */
   useEffect(() => {
     const fetchTodaySummary = async () => {
-      showLoading(); // ✅ 전역 로더 +1
+      showLoading();
       setScheduleLoading(true);
       setStudyPlacesLoading(true);
       setDdayLoading(true);
@@ -196,8 +157,8 @@ const HomePage = () => {
       try {
         const res = await api.get("/calendar/summary/today", {
           params: {
-            lat: coords.lat,
-            lon: coords.lon,
+            lat: STATIC_LAT,
+            lon: STATIC_LON,
           },
         });
 
@@ -215,7 +176,6 @@ const HomePage = () => {
           : [];
 
         const mappedSchedules = rawEvents.map((item, idx) => ({
-          // id 없으면 title+time 조합으로 대체
           id:
             item.id ??
             `${item.title || "schedule"}-${
@@ -251,17 +211,17 @@ const HomePage = () => {
           .filter((d) => d._dValue !== null);
 
         if (withParsed.length > 0) {
-          // 🔥 1단계: 0~5일 이내 일정만 우선
+          // 1단계: 0~5일 이내 일정만 우선
           let candidate = withParsed.filter(
             (d) => d._dValue >= 0 && d._dValue <= 5
           );
 
-          // 🔥 2단계: 5일 이내가 하나도 없으면 전체 사용
+          // 2단계: 5일 이내가 하나도 없으면 전체 사용
           if (candidate.length === 0) {
             candidate = withParsed;
           }
 
-          // 🔥 3단계: 가장 가까운 일정 순으로 정렬
+          // 3단계: 가장 가까운 일정 순으로 정렬
           candidate.sort((a, b) => {
             if (a._dValue !== b._dValue) {
               return a._dValue - b._dValue;
@@ -278,7 +238,6 @@ const HomePage = () => {
           setDdayList(mappedDdays);
           setDdayCurrentIndex(0);
         } else {
-          // 🔥 중요 일정이 하나도 없을 때
           setDdayList([]);
           setDdayCurrentIndex(0);
         }
@@ -319,7 +278,7 @@ const HomePage = () => {
 
         setHomeMapMarkers(parsedMarkers);
 
-        // ===== 장소별 일정(강의 + 이벤트) 맵 생성 (홈 지도에서 정보 패널용) =====
+        // ===== 장소별 일정(강의 + 이벤트) 맵 생성 =====
         const lectures = Array.isArray(body.lectures) ? body.lectures : [];
         const eventsForPlaces = Array.isArray(body.events)
           ? body.events
@@ -371,27 +330,26 @@ const HomePage = () => {
         setScheduleLoading(false);
         setStudyPlacesLoading(false);
         setDdayLoading(false);
-        hideLoading(); // ✅ 전역 로더 -1
+        hideLoading();
       }
     };
 
-    // coords(lat/lon)가 준비될 때마다 호출
+    // 🔴 더 이상 coords 의존 X, 항상 STATIC_LAT/LON 기준으로 호출
     fetchTodaySummary();
-  }, [coords.lat, coords.lon, showLoading, hideLoading]);
+  }, [showLoading, hideLoading]);
 
   /* =========================
-     2. D-Day 여러 개일 때 6초마다 순환
-        - 각 일정은 6초씩 화면에 고정
+     2. D-Day 여러 개일 때 5초마다 순환
      ========================= */
   useEffect(() => {
     if (ddayLoading) return;
-    if (ddayList.length <= 1) return; // 1개 이하면 순환 필요 없음
+    if (ddayList.length <= 1) return;
 
     const interval = setInterval(() => {
       setDdayCurrentIndex((prev) =>
         ddayList.length === 0 ? 0 : (prev + 1) % ddayList.length
       );
-    }, 5000); // 6초
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [ddayLoading, ddayList.length]);
@@ -414,7 +372,7 @@ const HomePage = () => {
 
         <div className="home-dday-card">
           <div className="home-dday-texts">
-            {/* 🔥 제목 슬라이드 영역 */}
+            {/* 제목 슬라이드 영역 */}
             <div className="home-dday-label-viewport">
               {ddayLoading ? (
                 <span className="home-dday-label home-dday-label-line">
@@ -445,11 +403,10 @@ const HomePage = () => {
               )}
             </div>
 
-            {/* 서브 텍스트는 고정 */}
             <span className="home-dday-sub">캠플이 응원할게요!~</span>
           </div>
 
-          {/* 🔥 D-Day 숫자 슬라이드 영역 */}
+          {/* D-Day 숫자 슬라이드 영역 */}
           <div className="home-dday-value">
             {ddayLoading ? (
               <span className="home-dday-number">D-...</span>
@@ -478,23 +435,23 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* 지도 / 시간표 (홈 상단 지도에 placeMarkers + 장소별 일정 맵 사용) */}
+      {/* 지도 / 시간표 */}
       <TimetableMapSection
         onTodayLecturesChange={setTodayLectures}
         markers={homeMapMarkers}
         placeEventsMap={homePlaceEventsMap}
       />
 
-      {/* 오늘의 강의 리스트 (시간표에서 내려주는 것 그대로 사용) */}
+      {/* 오늘의 강의 리스트 */}
       <TodayLectureList lectures={todayLectures} />
 
-      {/* 오늘의 일정 리스트 (요약 API 결과) */}
+      {/* 오늘의 일정 리스트 */}
       <TodayScheduleList
         schedules={todaySchedules}
         loading={scheduleLoading}
       />
 
-      {/* 과제하기 좋은 장소 추천 리스트 (요약 API 결과) */}
+      {/* 과제하기 좋은 장소 추천 리스트 */}
       <StudyPlaceList
         places={studyPlaces}
         loading={studyPlacesLoading}
