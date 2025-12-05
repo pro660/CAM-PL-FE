@@ -1,26 +1,25 @@
+/* 전체 페이지 배경 + 상단 여백 */
 .time-filter-page {
   min-height: 100vh;
-  background-color: #d9d9d9; /* 배경 */
+  background-color: #d9d9d9;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  padding: 16px;
+  box-sizing: border-box;
+  padding: 32px 16px 16px; /* 상단 여백 조금 더 크게 */
 }
 
-.time-filter-container {
+/* 최대 너비 430px 정도로 중앙 정렬 */
+.time-filter-inner {
   width: 100%;
   max-width: 430px;
-  background-color: #f5f5f5;
-  border-radius: 16px;
-  padding: 16px 16px 20px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 }
 
-/* 헤더 영역 */
+/* 상단 인사 / 날짜 / 확인 버튼 */
 .time-filter-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 12px;
 }
 
 .time-filter-hello {
@@ -44,68 +43,38 @@
   cursor: pointer;
 }
 
-/* 시간표 카드 */
-.time-filter-timetable {
-  margin-top: 12px;
-  background-color: #f7f1ff;
-  border-radius: 8px;
-  padding: 8px 8px 12px;
+/* 시간표 카드 (MyTimetable 색감과 동일하게) */
+.time-filter-timetable-card {
+  margin-top: 10px;
+  background-color: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 }
 
-/* 요일 헤더 */
-.time-filter-days-row {
-  display: flex;
-  margin-left: 32px; /* 왼쪽 시간축 공간만큼 */
+/* 오른쪽 선택 그리드: MyTimetable의 오른쪽 영역 대신 사용 */
+.time-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  background-color: #f6f0ff; /* MyTimetable body 배경과 맞춤 */
 }
 
-.time-filter-day-header-empty {
-  width: 32px;
-}
-
-.time-filter-day-header-cell {
-  flex: 1;
-  text-align: center;
-  font-size: 11px;
-  font-weight: 600;
-  color: #ffffff;
-  background-color: #c79bf9;
-  padding: 4px 0;
-}
-
-/* 본문: 시간축 + 그리드 */
-.time-filter-body {
-  display: flex;
-}
-
-/* 시간축 */
-.time-filter-time-col {
+/* 각 요일 컬럼 */
+.time-filter-day-column {
   display: flex;
   flex-direction: column;
+  background-color: #ffffff;
+  border-right: 1px solid #e4d9ff;
 }
 
-.time-filter-time-label {
-  width: 32px;
-  height: 28px;
-  font-size: 11px;
-  text-align: center;
-  line-height: 28px;
-  color: #555555;
+.time-filter-day-column:last-child {
+  border-right: none;
 }
 
-/* 그리드 */
-.time-filter-grid {
-  flex: 1;
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  grid-auto-rows: 28px;
-  background-color: #f7f1ff;
-  border-left: 1px solid #e3d7f4;
-  border-top: 1px solid #e3d7f4;
-}
-
-.time-filter-cell {
-  border-right: 1px solid #e3d7f4; /* 세로줄 */
-  border-bottom: 1px solid #e3d7f4; /* 가로줄 */
+/* 한 칸(1시간) 슬롯 */
+.time-filter-slot {
+  height: 2.4rem; /* MyTimetable 시간칸 높이와 동일 */
+  border-bottom: 1px solid #e4d9ff; /* 가로줄 추가 */
   background: transparent;
   padding: 0;
   margin: 0;
@@ -113,7 +82,7 @@
   cursor: pointer;
 }
 
-/* 선택된 칸 색상 */
-.time-filter-cell.selected {
-  background-color: #e3d7f4; /* 요구한 색 */
+/* 선택된 칸 색 */
+.time-filter-slot.selected {
+  background-color: #e3d7f4; /* 요구한 색상 */
 }

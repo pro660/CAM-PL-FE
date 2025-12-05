@@ -1,16 +1,30 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import "../../css/mypage/MyTimetable.css"; // 기존 시간표 스타일 재사용
 import "../../css/mypage/CourseTimeFilterPage.css";
 
-const DAY_LABELS = ["월", "화", "수", "목", "금", "토", "일"];
-const START_HOUR = 9;
-const END_HOUR = 19; // 9~18시
-const HOUR_LABELS = Array.from(
-  { length: END_HOUR - START_HOUR },
-  (_, i) => START_HOUR + i
-);
+const DAY_LABELS = ["월", "화", "수", "목", "금"];
+// 실제 시간 값(24시간 기준)
+const HOUR_VALUES = [9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
+// 왼쪽에 보여줄 라벨 (9~6)
+const TIME_LABELS_DISPLAY = [9, 10, 11, 12, 1, 2, 3, 4, 5, 6];
 
-// 분 단위 유틸
+const getUserNameFromCampAuth = () => {
+  if (typeof window === "undefined") return "사용자";
+  try {
+    const raw = window.localStorage.getItem("camp_auth");
+    if (!raw) return "사용자";
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed.name === "string" && parsed.name.trim()) {
+      return parsed.name.trim();
+    }
+    return "사용자";
+  } catch {
+    return "사용자";
+  }
+};
+
+// 선택한 칸 → slot 배열
 const buildSlotsFromSelectedCells = (selectedCells) => {
   const slots = [];
   for (const key of selectedCells) {
@@ -21,7 +35,7 @@ const buildSlotsFromSelectedCells = (selectedCells) => {
     if (!day || Number.isNaN(hour)) continue;
 
     slots.push({
-      day, // "월" ~ "일"
+      day, // "월" ~ "금"
       startMinutes: hour * 60,
       endMinutes: (hour + 1) * 60,
     });
@@ -29,7 +43,6 @@ const buildSlotsFromSelectedCells = (selectedCells) => {
   return slots;
 };
 
-// pill에 찍어줄 라벨 만들기
 const buildLabelFromSlots = (slots) => {
   if (!slots || slots.length === 0) return "전체";
 
@@ -40,9 +53,7 @@ const buildLabelFromSlots = (slots) => {
   });
 
   const parts = Object.keys(byDay)
-    .sort(
-      (a, b) => DAY_LABELS.indexOf(a) - DAY_LABELS.indexOf(b)
-    )
+    .sort((a, b) => DAY_LABELS.indexOf(a) - DAY_LABELS.indexOf(b))
     .map((day) => {
       const arr = byDay[day].sort(
         (a, b) => a.startMinutes - b.startMinutes
@@ -53,7 +64,7 @@ const buildLabelFromSlots = (slots) => {
 
       for (let i = 1; i < arr.length; i++) {
         if (arr[i].startMinutes === curEnd) {
-          // 연속 시간대면 묶기 (9~10, 10~11 -> 9~11)
+          // 연속 시간대면 묶기
           curEnd = arr[i].endMinutes;
         } else {
           ranges.push([curStart, curEnd]);
@@ -89,20 +100,13 @@ const CourseTimeFilterPage = () => {
   ];
   const weekday = weekdayNames[today.getDay()];
 
-  // 사용자 이름: localStorage.name
-  let userName = "사용자";
-  if (typeof window !== "undefined") {
-    const stored = window.localStorage.getItem("name");
-    if (stored) userName = stored;
-  }
+  const userName = useMemo(getUserNameFromCampAuth, []);
 
-  // 선택된 칸: "dayIndex-hour" 형태 문자열을 Set으로 관리
-  const [selectedCells, setSelectedCells] = useState(
-    () => new Set()
-  );
+  // 선택된 칸: "dayIndex-hourValue" 형태 문자열
+  const [selectedCells, setSelectedCells] = useState(() => new Set());
 
-  const toggleCell = (dayIndex, hour) => {
-    const key = `${dayIndex}-${hour}`;
+  const toggleCell = (dayIndex, hourValue) => {
+    const key = `${dayIndex}-${hourValue}`;
     setSelectedCells((prev) => {
       const next = new Set(prev);
       if (next.has(key)) {
@@ -118,7 +122,6 @@ const CourseTimeFilterPage = () => {
     const slots = buildSlotsFromSelectedCells(selectedCells);
     const label = buildLabelFromSlots(slots);
 
-    // 시간 필터 정보 저장
     if (typeof window !== "undefined") {
       window.localStorage.setItem(
         "course_time_filter",
@@ -129,7 +132,6 @@ const CourseTimeFilterPage = () => {
       );
     }
 
-    // 마이페이지로 이동 + 바텀시트 열도록 state 전달 (경로는 프로젝트에 맞춰 수정)
     navigate("/mypage", {
       state: {
         openCourseSearchSheet: true,
@@ -139,7 +141,7 @@ const CourseTimeFilterPage = () => {
 
   return (
     <div className="time-filter-page">
-      <div className="time-filter-container">
+      <div className="time-filter-inner">
         {/* 상단 인사 + 날짜 + 확인 버튼 */}
         <div className="time-filter-header">
           <div className="time-filter-header-text">
@@ -150,7 +152,6 @@ const CourseTimeFilterPage = () => {
               오늘은 {month}월 {date}일 {weekday}입니다.
             </p>
           </div>
-
           <button
             type="button"
             className="time-filter-confirm-btn"
@@ -160,54 +161,63 @@ const CourseTimeFilterPage = () => {
           </button>
         </div>
 
-        {/* 시간표 영역 */}
-        <div className="time-filter-timetable">
-          {/* 요일 헤더 */}
-          <div className="time-filter-days-row">
-            <div className="time-filter-day-header-empty" />
-            {DAY_LABELS.map((day) => (
-              <div
-                key={day}
-                className="time-filter-day-header-cell"
-              >
-                {day}
-              </div>
-            ))}
-          </div>
-
-          {/* 시간 + 그리드 */}
-          <div className="time-filter-body">
-            {/* 왼쪽 시간축 */}
-            <div className="time-filter-time-col">
-              {HOUR_LABELS.map((h) => (
+        {/* 시간표 카드 (MyTimetable 레이아웃/색깔 재사용) */}
+        <div className="time-filter-timetable-card">
+          <div className="mypage-timetable">
+            {/* 상단 요일 헤더 줄 */}
+            <div className="mypage-timetable-header-row">
+              <div className="mypage-timetable-header-cell mypage-timetable-header-cell-time" />
+              {DAY_LABELS.map((label) => (
                 <div
-                  key={h}
-                  className="time-filter-time-label"
+                  key={label}
+                  className="mypage-timetable-header-cell"
                 >
-                  {h}
+                  {label}
                 </div>
               ))}
             </div>
 
-            {/* 우측 시간표 그리드 */}
-            <div className="time-filter-grid">
-              {HOUR_LABELS.map((hour) =>
-                DAY_LABELS.map((day, dayIndex) => {
-                  const key = `${dayIndex}-${hour}`;
-                  const isSelected = selectedCells.has(key);
-                  return (
-                    <button
-                      key={key}
-                      type="button"
-                      className={
-                        "time-filter-cell" +
-                        (isSelected ? " selected" : "")
-                      }
-                      onClick={() => toggleCell(dayIndex, hour)}
-                    />
-                  );
-                })
-              )}
+            {/* 본문: 왼쪽 시간축 + 오른쪽 선택 그리드 */}
+            <div className="mypage-timetable-body">
+              {/* 왼쪽 시간축 */}
+              <div className="mypage-timetable-time-col">
+                {TIME_LABELS_DISPLAY.map((t) => (
+                  <div
+                    key={t}
+                    className="mypage-timetable-time-slot"
+                  >
+                    {t}
+                  </div>
+                ))}
+              </div>
+
+              {/* 오른쪽 5일 선택 그리드 */}
+              <div className="time-filter-grid">
+                {DAY_LABELS.map((_, dayIdx) => (
+                  <div
+                    key={dayIdx}
+                    className="time-filter-day-column"
+                  >
+                    {HOUR_VALUES.map((hour) => {
+                      const key = `${dayIdx}-${hour}`;
+                      const isSelected = selectedCells.has(key);
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          className={
+                            "time-filter-slot" +
+                            (isSelected ? " selected" : "")
+                          }
+                          onClick={() =>
+                            toggleCell(dayIdx, hour)
+                          }
+                        />
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
