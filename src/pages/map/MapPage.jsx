@@ -116,6 +116,9 @@ function extractPlaceLabel(location) {
 // 요일 + 시간 포맷 (슬라이더 카드용)
 const DAY_NAMES_SHORT = ["일", "월", "화", "수", "목", "금", "토"];
 
+// 🔴 정적 기본 중심 좌표 (빨간 마커 위치)
+const STATIC_CENTER = { lat: 36.690711, lng: 126.581783 };
+
 function formatEventTimeRange(startIso, endIso) {
   if (!startIso) return "";
   const s = new Date(startIso);
@@ -162,34 +165,6 @@ export default function MapPage() {
   // 👉 오늘의 일정 칩/마커에서 선택된 장소 "키" (extractPlaceLabel 기준)
   const [selectedPlace, setSelectedPlace] = useState(null);
 
-  // 🔴 사용자 현재 위치 (위도/경도)
-  const [userLocation, setUserLocation] = useState(null);
-
-  // 브라우저에서 현재 위치 가져오기
-  useEffect(() => {
-    if (!navigator.geolocation) {
-      console.warn("이 브라우저에서는 위치 정보를 사용할 수 없습니다.");
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setUserLocation({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-        });
-      },
-      (err) => {
-        console.warn("위치 정보를 가져오지 못했어요:", err);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 0, // 🔥 캐시된 위치 쓰지 않도록
-      }
-    );
-  }, []);
-
   // 최초 진입 시: /calendar/map 만 호출
   useEffect(() => {
     (async () => {
@@ -198,6 +173,7 @@ export default function MapPage() {
       setError("");
 
       try {
+        // 🔴 여기 좌표도 네가 준 걸 사용 중
         const res = await api.get("/calendar/map/36.690711/126.581783");
         const data = res.data ?? {};
 
@@ -230,9 +206,7 @@ export default function MapPage() {
           const startAt = raw.startAt || raw.startTime || "";
           const dedupKey = `${title}|${startAt || idx}`;
 
-          if (seen.has(dedupKey)) {
-            return;
-          }
+          if (seen.has(dedupKey)) return;
           seen.add(dedupKey);
 
           mergedToday.push({
@@ -393,17 +367,13 @@ export default function MapPage() {
 
   // ✅ 지도 중심 계산:
   // 1순위: 선택된 장소
-  // 2순위: 사용자 현재 위치(빨간 마커)
-  // 3순위: null → 컴포넌트 내부 기본값(한서대)
+  // 2순위: STATIC_CENTER (항상 같은 위치)
   const centerForMap = useMemo(() => {
     if (selectedPlaceMarker) {
       return { lat: selectedPlaceMarker.lat, lng: selectedPlaceMarker.lng };
     }
-    if (userLocation) {
-      return { lat: userLocation.lat, lng: userLocation.lng };
-    }
-    return null;
-  }, [selectedPlaceMarker, userLocation]);
+    return STATIC_CENTER;
+  }, [selectedPlaceMarker]);
 
   const handleClickRecommend = () => {
     setShowRecommend(true);
@@ -463,7 +433,6 @@ export default function MapPage() {
           markers={mapMarkers}
           center={centerForMap}
           onMarkerClick={handleMarkerClick}
-          userLocation={userLocation} // 🔴 현재 위치 전달
         />
 
         <PlaceEventsBar
