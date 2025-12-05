@@ -82,7 +82,7 @@
 .map-page-location-fab {
   position: absolute;
   right: 0.9rem;
-  bottom: 0.9rem;
+  bottom: 1.5rem;
   width: 2.3rem;
   height: 2.3rem;
   border-radius: 50%;
@@ -94,6 +94,7 @@
   justify-content: center;
   padding: 0;
   cursor: pointer;
+
 }
 
 .map-page-location-fab:active {
@@ -108,7 +109,6 @@
   border: 2px solid #8c6ce8;
   box-shadow: 0 0 0 2px rgba(140, 108, 232, 0.12);
   position: relative;
-  margin-bottom: 0.5rem;
 }
 
 .map-page-location-fab-dot::after {
