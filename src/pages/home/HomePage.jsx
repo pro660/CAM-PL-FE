@@ -175,27 +175,39 @@ const HomePage = () => {
           ? body.todaySchedules
           : [];
 
-        const mappedSchedules = rawEvents.map((item, idx) => ({
-          id:
-            item.id ??
-            `${item.title || "schedule"}-${
-              item.startAt || item.startTime || idx
-            }`,
-          category: getCategoryLabel(
-            item.category || item.type,
-            item.origin
-          ),
-          title: item.title || "",
-          place: item.place || item.location || "",
-          timeRange:
+        const mappedSchedules = rawEvents.map((item, idx) => {
+          // 🔥 원래 timeRange 계산
+          const rawTimeRange =
             item.timeRange ||
             item.time ||
             (item.startAt && item.endAt
               ? formatTimeRange(item.startAt, item.endAt)
               : item.startTime && item.endTime
               ? `${item.startTime} ~ ${item.endTime}`
-              : ""),
-        }));
+              : "");
+
+          // 🔥 "00:00~00:00" 형태면 시간 숨김 (빈 문자열로)
+          const normalizedTimeRange =
+            typeof rawTimeRange === "string" &&
+            rawTimeRange.replace(/\s/g, "") === "00:00~00:00"
+              ? ""
+              : rawTimeRange;
+
+          return {
+            id:
+              item.id ??
+              `${item.title || "schedule"}-${
+                item.startAt || item.startTime || idx
+              }`,
+            category: getCategoryLabel(
+              item.category || item.type,
+              item.origin
+            ),
+            title: item.title || "",
+            place: item.place || item.location || "",
+            timeRange: normalizedTimeRange,
+          };
+        });
 
         setTodaySchedules(mappedSchedules);
 
@@ -279,7 +291,9 @@ const HomePage = () => {
         setHomeMapMarkers(parsedMarkers);
 
         // ===== 장소별 일정(강의 + 이벤트) 맵 생성 =====
-        const lectures = Array.isArray(body.lectures) ? body.lectures : [];
+        const lectures = Array.isArray(body.lectures)
+          ? body.lectures
+          : [];
         const eventsForPlaces = Array.isArray(body.events)
           ? body.events
           : [];

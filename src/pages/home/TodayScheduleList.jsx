@@ -18,15 +18,21 @@ const TodayScheduleList = ({ schedules = [], loading }) => {
               key={schedule.id}
               className="home-card home-schedule-card"
             >
+              {/* 왼쪽 카테고리 Pill */}
               <div className="home-card-header">
                 <span className="home-pill home-pill-category">
                   {schedule.category}
                 </span>
               </div>
+
+              {/* 오른쪽 텍스트 묶음 */}
               <div className="home-card-body">
                 <h3 className="home-card-title">{schedule.title}</h3>
                 <p className="home-card-subtext">{schedule.place}</p>
-                <p className="home-card-time">{schedule.timeRange}</p>
+                {/* 🔥 시간 값이 있을 때만 표시 (00:00~00:00 → "" 로 들어오면 숨김) */}
+                {schedule.timeRange && (
+                  <p className="home-card-time">{schedule.timeRange}</p>
+                )}
               </div>
             </article>
           ))}
