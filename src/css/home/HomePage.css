@@ -84,11 +84,6 @@
   color: #9c9c9c;
 }
 
-/* 숨김용 공통 클래스 (시간 안 보이게) */
-.home-card-time--hidden {
-  display: none;
-}
-
 /* =========================
    상단 날짜 + D-DAY 카드
    ========================= */
@@ -443,7 +438,7 @@
 }
 
 /* =========================
-   오늘의 일정 리스트
+   오늘의 일정 리스트 (수정된 부분)
    ========================= */
 
 .home-schedule-section {
@@ -453,55 +448,61 @@
 /* 오늘의 일정 카드:
    - 왼쪽에 카테고리 pill
    - 오른쪽에 텍스트 묶음 (제목 / 장소 / 시간)
-   → 높이 줄이고, pill + 제목을 가로 한 줄에 평행하게
+   - 세로 높이 타이트하게
 */
 .home-schedule-card {
   display: flex;
-  align-items: center;          /* 🔥 pill + 제목 가로 한 줄 정렬 */
-  padding: 0.4rem 0.9rem;       /* 🔥 전체 높이 살짝 줄이기 */
+  align-items: flex-start;
+  padding: 0.4rem 0.9rem; /* 🔥 세로 패딩 줄임 */
 }
 
 /* 왼쪽 카테고리 pill 영역 */
 .home-schedule-card .home-card-header {
   margin: 0;
-  margin-right: 0.6rem;         /* 🔥 제목과의 간격 살짝만 */
+  margin-right: 0.8rem;
   flex-shrink: 0;
 }
 
-/* 카테고리 Pill (발표 / 팀플 등) - 사진 스타일 */
+/* 카테고리 Pill (발표 / 팀플 등) */
 .home-schedule-card .home-pill-category {
   background: #d0b5ff;
   color: #ffffff;
   font-size: 0.7rem;
   font-weight: 700;
   border-radius: 999px;
-  padding: 0.18rem 0.8rem;      /* 🔥 약간 더 컴팩트하게 */
+  padding: 0.2rem 0.9rem;
 }
 
 /* 오른쪽 텍스트 묶음 */
 .home-schedule-card .home-card-body {
   display: flex;
   flex-direction: column;
+  gap: 0.05rem; /* 🔥 제목/장소/시간 줄 사이 간격 최소화 */
 }
 
-/* 제목 (인더렉티브디자인 기획서 발표) */
+/* 제목 (일정명) */
 .home-schedule-card .home-card-title {
   font-size: 0.82rem;
   font-weight: 700;
   color: #4f4f4f;
-  line-height: 1.3;
+  line-height: 1.2;  /* 🔥 줄 높이 조이기 */
+  margin: 0;         /* 🔥 h3 기본 margin 제거 */
 }
 
-/* 장소 ([H05] 건축토목공학관 509) */
+/* 장소 */
 .home-schedule-card .home-card-subtext {
   font-size: 0.72rem;
   color: #8a8a8a;
+  line-height: 1.2;
+  margin: 0;         /* 🔥 p 기본 margin 제거 */
 }
 
-/* 시간 (14:00) */
+/* 시간 */
 .home-schedule-card .home-card-time {
   font-size: 0.7rem;
   color: #b5b5b5;
+  line-height: 1.2;
+  margin: 0;         /* 🔥 p 기본 margin 제거 */
 }
 
 /* =========================
