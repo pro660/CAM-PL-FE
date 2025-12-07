@@ -228,7 +228,6 @@ export default function MyPage() {
   // 🔥 시간표 블록 클릭 → 무조건 삭제 모달 오픈
   // block: { itemId, title, timeLabel }
   const handleTimetableBlockClick = (block) => {
-    // 여기서는 아무 판단 안 하고 그냥 모달에 넘김
     setDeleteTarget({
       itemId: block?.itemId,
       title: block?.title,
@@ -244,16 +243,14 @@ export default function MyPage() {
 
   // 삭제 팝업 확인 → DELETE /timetable/items/{itemId}
   const handleConfirmDelete = async () => {
-    // 실제 삭제 시점에만 itemId 사용
-    if (!deleteTarget?.itemId) {
-      console.error("삭제 요청에 itemId가 없습니다.", deleteTarget);
-      setDeleteTarget(null);
-      return;
-    }
+    console.log("🗑 삭제 요청 deleteTarget :", deleteTarget);
+
+    // ❗ 네가 말한 대로, 여기서 굳이 막지 않고 일단 API를 날린다
+    const itemId = deleteTarget?.itemId;
 
     setDeleteLoading(true);
     try {
-      await api.delete(`/timetable/items/${deleteTarget.itemId}`);
+      await api.delete(`/timetable/items/${itemId}`);
       // 성공 시 시간표 다시 불러오기
       await loadTimetable();
     } catch (e) {
