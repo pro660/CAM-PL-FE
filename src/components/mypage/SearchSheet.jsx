@@ -480,7 +480,7 @@ const CourseSearchBottomSheet = ({
     }
   };
 
-  /** 🔥 필터 pill 내부 X 클릭 → 해당 필터만 "전체"로 초기화 + localStorage 동기화 */
+  /** 🔥 필터 pill 내부 X 클릭 → 해당 필터만 "전체"로 초기화 + localStorage도 정리 */
   const handleFilterClearClick = (e, key) => {
     e.stopPropagation(); // pill 클릭 이벤트 막기
 
@@ -488,14 +488,13 @@ const CourseSearchBottomSheet = ({
     if (!config) return;
     const { defaultValue } = config;
 
-    // UI 상태 초기화
     setFilterValues((prev) => ({
       ...prev,
       [key]: defaultValue,
     }));
 
-    // 실제 필터 상태 + localStorage 초기화
     try {
+      // 실제 필터 상태 + localStorage 동기화
       if (key === "type") {
         setSelectedCategoryId(null);
         localStorage.removeItem("course_area_filter");
