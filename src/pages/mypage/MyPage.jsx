@@ -31,7 +31,14 @@ const WEEKDAY_KR_LONG = [
 ];
 
 // 🔔 시간표 과목 삭제 팝업 (Delete_schdule 스타일 재사용)
-const TimetableDeleteModal = ({ visible, onConfirm, onCancel, loading }) => {
+const TimetableDeleteModal = ({
+  visible,
+  loading,
+  onConfirm,
+  onCancel,
+  title,
+  timeLabel,
+}) => {
   if (!visible) return null;
 
   return (
@@ -44,9 +51,23 @@ const TimetableDeleteModal = ({ visible, onConfirm, onCancel, loading }) => {
             className="delete-schedule-icon"
           />
         </div>
+
         <p className="delete-schedule-message">
-          선택한 과목을 시간표에서 삭제하시겠습니까?
+          {title && (
+            <>
+              <strong>{title}</strong>
+              <br />
+            </>
+          )}
+          {timeLabel && (
+            <>
+              <span>{timeLabel}</span>
+              <br />
+            </>
+          )}
+          해당 과목을 시간표에서 삭제하시겠습니까?
         </p>
+
         <div className="delete-schedule-buttons">
           <button
             type="button"
@@ -73,11 +94,7 @@ const TimetableDeleteModal = ({ visible, onConfirm, onCancel, loading }) => {
 export default function MyPage() {
   const location = useLocation();
 
-  // /timetable 응답에서 오는 과목 정보 (courseName 조인용)
   const [courses, setCourses] = useState([]);
-  // 실제 시간표에 올라간 item 들 (itemId 기반)
-  const [timetableItems, setTimetableItems] = useState([]);
-
   const { showLoading, hideLoading } = useLoading();
 
   const [isCourseSheetOpen, setIsCourseSheetOpen] = useState(false);
@@ -90,8 +107,9 @@ export default function MyPage() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showUnregisterModal, setShowUnregisterModal] = useState(false);
 
-  // 시간표 삭제 모달 상태
-  const [deleteTargetItemId, setDeleteTargetItemId] = useState(null);
+  // 🔥 삭제 대상(블록 클릭 시 세팅)
+  // { itemId, title, timeLabel } 형태
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   // camp_auth에서 사용자 이름 로드
@@ -154,52 +172,11 @@ export default function MyPage() {
     try {
       const res = await api.get("/timetable");
       const data = res.data ?? {};
-
-      const courseList = Array.isArray(data.courses) ? data.courses : [];
-      setCourses(courseList);
-
-      // 🔥 timetable items 배열 추출 (items or timetableItems 둘 다 대응)
-      const rawItems = Array.isArray(data.items)
-        ? data.items
-        : Array.isArray(data.timetableItems)
-        ? data.timetableItems
-        : [];
-
-      // console.log("TIMETABLE API RESPONSE", data, rawItems);
-
-      // 🔥 각 item에 courseName/room 채워 넣기 (백엔드에서 안 내려줘도 안전하게)
-      const enrichedItems = rawItems.map((item) => {
-        const course =
-          courseList.find((c) => c.id === item.courseId) || null;
-
-        let courseName =
-          item.courseName || item.name || course?.name || "";
-        let room = item.room || "";
-
-        if (!room && course && Array.isArray(course.times)) {
-          const matched = course.times.find(
-            (t) =>
-              t.dayOfWeek === item.dayOfWeek &&
-              t.startTime === item.startTime &&
-              t.endTime === item.endTime
-          );
-          if (matched?.room) {
-            room = matched.room;
-          }
-        }
-
-        return {
-          ...item,
-          courseName,
-          room,
-        };
-      });
-
-      setTimetableItems(enrichedItems);
+      const list = Array.isArray(data.courses) ? data.courses : [];
+      setCourses(list);
     } catch (e) {
       console.error("시간표 불러오기 실패:", e);
       setCourses([]);
-      setTimetableItems([]);
     } finally {
       hideLoading();
     }
@@ -229,35 +206,6 @@ export default function MyPage() {
     setIsCourseSheetOpen(false); // 바텀시트 닫기
   };
 
-  // 시간표 블록 클릭 → 삭제 모달 오픈
-  const handleTimetableBlockClick = (itemId) => {
-    if (!itemId) return;
-    setDeleteTargetItemId(itemId);
-  };
-
-  // 삭제 모달 - 취소
-  const handleCancelDelete = () => {
-    if (deleteLoading) return;
-    setDeleteTargetItemId(null);
-  };
-
-  // 삭제 모달 - 확인
-  const handleConfirmDelete = async () => {
-    if (!deleteTargetItemId) return;
-
-    setDeleteLoading(true);
-    try {
-      await api.delete(`/timetable/items/${deleteTargetItemId}`);
-      // 삭제 후 시간표 갱신
-      await loadTimetable();
-    } catch (e) {
-      console.error("시간표 과목 삭제 실패:", e);
-    } finally {
-      setDeleteLoading(false);
-      setDeleteTargetItemId(null);
-    }
-  };
-
   const handleGoNotice = () => {
     window.open("https://nportal.hanseo.ac.kr/");
   };
@@ -272,6 +220,43 @@ export default function MyPage() {
 
   const handleUnregisterClick = () => {
     setShowUnregisterModal(true);
+  };
+
+  // 🔥 시간표 블록 클릭 → 삭제 모달 오픈
+  // block: { itemId, title, timeLabel, ... }
+  const handleTimetableBlockClick = (block) => {
+    if (!block || !block.itemId) {
+      console.warn("시간표 블록에 itemId가 없어 삭제할 수 없습니다.", block);
+      return;
+    }
+    setDeleteTarget({
+      itemId: block.itemId,
+      title: block.title,
+      timeLabel: block.timeLabel,
+    });
+  };
+
+  // 삭제 팝업 취소
+  const handleCancelDelete = () => {
+    if (deleteLoading) return;
+    setDeleteTarget(null);
+  };
+
+  // 삭제 팝업 확인 → DELETE /timetable/items/{itemId}
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget?.itemId) return;
+
+    setDeleteLoading(true);
+    try {
+      await api.delete(`/timetable/items/${deleteTarget.itemId}`);
+      // 성공 시 시간표 다시 불러오기
+      await loadTimetable();
+    } catch (e) {
+      console.error("시간표 과목 삭제 실패:", e);
+    } finally {
+      setDeleteLoading(false);
+      setDeleteTarget(null);
+    }
   };
 
   return (
@@ -298,7 +283,7 @@ export default function MyPage() {
 
       <section className="mypage-timetable-section">
         <MyTimetable
-          items={timetableItems}
+          courses={courses}
           previewCourse={previewCourse}
           onBlockClick={handleTimetableBlockClick}
         />
@@ -363,10 +348,12 @@ export default function MyPage() {
 
       {/* 시간표 과목 삭제 팝업 */}
       <TimetableDeleteModal
-        visible={deleteTargetItemId != null}
+        visible={!!deleteTarget}
+        loading={deleteLoading}
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
-        loading={deleteLoading}
+        title={deleteTarget?.title}
+        timeLabel={deleteTarget?.timeLabel}
       />
     </div>
   );

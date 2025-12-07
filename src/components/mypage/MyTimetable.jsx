@@ -14,100 +14,45 @@ const TOTAL_MINUTES = (END_HOUR - START_HOUR + 1) * 60; // 10 * 60 = 600
 // 왼쪽에 표시할 시간 라벨: 9 ~ 6
 const TIME_LABELS = [9, 10, 11, 12, 1, 2, 3, 4, 5, 6];
 
-// "10:00:00" / "10:00" → 분
-function timeToMinutes(timeStr) {
-  if (!timeStr) return null;
-  const [hStr, mStr] = timeStr.split(":");
-  const h = Number(hStr);
-  const m = Number(mStr);
-  if (Number.isNaN(h) || Number.isNaN(m)) return null;
-  return h * 60 + m;
-}
-
-// 🔥 실제 시간표 item들로부터 요일별 블록 빌드 (item.id = itemId)
-function buildDayColumnsFromItems(items = []) {
-  const columns = DAY_ORDER.map(() => []);
-
-  items.forEach((item) => {
-    if (!item) return;
-
-    const dayKey = (item.dayOfWeek || "").toUpperCase();
-    const dayIndex = DAY_ORDER.indexOf(dayKey);
-    if (dayIndex === -1) return;
-
-    const startMinutes = timeToMinutes(item.startTime);
-    const endMinutes = timeToMinutes(item.endTime);
-    if (startMinutes == null || endMinutes == null) return;
-
-    const minMinutes = START_HOUR * 60;
-    const maxMinutes = END_HOUR * 60;
-
-    // 9~18시 범위 안으로 클램프
-    const clampedStart = Math.max(startMinutes, minMinutes);
-    const clampedEnd = Math.min(endMinutes, maxMinutes);
-    if (clampedEnd <= clampedStart) return;
-
-    const topPercent =
-      ((clampedStart - minMinutes) / TOTAL_MINUTES) * 100;
-    const heightPercent =
-      ((clampedEnd - clampedStart) / TOTAL_MINUTES) * 100;
-
-    const startLabel = (item.startTime || "").slice(0, 5);
-    const endLabel = (item.endTime || "").slice(0, 5);
-
-    columns[dayIndex].push({
-      id: item.id, // ✅ timetable itemId
-      title: item.courseName || item.title || "",
-      room: item.room,
-      timeLabel:
-        startLabel && endLabel ? `${startLabel} ~ ${endLabel}` : "",
-      topPercent,
-      heightPercent,
-    });
-  });
-
-  return columns;
-}
-
-// 🔥 미리보기용: /courses 응답의 course 구조로부터 블록 생성
-function buildDayColumnsFromCourses(courses = []) {
+function buildDayColumns(courses = []) {
   const columns = DAY_ORDER.map(() => []);
 
   courses.forEach((course) => {
     if (!Array.isArray(course.times)) return;
 
     course.times.forEach((t, idx) => {
-      if (!t) return;
-
-      const dayKey = (t.dayOfWeek || "").toUpperCase();
-      const dayIndex = DAY_ORDER.indexOf(dayKey);
+      const dayIndex = DAY_ORDER.indexOf(t.dayOfWeek);
       if (dayIndex === -1) return;
 
-      const startMinutes = timeToMinutes(t.startTime);
-      const endMinutes = timeToMinutes(t.endTime);
-      if (startMinutes == null || endMinutes == null) return;
+      const [sh, sm] = t.startTime.split(":").map(Number);
+      const [eh, em] = t.endTime.split(":").map(Number);
+      if (Number.isNaN(sh) || Number.isNaN(eh)) return;
+
+      const startMinutes = sh * 60 + sm;
+      const endMinutes = eh * 60 + em;
 
       const minMinutes = START_HOUR * 60;
       const maxMinutes = END_HOUR * 60;
 
+      // 9~18시 범위 안으로 클램프
       const clampedStart = Math.max(startMinutes, minMinutes);
       const clampedEnd = Math.min(endMinutes, maxMinutes);
       if (clampedEnd <= clampedStart) return;
 
+      // 🔥 세로 길이 비율(9~6 = 10칸 기준)
       const topPercent =
         ((clampedStart - minMinutes) / TOTAL_MINUTES) * 100;
       const heightPercent =
         ((clampedEnd - clampedStart) / TOTAL_MINUTES) * 100;
 
-      const startLabel = (t.startTime || "").slice(0, 5);
-      const endLabel = (t.endTime || "").slice(0, 5);
-
       columns[dayIndex].push({
+        // React key용 id (course 기준 고유값)
         id: `${course.id}-${idx}-${t.dayOfWeek}-${t.startTime}`,
+        // ❗ 시간표 삭제용 itemId (백엔드에서 time 객체에 내려준다고 가정)
+        itemId: t.itemId,
         title: course.name,
         room: t.room,
-        timeLabel:
-          startLabel && endLabel ? `${startLabel} ~ ${endLabel}` : "",
+        timeLabel: `${t.startTime.slice(0, 5)} ~ ${t.endTime.slice(0, 5)}`,
         topPercent,
         heightPercent,
       });
@@ -118,29 +63,32 @@ function buildDayColumnsFromCourses(courses = []) {
 }
 
 export default function MyTimetable({
-  items = [],
+  courses = [],
   previewCourse = null,
   onBlockClick,
 }) {
-  // 실제 내 시간표 item 기반 블록
+  // 실제 내 시간표 강의
   const dayColumns = useMemo(
-    () => buildDayColumnsFromItems(items),
-    [items]
+    () => buildDayColumns(courses),
+    [courses]
   );
 
   // 🔥 선택된 강의 미리보기용 (흐릿한 블록)
   const previewColumns = useMemo(() => {
     if (!previewCourse) {
+      // DAY_ORDER 길이에 맞춰 빈 배열 유지
       return DAY_ORDER.map(() => []);
     }
-    return buildDayColumnsFromCourses([previewCourse]);
+    return buildDayColumns([previewCourse]);
   }, [previewCourse]);
 
+  // ✅ 강의가 하나라도 있는지 여부
   const hasAnyLecture = useMemo(
     () => dayColumns.some((blocks) => blocks.length > 0),
     [dayColumns]
   );
 
+  // ✅ 미리보기 블록이 있는지 여부
   const hasPreview = useMemo(
     () => previewColumns.some((blocks) => blocks.length > 0),
     [previewColumns]
@@ -200,7 +148,7 @@ export default function MyTimetable({
                     />
                   ))}
 
-                  {/* 실제 시간표 강의 블록 (itemId 클릭 가능) */}
+                  {/* 실제 시간표 강의 블록 */}
                   {blocks.map((block) => (
                     <div
                       key={block.id}
@@ -210,7 +158,12 @@ export default function MyTimetable({
                         height: `${block.heightPercent}%`,
                       }}
                       onClick={() =>
-                        onBlockClick && block.id && onBlockClick(block.id)
+                        onBlockClick &&
+                        onBlockClick({
+                          itemId: block.itemId,
+                          title: block.title,
+                          timeLabel: block.timeLabel,
+                        })
                       }
                     >
                       <div className="mypage-timetable-class-title">
