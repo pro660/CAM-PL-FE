@@ -24,7 +24,6 @@ const NaverMap = ({ markers = [], center, onMarkerClick, onMapDrag }) => {
   const markersRef = useRef([]);
   const staticMarkerRef = useRef(null); // 🔴 정적 빨간 마커
   const dragListenerRef = useRef(null); // 드래그 리스너
-  const prevCenterRef = useRef(null);   // 이전 center 기억해서 불필요한 panTo 방지
   const { showLoading, hideLoading } = useLoading();
 
   /* =========================
@@ -208,8 +207,8 @@ const NaverMap = ({ markers = [], center, onMarkerClick, onMapDrag }) => {
 
   /* =========================
      4. center 변경 시에만 부드럽게 panTo
-        - defaultCenter 강제 panTo 제거
-        - 이전 center와 같으면 아무것도 안 함
+        - prevCenterRef 최적화 제거
+        - 사용자가 드래그로 center를 바꿔도 버튼 누르면 항상 이동
      ========================= */
   useEffect(() => {
     if (
@@ -225,14 +224,6 @@ const NaverMap = ({ markers = [], center, onMarkerClick, onMapDrag }) => {
     const { naver } = window;
     const map = mapInstanceRef.current;
     if (!map) return;
-
-    const prev = prevCenterRef.current;
-    if (prev && prev.lat === center.lat && prev.lng === center.lng) {
-      // 같은 중심이면 panTo 생략
-      return;
-    }
-
-    prevCenterRef.current = { lat: center.lat, lng: center.lng };
 
     const target = new naver.maps.LatLng(center.lat, center.lng);
     map.panTo(target);
