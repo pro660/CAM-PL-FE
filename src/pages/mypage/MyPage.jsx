@@ -32,13 +32,13 @@ const WEEKDAY_KR_LONG = [
   "토요일",
 ];
 
-/** 🔔 시간표 과목 삭제 확인 모달 */
-const TimetableDeleteModal = ({
+// 🔔 시간표 과목 삭제 확인 모달
+function TimetableDeleteModal({
   visible,
   courseName,
   onConfirm,
   onCancel,
-}) => {
+}) {
   if (!visible) return null;
 
   return (
@@ -53,14 +53,9 @@ const TimetableDeleteModal = ({
         </div>
 
         <p className="delete-schedule-message">
-          {courseName ? (
-            <>
-              시간표에서 <br />
-              <strong>{courseName}</strong> 과목을 삭제하시겠습니까?
-            </>
-          ) : (
-            <>시간표에서 해당 과목을 삭제하시겠습니까?</>
-          )}
+          {courseName
+            ? `"${courseName}" 강의를 시간표에서 삭제하시겠습니까?`
+            : "선택한 강의를 시간표에서 삭제하시겠습니까?"}
         </p>
 
         <div className="delete-schedule-buttons">
@@ -76,13 +71,13 @@ const TimetableDeleteModal = ({
             className="delete-schedule-confirm"
             onClick={onConfirm}
           >
-            삭제
+            삭제하기
           </button>
         </div>
       </div>
     </div>
   );
-};
+}
 
 export default function MyPage() {
   const location = useLocation();
@@ -101,9 +96,11 @@ export default function MyPage() {
   const [showUnregisterModal, setShowUnregisterModal] = useState(false);
 
   // 🔥 시간표 과목 삭제 모달 상태
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteTargetCourse, setDeleteTargetCourse] = useState(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteModalState, setDeleteModalState] = useState({
+    visible: false,
+    courseId: null,
+    courseName: "",
+  });
 
   // camp_auth에서 사용자 이름 로드
   useEffect(() => {
@@ -217,37 +214,44 @@ export default function MyPage() {
     setShowUnregisterModal(true);
   };
 
-  // 🔥 MyTimetable 에서 강의 블록 클릭 시 호출
-  const handleCourseBlockClick = (courseInfo) => {
-    if (!courseInfo || !courseInfo.itemId) return;
-    setDeleteTargetCourse(courseInfo);
-    setShowDeleteModal(true);
+  // 🔥 시간표 블록 클릭 → 삭제 모달 열기
+  const handleCourseBlockClick = (courseId, courseName) => {
+    setDeleteModalState({
+      visible: true,
+      courseId,
+      courseName,
+    });
   };
 
-  // 🔥 시간표 과목 삭제 확정
+  // 🔥 삭제 모달에서 "삭제하기" 클릭
   const handleConfirmDeleteCourse = async () => {
-    if (!deleteTargetCourse || !deleteTargetCourse.itemId) return;
-
-    const itemId = deleteTargetCourse.itemId;
+    const { courseId } = deleteModalState;
+    if (courseId == null) return;
 
     try {
-      setDeleteLoading(true);
-      // ⚠️ 여기서 itemId 는 "시간표 아이템 ID" 여야 한다
-      await api.delete(`/timetable/items/${itemId}`);
+      showLoading();
+      await api.delete(`/timetable/items/${courseId}`);
+      // 삭제 성공 후 시간표 새로고침
       await loadTimetable();
     } catch (e) {
       console.error("시간표 과목 삭제 실패:", e);
     } finally {
-      setDeleteLoading(false);
-      setShowDeleteModal(false);
-      setDeleteTargetCourse(null);
+      hideLoading();
+      setDeleteModalState({
+        visible: false,
+        courseId: null,
+        courseName: "",
+      });
     }
   };
 
+  // 🔥 삭제 모달에서 "취소" 클릭
   const handleCancelDeleteCourse = () => {
-    if (deleteLoading) return;
-    setShowDeleteModal(false);
-    setDeleteTargetCourse(null);
+    setDeleteModalState({
+      visible: false,
+      courseId: null,
+      courseName: "",
+    });
   };
 
   return (
@@ -276,7 +280,7 @@ export default function MyPage() {
         <MyTimetable
           courses={courses}
           previewCourse={previewCourse}
-          onCourseClick={handleCourseBlockClick} // 🔥 블록 클릭 시 삭제 모달 오픈
+          onCourseClick={handleCourseBlockClick}
         />
       </section>
 
@@ -323,6 +327,14 @@ export default function MyPage() {
         />
       )}
 
+      {/* 시간표 과목 삭제 팝업 */}
+      <TimetableDeleteModal
+        visible={deleteModalState.visible}
+        courseName={deleteModalState.courseName}
+        onConfirm={handleConfirmDeleteCourse}
+        onCancel={handleCancelDeleteCourse}
+      />
+
       {/* 로그아웃 확인 팝업 */}
       <AccountConfirmModal
         mode="logout"
@@ -335,14 +347,6 @@ export default function MyPage() {
         mode="unregister"
         visible={showUnregisterModal}
         onClose={() => setShowUnregisterModal(false)}
-      />
-
-      {/* 🔥 시간표 과목 삭제 모달 */}
-      <TimetableDeleteModal
-        visible={showDeleteModal}
-        courseName={deleteTargetCourse?.name}
-        onConfirm={handleConfirmDeleteCourse}
-        onCancel={handleCancelDeleteCourse}
       />
     </div>
   );
