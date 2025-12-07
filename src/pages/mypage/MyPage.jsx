@@ -225,17 +225,14 @@ export default function MyPage() {
     setShowUnregisterModal(true);
   };
 
-  // 🔥 시간표 블록 클릭 → 삭제 모달 오픈
+  // 🔥 시간표 블록 클릭 → 무조건 삭제 모달 오픈
   // block: { itemId, title, timeLabel }
   const handleTimetableBlockClick = (block) => {
-    if (!block || !block.itemId) {
-      console.warn("시간표 블록에 itemId가 없어 삭제할 수 없습니다.", block);
-      return;
-    }
+    // 여기서는 아무 판단 안 하고 그냥 모달에 넘김
     setDeleteTarget({
-      itemId: block.itemId,
-      title: block.title,
-      timeLabel: block.timeLabel,
+      itemId: block?.itemId,
+      title: block?.title,
+      timeLabel: block?.timeLabel,
     });
   };
 
@@ -247,7 +244,12 @@ export default function MyPage() {
 
   // 삭제 팝업 확인 → DELETE /timetable/items/{itemId}
   const handleConfirmDelete = async () => {
-    if (!deleteTarget?.itemId) return;
+    // 실제 삭제 시점에만 itemId 사용
+    if (!deleteTarget?.itemId) {
+      console.error("삭제 요청에 itemId가 없습니다.", deleteTarget);
+      setDeleteTarget(null);
+      return;
+    }
 
     setDeleteLoading(true);
     try {

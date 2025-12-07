@@ -172,6 +172,7 @@ export default function MyTimetable({
                         top: `${block.topPercent}%`,
                         height: `${block.heightPercent}%`,
                       }}
+                      // ✅ 클릭 시 무조건 부모에 전달 → 부모에서 모달 오픈
                       onClick={() =>
                         onBlockClick &&
                         onBlockClick({
