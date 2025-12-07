@@ -14,6 +14,19 @@ const TOTAL_MINUTES = (END_HOUR - START_HOUR + 1) * 60; // 10 * 60 = 600
 // 왼쪽에 표시할 시간 라벨: 9 ~ 6
 const TIME_LABELS = [9, 10, 11, 12, 1, 2, 3, 4, 5, 6];
 
+// 🔥 백엔드에서 내려오는 itemId 위치를 유연하게 처리
+function resolveItemId(course, time) {
+  // 과목 기준 itemId
+  if (course?.itemId != null) return course.itemId;
+  if (course?.timetableItemId != null) return course.timetableItemId;
+
+  // 혹시 time 쪽에 내려오는 경우 대비
+  if (time?.itemId != null) return time.itemId;
+  if (time?.timetableItemId != null) return time.timetableItemId;
+
+  return null;
+}
+
 function buildDayColumns(courses = []) {
   const columns = DAY_ORDER.map(() => []);
 
@@ -45,11 +58,13 @@ function buildDayColumns(courses = []) {
       const heightPercent =
         ((clampedEnd - clampedStart) / TOTAL_MINUTES) * 100;
 
+      const itemId = resolveItemId(course, t);
+
       columns[dayIndex].push({
         // React key용 id (course 기준 고유값)
         id: `${course.id}-${idx}-${t.dayOfWeek}-${t.startTime}`,
-        // ❗ 시간표 삭제용 itemId (백엔드에서 time 객체에 내려줌)
-        itemId: t.itemId,
+        // ✅ 시간표 삭제용 itemId
+        itemId,
         title: course.name,
         room: t.room,
         timeLabel: `${t.startTime.slice(0, 5)} ~ ${t.endTime.slice(0, 5)}`,
@@ -65,7 +80,7 @@ function buildDayColumns(courses = []) {
 export default function MyTimetable({
   courses = [],
   previewCourse = null,
-  onBlockClick, // 💡 블록 클릭 시 상위(MyPage)에 알려주는 콜백
+  onBlockClick,
 }) {
   // 실제 내 시간표 강의
   const dayColumns = useMemo(
