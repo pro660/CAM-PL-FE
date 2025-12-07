@@ -253,13 +253,20 @@ export default function MapPage() {
           )
           .map((m, idx) => {
             const placeKey = extractPlaceLabel(m.name);
+
+            // 🔥 마커에 표시할 숫자 (1 이상, 정수)
+            let safeCount = 1;
+            if (typeof m.count === "number" && m.count > 0) {
+              safeCount = Math.round(m.count);
+            }
+
             return {
               id: m.name ? `${m.name}-${idx}` : `marker-${idx}`,
               name: m.name,
               placeKey,
               lat: m.latitude,
               lng: m.longitude,
-              count: m.count,
+              count: safeCount, // ✅ NaverMap에서 동그란 마커 안에 들어갈 숫자
             };
           });
 
@@ -412,7 +419,11 @@ export default function MapPage() {
     // 새 장소 선택 시 선택 + 지도 중심 이동
     setSelectedPlace(placeName);
     const marker = mapMarkers.find((m) => m.placeKey === placeName);
-    if (marker && typeof marker.lat === "number" && typeof marker.lng === "number") {
+    if (
+      marker &&
+      typeof marker.lat === "number" &&
+      typeof marker.lng === "number"
+    ) {
       setMapCenter({
         lat: marker.lat,
         lng: marker.lng,
