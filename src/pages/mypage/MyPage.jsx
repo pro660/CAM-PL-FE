@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { useLocation } from "react-router-dom";
 import "../../css/mypage/MyPage.css";
+import "../../css/calendar/Delete_schdule.css"; // 🔥 삭제 팝업 스타일 재사용
 
 import api from "../../api/axios";
 import { useLoading } from "../../context/LoadingContext.jsx";
@@ -17,9 +18,6 @@ import AccountConfirmModal from "../../components/mypage/AccountConfirmModal.jsx
 
 import NoticeIcon from "../../images/mypage/haksa.svg";
 import ShuttleIcon from "../../images/mypage/bus.svg";
-
-// 🔥 삭제 팝업 스타일 재사용
-import "../../css/calendar/Delete_schdule.css";
 import NosmileImg from "../../images/calendar/nosmile.svg";
 
 const WEEKDAY_KR_LONG = [
@@ -32,13 +30,8 @@ const WEEKDAY_KR_LONG = [
   "토요일",
 ];
 
-// 🔔 시간표 과목 삭제 확인 모달
-function TimetableDeleteModal({
-  visible,
-  courseName,
-  onConfirm,
-  onCancel,
-}) {
+// 🔔 시간표 과목 삭제 팝업 (Delete_schdule 스타일 재사용)
+const TimetableDeleteModal = ({ visible, onConfirm, onCancel, loading }) => {
   if (!visible) return null;
 
   return (
@@ -51,18 +44,15 @@ function TimetableDeleteModal({
             className="delete-schedule-icon"
           />
         </div>
-
         <p className="delete-schedule-message">
-          {courseName
-            ? `"${courseName}" 강의를 시간표에서 삭제하시겠습니까?`
-            : "선택한 강의를 시간표에서 삭제하시겠습니까?"}
+          선택한 과목을 시간표에서 삭제하시겠습니까?
         </p>
-
         <div className="delete-schedule-buttons">
           <button
             type="button"
             className="delete-schedule-cancel"
             onClick={onCancel}
+            disabled={loading}
           >
             취소
           </button>
@@ -70,19 +60,24 @@ function TimetableDeleteModal({
             type="button"
             className="delete-schedule-confirm"
             onClick={onConfirm}
+            disabled={loading}
           >
-            삭제하기
+            {loading ? "삭제 중..." : "삭제하기"}
           </button>
         </div>
       </div>
     </div>
   );
-}
+};
 
 export default function MyPage() {
   const location = useLocation();
 
+  // /timetable 응답에서 오는 과목 정보 (courseName 조인용)
   const [courses, setCourses] = useState([]);
+  // 실제 시간표에 올라간 item 들 (itemId 기반)
+  const [timetableItems, setTimetableItems] = useState([]);
+
   const { showLoading, hideLoading } = useLoading();
 
   const [isCourseSheetOpen, setIsCourseSheetOpen] = useState(false);
@@ -95,12 +90,9 @@ export default function MyPage() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showUnregisterModal, setShowUnregisterModal] = useState(false);
 
-  // 🔥 시간표 과목 삭제 모달 상태
-  const [deleteModalState, setDeleteModalState] = useState({
-    visible: false,
-    courseId: null,
-    courseName: "",
-  });
+  // 시간표 삭제 모달 상태
+  const [deleteTargetItemId, setDeleteTargetItemId] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // camp_auth에서 사용자 이름 로드
   useEffect(() => {
@@ -138,10 +130,7 @@ export default function MyPage() {
     }
 
     // 한 번 사용한 뒤에는 history state를 정리 (뒤로가기 시 계속 열리는 것 방지)
-    if (
-      location.state?.openCourseSearchSheet &&
-      window.history?.replaceState
-    ) {
+    if (location.state?.openCourseSearchSheet && window.history?.replaceState) {
       const { openCourseSearchSheet, fromTimeFilter, ...rest } =
         location.state;
       window.history.replaceState(
@@ -165,10 +154,52 @@ export default function MyPage() {
     try {
       const res = await api.get("/timetable");
       const data = res.data ?? {};
-      const list = Array.isArray(data.courses) ? data.courses : [];
-      setCourses(list);
+
+      const courseList = Array.isArray(data.courses) ? data.courses : [];
+      setCourses(courseList);
+
+      // 🔥 timetable items 배열 추출 (items or timetableItems 둘 다 대응)
+      const rawItems = Array.isArray(data.items)
+        ? data.items
+        : Array.isArray(data.timetableItems)
+        ? data.timetableItems
+        : [];
+
+      // console.log("TIMETABLE API RESPONSE", data, rawItems);
+
+      // 🔥 각 item에 courseName/room 채워 넣기 (백엔드에서 안 내려줘도 안전하게)
+      const enrichedItems = rawItems.map((item) => {
+        const course =
+          courseList.find((c) => c.id === item.courseId) || null;
+
+        let courseName =
+          item.courseName || item.name || course?.name || "";
+        let room = item.room || "";
+
+        if (!room && course && Array.isArray(course.times)) {
+          const matched = course.times.find(
+            (t) =>
+              t.dayOfWeek === item.dayOfWeek &&
+              t.startTime === item.startTime &&
+              t.endTime === item.endTime
+          );
+          if (matched?.room) {
+            room = matched.room;
+          }
+        }
+
+        return {
+          ...item,
+          courseName,
+          room,
+        };
+      });
+
+      setTimetableItems(enrichedItems);
     } catch (e) {
       console.error("시간표 불러오기 실패:", e);
+      setCourses([]);
+      setTimetableItems([]);
     } finally {
       hideLoading();
     }
@@ -198,6 +229,35 @@ export default function MyPage() {
     setIsCourseSheetOpen(false); // 바텀시트 닫기
   };
 
+  // 시간표 블록 클릭 → 삭제 모달 오픈
+  const handleTimetableBlockClick = (itemId) => {
+    if (!itemId) return;
+    setDeleteTargetItemId(itemId);
+  };
+
+  // 삭제 모달 - 취소
+  const handleCancelDelete = () => {
+    if (deleteLoading) return;
+    setDeleteTargetItemId(null);
+  };
+
+  // 삭제 모달 - 확인
+  const handleConfirmDelete = async () => {
+    if (!deleteTargetItemId) return;
+
+    setDeleteLoading(true);
+    try {
+      await api.delete(`/timetable/items/${deleteTargetItemId}`);
+      // 삭제 후 시간표 갱신
+      await loadTimetable();
+    } catch (e) {
+      console.error("시간표 과목 삭제 실패:", e);
+    } finally {
+      setDeleteLoading(false);
+      setDeleteTargetItemId(null);
+    }
+  };
+
   const handleGoNotice = () => {
     window.open("https://nportal.hanseo.ac.kr/");
   };
@@ -212,46 +272,6 @@ export default function MyPage() {
 
   const handleUnregisterClick = () => {
     setShowUnregisterModal(true);
-  };
-
-  // 🔥 시간표 블록 클릭 → 삭제 모달 열기
-  const handleCourseBlockClick = (courseId, courseName) => {
-    setDeleteModalState({
-      visible: true,
-      courseId,
-      courseName,
-    });
-  };
-
-  // 🔥 삭제 모달에서 "삭제하기" 클릭
-  const handleConfirmDeleteCourse = async () => {
-    const { courseId } = deleteModalState;
-    if (courseId == null) return;
-
-    try {
-      showLoading();
-      await api.delete(`/timetable/items/${courseId}`);
-      // 삭제 성공 후 시간표 새로고침
-      await loadTimetable();
-    } catch (e) {
-      console.error("시간표 과목 삭제 실패:", e);
-    } finally {
-      hideLoading();
-      setDeleteModalState({
-        visible: false,
-        courseId: null,
-        courseName: "",
-      });
-    }
-  };
-
-  // 🔥 삭제 모달에서 "취소" 클릭
-  const handleCancelDeleteCourse = () => {
-    setDeleteModalState({
-      visible: false,
-      courseId: null,
-      courseName: "",
-    });
   };
 
   return (
@@ -278,9 +298,9 @@ export default function MyPage() {
 
       <section className="mypage-timetable-section">
         <MyTimetable
-          courses={courses}
+          items={timetableItems}
           previewCourse={previewCourse}
-          onCourseClick={handleCourseBlockClick}
+          onBlockClick={handleTimetableBlockClick}
         />
       </section>
 
@@ -327,14 +347,6 @@ export default function MyPage() {
         />
       )}
 
-      {/* 시간표 과목 삭제 팝업 */}
-      <TimetableDeleteModal
-        visible={deleteModalState.visible}
-        courseName={deleteModalState.courseName}
-        onConfirm={handleConfirmDeleteCourse}
-        onCancel={handleCancelDeleteCourse}
-      />
-
       {/* 로그아웃 확인 팝업 */}
       <AccountConfirmModal
         mode="logout"
@@ -347,6 +359,14 @@ export default function MyPage() {
         mode="unregister"
         visible={showUnregisterModal}
         onClose={() => setShowUnregisterModal(false)}
+      />
+
+      {/* 시간표 과목 삭제 팝업 */}
+      <TimetableDeleteModal
+        visible={deleteTargetItemId != null}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        loading={deleteLoading}
       />
     </div>
   );
