@@ -1,3 +1,4 @@
+// src/pages/home/TimetableMapSection.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import NaverMap from "../../components/home/NaverMap";
 import api from "../../api/axios";
@@ -198,6 +199,13 @@ const TimetableMapSection = ({
     });
   };
 
+  // ✅ 홈 지도에서 드래그 시작 시 → 선택된 장소 정보 닫기
+  const handleMapDrag = () => {
+    if (selectedPlaceKey !== null) {
+      setSelectedPlaceKey(null);
+    }
+  };
+
   // ✅ 오른쪽 하단 버튼 눌렀을 때 → 캠퍼스 고정 빨간 마커 위치로 이동
   const handleRecenterToUser = () => {
     setSelectedPlaceKey(null);
@@ -241,6 +249,7 @@ const TimetableMapSection = ({
               markers={markers}
               center={mapCenter}
               onMarkerClick={handleMarkerClick}
+              onMapDrag={handleMapDrag}  
             />
 
             <PlaceEventsBar
