@@ -107,8 +107,11 @@ export default function MyPage() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showUnregisterModal, setShowUnregisterModal] = useState(false);
 
-  // 🔥 삭제 대상(블록 클릭 시 세팅)
-  // { itemId, title, timeLabel }
+  // 🔥 과목ID -> itemId 매핑 (과목 추가 API 성공 시 세팅)
+  // 예: { [courseId]: itemId }
+  const [timetableItemMap, setTimetableItemMap] = useState({});
+
+  // 🔥 삭제 대상(블록 클릭 시 세팅)  { itemId, title, timeLabel }
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
@@ -194,7 +197,6 @@ export default function MyPage() {
   const handleToggleCourseSheet = () => {
     setIsCourseSheetOpen((prev) => {
       const next = !prev;
-      // 닫힐 때는 미리보기 삭제
       if (!next) {
         setPreviewCourse(null);
       }
@@ -202,11 +204,26 @@ export default function MyPage() {
     });
   };
 
-  // 바텀시트에서 "시간표 추가" 성공 시
-  const handleTimetableAdded = () => {
-    loadTimetable(); // 내 시간표 다시 불러오고
-    setPreviewCourse(null); // 미리보기 제거
-    setIsCourseSheetOpen(false); // 바텀시트 닫기
+  /**
+   * ⛳ 바텀시트에서 "시간표 추가" 성공 시 호출되는 콜백
+   *
+   * SearchSheet.jsx 쪽에서:
+   *   onTimetableAdded?.({ courseId: 선택한과목.id, itemId: res.data.itemId });
+   * 이렇게 넘겨준다고 가정.
+   */
+  const handleTimetableAdded = (info) => {
+    // info: { courseId, itemId }
+    if (info && info.courseId && info.itemId) {
+      setTimetableItemMap((prev) => ({
+        ...prev,
+        [info.courseId]: info.itemId,
+      }));
+      console.log("🧩 itemId 매핑 추가:", info.courseId, "→", info.itemId);
+    }
+
+    loadTimetable();
+    setPreviewCourse(null);
+    setIsCourseSheetOpen(false);
   };
 
   const handleGoNotice = () => {
@@ -245,13 +262,11 @@ export default function MyPage() {
   const handleConfirmDelete = async () => {
     console.log("🗑 삭제 요청 deleteTarget :", deleteTarget);
 
-    // ❗ 네가 말한 대로, 여기서 굳이 막지 않고 일단 API를 날린다
     const itemId = deleteTarget?.itemId;
 
     setDeleteLoading(true);
     try {
       await api.delete(`/timetable/items/${itemId}`);
-      // 성공 시 시간표 다시 불러오기
       await loadTimetable();
     } catch (e) {
       console.error("시간표 과목 삭제 실패:", e);
@@ -288,6 +303,7 @@ export default function MyPage() {
           courses={courses}
           previewCourse={previewCourse}
           onBlockClick={handleTimetableBlockClick}
+          itemMap={timetableItemMap} // 🔥 여기!
         />
       </section>
 

@@ -417,6 +417,9 @@ const CourseSearchBottomSheet = ({
   // 충돌 해결용 courseId 보관
   const [pendingCourseId, setPendingCourseId] = useState(null);
 
+  // 🔥 방금 추가된 강의/아이템 정보 { courseId, itemId }
+  const [lastAddedInfo, setLastAddedInfo] = useState(null);
+
   // 바텀시트 열려있는 동안 배경 스크롤 막기
   useEffect(() => {
     const prevOverflow = document.body.style.overflow;
@@ -622,12 +625,18 @@ const CourseSearchBottomSheet = ({
 
       if (resolution === "REPLACE") {
         if (resolveData.createdEventCount === 0) {
+          setLastAddedInfo(null);
           setModalState({
             visible: true,
             mode: "notAdded",
             message: "강의가 추가되지 않았어요.",
           });
         } else {
+          // 🔥 교체 후 새로 추가된 강의에 대한 itemId 저장
+          setLastAddedInfo({
+            courseId,
+            itemId: resolveData.itemId ?? null,
+          });
           setModalState({
             visible: true,
             mode: "added",
@@ -636,6 +645,7 @@ const CourseSearchBottomSheet = ({
         }
       } else {
         // KEEP 선택 시
+        setLastAddedInfo(null);
         setModalState({
           visible: true,
           mode: "keep",
@@ -644,6 +654,7 @@ const CourseSearchBottomSheet = ({
       }
     } catch (err) {
       console.error("시간표 충돌 해결 실패:", err);
+      setLastAddedInfo(null);
       setModalState({
         visible: true,
         mode: "error",
@@ -667,9 +678,17 @@ const CourseSearchBottomSheet = ({
     }
 
     if (mode === "added") {
-      // 성공 안내 후 시간표 갱신 + 바텀시트 닫기
+      // ✅ 성공 안내 후, itemId를 들고 부모(MyPage)에게 알려줌
       setModalState({ visible: false, mode: null, message: "" });
-      onTimetableAdded?.();
+
+      if (lastAddedInfo && onTimetableAdded) {
+        onTimetableAdded(lastAddedInfo); // { courseId, itemId }
+      } else if (onTimetableAdded) {
+        // 혹시 모르니 fallback
+        onTimetableAdded();
+      }
+
+      setLastAddedInfo(null);
       return;
     }
 
@@ -696,6 +715,7 @@ const CourseSearchBottomSheet = ({
     if (!courseId) return;
 
     setAddLoading(true);
+    setLastAddedInfo(null);
 
     try {
       const res = await api.post("/timetable/items/try-add", {
@@ -704,6 +724,7 @@ const CourseSearchBottomSheet = ({
       const data = res.data ?? {};
 
       if (data.conflict) {
+        // 🔥 충돌 → 나중에 resolve에서 itemId 처리
         setPendingCourseId(courseId);
         setModalState({
           visible: true,
@@ -715,6 +736,11 @@ const CourseSearchBottomSheet = ({
       }
 
       if (data.createdEventCount > 0 || !("conflict" in data)) {
+        // 🔥 바로 추가 성공 → 여기서 itemId 저장
+        setLastAddedInfo({
+          courseId,
+          itemId: data.itemId ?? null,
+        });
         setModalState({
           visible: true,
           mode: "added",
@@ -723,12 +749,15 @@ const CourseSearchBottomSheet = ({
         return;
       }
 
+      setLastAddedInfo(null);
       setModalState({
         visible: true,
         mode: "notAdded",
         message: "강의가 추가되지 않았어요.",
       });
     } catch (error) {
+      setLastAddedInfo(null);
+
       if (error.response?.status === 409) {
         const msg =
           error.response.data?.error ||

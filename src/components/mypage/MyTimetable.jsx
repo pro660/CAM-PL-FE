@@ -14,20 +14,11 @@ const TOTAL_MINUTES = (END_HOUR - START_HOUR + 1) * 60; // 10 * 60 = 600
 // 왼쪽에 표시할 시간 라벨: 9 ~ 6
 const TIME_LABELS = [9, 10, 11, 12, 1, 2, 3, 4, 5, 6];
 
-// 🔥 백엔드에서 내려오는 itemId 위치를 유연하게 처리
-function resolveItemId(course, time) {
-  // 과목 기준 itemId
-  if (course?.itemId != null) return course.itemId;
-  if (course?.timetableItemId != null) return course.timetableItemId;
-
-  // 혹시 time 쪽에 내려오는 경우 대비
-  if (time?.itemId != null) return time.itemId;
-  if (time?.timetableItemId != null) return time.timetableItemId;
-
-  return null;
-}
-
-function buildDayColumns(courses = []) {
+/**
+ * courses: /timetable 에서 받은 과목들
+ * itemMap: { [courseId]: itemId }  형태 (추가 API 성공 시 MyPage에서 세팅)
+ */
+function buildDayColumns(courses = [], itemMap = {}) {
   const columns = DAY_ORDER.map(() => []);
 
   courses.forEach((course) => {
@@ -58,12 +49,12 @@ function buildDayColumns(courses = []) {
       const heightPercent =
         ((clampedEnd - clampedStart) / TOTAL_MINUTES) * 100;
 
-      const itemId = resolveItemId(course, t);
+      // ✅ 이 과목에 대응되는 itemId (추가 API에서 받은 값)
+      const itemId = itemMap[course.id] ?? null;
 
       columns[dayIndex].push({
         // React key용 id (course 기준 고유값)
         id: `${course.id}-${idx}-${t.dayOfWeek}-${t.startTime}`,
-        // ✅ 시간표 삭제용 itemId
         itemId,
         title: course.name,
         room: t.room,
@@ -81,20 +72,20 @@ export default function MyTimetable({
   courses = [],
   previewCourse = null,
   onBlockClick,
+  itemMap = {}, // 🔥 MyPage에서 내려주는 { [courseId]: itemId }
 }) {
   // 실제 내 시간표 강의
   const dayColumns = useMemo(
-    () => buildDayColumns(courses),
-    [courses]
+    () => buildDayColumns(courses, itemMap),
+    [courses, itemMap]
   );
 
-  // 🔥 선택된 강의 미리보기용 (흐릿한 블록)
+  // 🔥 선택된 강의 미리보기용 (흐릿한 블록) — itemId 필요 없음
   const previewColumns = useMemo(() => {
     if (!previewCourse) {
-      // DAY_ORDER 길이에 맞춰 빈 배열 유지
       return DAY_ORDER.map(() => []);
     }
-    return buildDayColumns([previewCourse]);
+    return buildDayColumns([previewCourse], {}); // 미리보기는 itemId 필요X
   }, [previewCourse]);
 
   // ✅ 강의가 하나라도 있는지 여부
@@ -172,7 +163,7 @@ export default function MyTimetable({
                         top: `${block.topPercent}%`,
                         height: `${block.heightPercent}%`,
                       }}
-                      // ✅ 클릭 시 무조건 부모에 전달 → 부모에서 모달 오픈
+                      // ✅ 네 말대로: 클릭하면 무조건 부모로 전달 → 부모에서 모달 띄움
                       onClick={() =>
                         onBlockClick &&
                         onBlockClick({
