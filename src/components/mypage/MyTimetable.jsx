@@ -5,8 +5,8 @@ import "../../css/mypage/MyTimetable.css";
 const DAY_ORDER = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"];
 const DAY_LABELS = ["월", "화", "수", "목", "금"];
 
-const START_HOUR = 9;   // 9시
-const END_HOUR = 18;    // 18시(6시)
+const START_HOUR = 9; // 9시
+const END_HOUR = 18; // 18시(6시)
 
 // 🔥 화면에 보이는 시간칸은 9~6까지 "10칸"이라서 10시간 기준으로 스케일
 const TOTAL_MINUTES = (END_HOUR - START_HOUR + 1) * 60; // 10 * 60 = 600
@@ -28,8 +28,8 @@ function buildDayColumns(courses = []) {
       const [eh, em] = t.endTime.split(":").map(Number);
       if (Number.isNaN(sh) || Number.isNaN(eh)) return;
 
-      const startMinutes = sh * 60 + sm;
-      const endMinutes = eh * 60 + em;
+      const startMinutes = sh * 60 + (Number.isNaN(sm) ? 0 : sm);
+      const endMinutes = eh * 60 + (Number.isNaN(em) ? 0 : em);
 
       const minMinutes = START_HOUR * 60;
       const maxMinutes = END_HOUR * 60;
@@ -47,6 +47,8 @@ function buildDayColumns(courses = []) {
 
       columns[dayIndex].push({
         id: `${course.id}-${idx}-${t.dayOfWeek}-${t.startTime}`,
+        courseId: course.id,
+        courseName: course.name,
         title: course.name,
         room: t.room,
         timeLabel: `${t.startTime.slice(0, 5)} ~ ${t.endTime.slice(0, 5)}`,
@@ -59,7 +61,11 @@ function buildDayColumns(courses = []) {
   return columns;
 }
 
-export default function MyTimetable({ courses = [], previewCourse = null }) {
+export default function MyTimetable({
+  courses = [],
+  previewCourse = null,
+  onCourseClick, // ✅ 시간표 블록 클릭 시 콜백 (과목 삭제용)
+}) {
   // 실제 내 시간표 강의
   const dayColumns = useMemo(
     () => buildDayColumns(courses),
@@ -149,6 +155,14 @@ export default function MyTimetable({ courses = [], previewCourse = null }) {
                       style={{
                         top: `${block.topPercent}%`,
                         height: `${block.heightPercent}%`,
+                      }}
+                      onClick={() => {
+                        if (!onCourseClick) return;
+                        if (!block.courseId) return;
+                        onCourseClick({
+                          id: block.courseId,
+                          name: block.courseName,
+                        });
                       }}
                     >
                       <div className="mypage-timetable-class-title">
