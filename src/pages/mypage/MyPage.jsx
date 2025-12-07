@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { useLocation } from "react-router-dom";
 import "../../css/mypage/MyPage.css";
+import "../../css/calendar/Delete_schdule.css"; // ✅ 삭제 팝업 스타일 재사용
 
 import api from "../../api/axios";
 import { useLoading } from "../../context/LoadingContext.jsx";
@@ -17,6 +18,7 @@ import AccountConfirmModal from "../../components/mypage/AccountConfirmModal.jsx
 
 import NoticeIcon from "../../images/mypage/haksa.svg";
 import ShuttleIcon from "../../images/mypage/bus.svg";
+import NosmileImg from "../../images/calendar/nosmile.svg"; // ✅ 팝업 아이콘
 
 const WEEKDAY_KR_LONG = [
   "일요일",
@@ -27,6 +29,60 @@ const WEEKDAY_KR_LONG = [
   "금요일",
   "토요일",
 ];
+
+/** ✅ 시간표 과목 삭제 확인 팝업 */
+const TimetableDeleteModal = ({
+  visible,
+  course,
+  loading,
+  onConfirm,
+  onCancel,
+}) => {
+  if (!visible || !course) return null;
+
+  return (
+    <div className="delete-schedule-overlay">
+      <div className="delete-schedule-modal">
+        <div className="delete-schedule-icon-wrap">
+          <img
+            src={NosmileImg}
+            alt="안내 아이콘"
+            className="delete-schedule-icon"
+          />
+        </div>
+
+        <p className="delete-schedule-message">
+          {course.name ? (
+            <>
+              <strong>{course.name}</strong>
+              <br />
+            </>
+          ) : null}
+          해당 과목을 시간표에서 삭제하시겠습니까?
+        </p>
+
+        <div className="delete-schedule-buttons">
+          <button
+            type="button"
+            className="delete-schedule-cancel"
+            onClick={onCancel}
+            disabled={loading}
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            className="delete-schedule-confirm"
+            onClick={onConfirm}
+            disabled={loading}
+          >
+            {loading ? "삭제 중..." : "삭제하기"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default function MyPage() {
   const location = useLocation();
@@ -43,6 +99,10 @@ export default function MyPage() {
   // 로그아웃 / 탈퇴 확인 팝업 상태
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showUnregisterModal, setShowUnregisterModal] = useState(false);
+
+  // ✅ 시간표에서 삭제 대상 과목 + 삭제 로딩 상태
+  const [deleteTargetCourse, setDeleteTargetCourse] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // camp_auth에서 사용자 이름 로드
   useEffect(() => {
@@ -137,6 +197,45 @@ export default function MyPage() {
     setIsCourseSheetOpen(false); // 바텀시트 닫기
   };
 
+  // ✅ 시간표 블록 클릭 시 → 삭제 확인 팝업 열기
+  const handleCourseBlockClick = (course) => {
+    if (!course || !course.id) return;
+    setDeleteTargetCourse(course);
+  };
+
+  // ✅ 삭제 팝업 "취소"
+  const handleCancelDeleteCourse = () => {
+    if (deleteLoading) return;
+    setDeleteTargetCourse(null);
+  };
+
+  // ✅ 삭제 팝업 "삭제하기"
+  const handleConfirmDeleteCourse = async () => {
+    if (!deleteTargetCourse || !deleteTargetCourse.id) return;
+    setDeleteLoading(true);
+
+    try {
+      // 과목 삭제 API: DELETE /timetable/items/{courseId}
+      await api.delete(`/timetable/items/${deleteTargetCourse.id}`);
+
+      // 시간표 다시 불러오기
+      await loadTimetable();
+
+      // 미리보기로 선택돼 있던 과목이면 같이 정리
+      setPreviewCourse((prev) =>
+        prev && prev.id === deleteTargetCourse.id ? null : prev
+      );
+
+      // 팝업 닫기
+      setDeleteTargetCourse(null);
+    } catch (e) {
+      console.error("시간표 과목 삭제 실패:", e);
+      alert("시간표에서 과목을 삭제하는 중 오류가 발생했어요.");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   const handleGoNotice = () => {
     window.open("https://nportal.hanseo.ac.kr/");
   };
@@ -176,7 +275,12 @@ export default function MyPage() {
       </section>
 
       <section className="mypage-timetable-section">
-        <MyTimetable courses={courses} previewCourse={previewCourse} />
+        <MyTimetable
+          courses={courses}
+          previewCourse={previewCourse}
+          // ✅ 각 강의 블록 클릭 시 삭제 팝업 띄우기
+          onCourseClick={handleCourseBlockClick}
+        />
       </section>
 
       {/* 학사공지 / 셔틀 예약 링크 상자 */}
@@ -221,6 +325,15 @@ export default function MyPage() {
           onTimetableAdded={handleTimetableAdded}
         />
       )}
+
+      {/* 시간표 과목 삭제 팝업 */}
+      <TimetableDeleteModal
+        visible={!!deleteTargetCourse}
+        course={deleteTargetCourse}
+        loading={deleteLoading}
+        onConfirm={handleConfirmDeleteCourse}
+        onCancel={handleCancelDeleteCourse}
+      />
 
       {/* 로그아웃 확인 팝업 */}
       <AccountConfirmModal
