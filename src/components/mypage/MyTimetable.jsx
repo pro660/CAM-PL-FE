@@ -48,7 +48,7 @@ function buildDayColumns(courses = []) {
       columns[dayIndex].push({
         // React key용 id (course 기준 고유값)
         id: `${course.id}-${idx}-${t.dayOfWeek}-${t.startTime}`,
-        // ❗ 시간표 삭제용 itemId (백엔드에서 time 객체에 내려준다고 가정)
+        // ❗ 시간표 삭제용 itemId (백엔드에서 time 객체에 내려줌)
         itemId: t.itemId,
         title: course.name,
         room: t.room,
@@ -65,7 +65,7 @@ function buildDayColumns(courses = []) {
 export default function MyTimetable({
   courses = [],
   previewCourse = null,
-  onBlockClick,
+  onBlockClick, // 💡 블록 클릭 시 상위(MyPage)에 알려주는 콜백
 }) {
   // 실제 내 시간표 강의
   const dayColumns = useMemo(

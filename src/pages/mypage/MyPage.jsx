@@ -108,7 +108,7 @@ export default function MyPage() {
   const [showUnregisterModal, setShowUnregisterModal] = useState(false);
 
   // 🔥 삭제 대상(블록 클릭 시 세팅)
-  // { itemId, title, timeLabel } 형태
+  // { itemId, title, timeLabel }
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
@@ -148,7 +148,10 @@ export default function MyPage() {
     }
 
     // 한 번 사용한 뒤에는 history state를 정리 (뒤로가기 시 계속 열리는 것 방지)
-    if (location.state?.openCourseSearchSheet && window.history?.replaceState) {
+    if (
+      location.state?.openCourseSearchSheet &&
+      window.history?.replaceState
+    ) {
       const { openCourseSearchSheet, fromTimeFilter, ...rest } =
         location.state;
       window.history.replaceState(
@@ -223,7 +226,7 @@ export default function MyPage() {
   };
 
   // 🔥 시간표 블록 클릭 → 삭제 모달 오픈
-  // block: { itemId, title, timeLabel, ... }
+  // block: { itemId, title, timeLabel }
   const handleTimetableBlockClick = (block) => {
     if (!block || !block.itemId) {
       console.warn("시간표 블록에 itemId가 없어 삭제할 수 없습니다.", block);
