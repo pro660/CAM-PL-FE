@@ -14,6 +14,11 @@ const TOTAL_MINUTES = (END_HOUR - START_HOUR + 1) * 60; // 10 * 60 = 600
 // 왼쪽에 표시할 시간 라벨: 9 ~ 6
 const TIME_LABELS = [9, 10, 11, 12, 1, 2, 3, 4, 5, 6];
 
+/**
+ * courses: /timetable 에서 내려온 강의들
+ *  - 여기서 중요한 건 "시간표 아이템 ID" (예: timetableItemId)
+ *  - timetableItemId 필드 이름이 다르면 아래에서 course.timetableItemId 부분만 바꿔주면 됨.
+ */
 function buildDayColumns(courses = []) {
   const columns = DAY_ORDER.map(() => []);
 
@@ -28,8 +33,8 @@ function buildDayColumns(courses = []) {
       const [eh, em] = t.endTime.split(":").map(Number);
       if (Number.isNaN(sh) || Number.isNaN(eh)) return;
 
-      const startMinutes = sh * 60 + (Number.isNaN(sm) ? 0 : sm);
-      const endMinutes = eh * 60 + (Number.isNaN(em) ? 0 : em);
+      const startMinutes = sh * 60 + sm;
+      const endMinutes = eh * 60 + em;
 
       const minMinutes = START_HOUR * 60;
       const maxMinutes = END_HOUR * 60;
@@ -45,10 +50,20 @@ function buildDayColumns(courses = []) {
       const heightPercent =
         ((clampedEnd - clampedStart) / TOTAL_MINUTES) * 100;
 
+      // ✅ 여기서 "실제 삭제에 쓸 ID"를 따로 떼어 둔다.
+      //    - timetableItemId가 있으면 그걸 쓰고,
+      //    - 없으면 일단 course.id로 fallback
+      const timetableItemId =
+        course.timetableItemId != null ? course.timetableItemId : course.id;
+
       columns[dayIndex].push({
-        id: `${course.id}-${idx}-${t.dayOfWeek}-${t.startTime}`,
-        courseId: course.id,
+        // React key 용 내부 id (랜더링 용도)
+        id: `${timetableItemId}-${idx}-${t.dayOfWeek}-${t.startTime}`,
+        // 실제 삭제에 쓸 아이템 ID
+        itemId: timetableItemId,
+        // 모달에서 보여줄 이름
         courseName: course.name,
+
         title: course.name,
         room: t.room,
         timeLabel: `${t.startTime.slice(0, 5)} ~ ${t.endTime.slice(0, 5)}`,
@@ -64,7 +79,7 @@ function buildDayColumns(courses = []) {
 export default function MyTimetable({
   courses = [],
   previewCourse = null,
-  onCourseClick, // ✅ 시간표 블록 클릭 시 콜백 (과목 삭제용)
+  onCourseClick, // 🔥 블록 클릭 시 호출될 핸들러 (MyPage에서 내려줌)
 }) {
   // 실제 내 시간표 강의
   const dayColumns = useMemo(
@@ -158,9 +173,9 @@ export default function MyTimetable({
                       }}
                       onClick={() => {
                         if (!onCourseClick) return;
-                        if (!block.courseId) return;
+                        if (!block.itemId) return;
                         onCourseClick({
-                          id: block.courseId,
+                          itemId: block.itemId,
                           name: block.courseName,
                         });
                       }}
