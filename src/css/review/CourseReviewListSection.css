@@ -31,6 +31,14 @@
   border-top: none;
 }
 
+/* 카드 상단: 별점 + 우측 아이콘(내 리뷰일 때만) */
+.cr-review-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
 .cr-review-rating-row {
   margin-bottom: 0.25rem;
 }
@@ -59,6 +67,26 @@
   color: #ffc94a;        /* 채운 별 색 */
   overflow: hidden;      /* width로 잘라낼 부분 숨기기 */
   white-space: nowrap;   /* 별 문자 줄바꿈 방지 */
+}
+
+/* 상단 아이콘 영역 */
+.cr-review-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.cr-review-icon-btn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.cr-review-icon-img {
+  width: 0.9rem;
+  height: 0.9rem;
+  display: block;
 }
 
 /* 학기, 내용 */

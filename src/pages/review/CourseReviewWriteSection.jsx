@@ -37,7 +37,6 @@ function StarRatingInput({ value = 0, onChange }) {
         className="cr-star-input"
         onClick={(e) => handleClick(i, e)}
       >
-        {/* 리스트와 동일한 구조: 베이스 + 필 레이어 */}
         <span className="cr-star-input-base">★</span>
         <span
           className="cr-star-input-fill"
