@@ -1,35 +1,6 @@
-// src/pages/review/CourseReviewListSection.jsx
 import React, { useMemo } from "react";
 import "../../css/review/CourseReviewListSection.css";
-
-/** 별점 표시용 (읽기 전용, 0.5 단위, width + overflow 방식) */
-function StarRatingDisplay({ value = 0 }) {
-  const safeValue = Math.max(0, Math.min(5, value || 0));
-  const stars = [];
-
-  for (let i = 1; i <= 5; i += 1) {
-    let fill = 0;
-    const diff = safeValue - (i - 1);
-
-    if (diff >= 1) fill = 100;      // 꽉 찬 별
-    else if (diff >= 0.5) fill = 50; // 반 별
-    else fill = 0;                  // 빈 별
-
-    stars.push(
-      <span key={i} className="cr-list-star">
-        <span className="cr-list-star-base">★</span>
-        <span
-          className="cr-list-star-fill"
-          style={{ width: `${fill}%` }}
-        >
-          ★
-        </span>
-      </span>
-    );
-  }
-
-  return <div className="cr-list-star-row">{stars}</div>;
-}
+import StarRatingDisplay from "../../components/review/StarRatingDisplay.jsx";
 
 const formatSemesterLabel = (semesterCode) => {
   if (!semesterCode) return "";
@@ -78,6 +49,7 @@ export default function CourseReviewListSection({
               className="cr-review-card"
             >
               <div className="cr-review-rating-row">
+                {/* ⭐ 공용 별 컴포넌트 사용 (기본 클래스 = 리스트용) */}
                 <StarRatingDisplay value={review.rating || 0} />
               </div>
               {semesterLabel && (
