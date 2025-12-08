@@ -20,11 +20,11 @@ function StarRatingInput({ value = 0, onChange }) {
 
   const stars = [];
   for (let i = 1; i <= 5; i += 1) {
-    let fillPercent = "0%";
+    let fill = 0;
     const diff = safeValue - (i - 1);
-
-    if (diff >= 1) fillPercent = "100%"; // 꽉 찬 별
-    else if (diff >= 0.5) fillPercent = "50%"; // 반 별
+    if (diff >= 1) fill = 100;      // 꽉 찬 별
+    else if (diff >= 0.5) fill = 50; // 반 별
+    else fill = 0;                  // 빈 별
 
     stars.push(
       <button
@@ -32,16 +32,8 @@ function StarRatingInput({ value = 0, onChange }) {
         type="button"
         className="cr-star-input"
         onClick={(e) => handleClick(i, e)}
-      >
-        {/* 리스트/헤더와 동일 구조: 빈 별 + 잘려진 채운 별 */}
-        <span className="cr-star-input-base">★</span>
-        <span
-          className="cr-star-input-fill"
-          style={{ width: fillPercent }}
-        >
-          ★
-        </span>
-      </button>
+        style={{ "--star-fill": `${fill}%` }}
+      />
     );
   }
 
@@ -58,8 +50,8 @@ export default function CourseReviewWriteSection({
     onContentChange?.(e.target.value);
   };
 
-  const safeRating = typeof rating === "number" ? rating : 0;
-  const ratingText = `${safeRating.toFixed(1)} / 5.0`;
+  const ratingText =
+    rating && rating > 0 ? `${rating.toFixed(1)} / 5.0` : "0 / 5.0";
 
   return (
     <section className="cr-write-wrapper">
