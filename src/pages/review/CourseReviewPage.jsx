@@ -15,10 +15,82 @@ import CourseReviewHeaderSection from "./CourseReviewHeaderSection.jsx";
 import CourseReviewListSection from "./CourseReviewListSection.jsx";
 import CourseReviewWriteSection from "./CourseReviewWriteSection.jsx";
 
-// ✅ 공통 모달 (등록/수정/삭제 완료용)
-import ReviewResultModal from "../../components/review/ReviewResultModal.jsx";
-// ✅ 강의평 삭제 확인 모달
-import CourseReviewDeleteModal from "../../components/review/CourseReviewDeleteModal.jsx";
+// 공통 모달 스타일 재사용
+import "../../css/calendar/Delete_schdule.css";
+import NosmileImg from "../../images/calendar/nosmile.svg";
+
+/** 강의평 삭제 확인 모달 */
+function ReviewDeleteModal({ visible, loading, onConfirm, onCancel }) {
+  if (!visible) return null;
+
+  return (
+    <div className="delete-schedule-overlay">
+      <div className="delete-schedule-modal">
+        <div className="delete-schedule-icon-wrap">
+          <img
+            src={NosmileImg}
+            alt="삭제 안내 아이콘"
+            className="delete-schedule-icon"
+          />
+        </div>
+
+        <p className="delete-schedule-message">
+          해당 강의평을 삭제하시겠습니까?
+        </p>
+
+        <div className="delete-schedule-buttons">
+          <button
+            type="button"
+            className="delete-schedule-confirm"
+            onClick={onConfirm}
+            disabled={loading}
+          >
+            {loading ? "삭제 중..." : "확인"}
+          </button>
+          <button
+            type="button"
+            className="delete-schedule-cancel"
+            onClick={onCancel}
+            disabled={loading}
+          >
+            취소
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** 강의평 등록/수정/삭제 완료 안내 모달 */
+function ReviewResultModal({ visible, message, onClose }) {
+  if (!visible) return null;
+
+  return (
+    <div className="delete-schedule-overlay">
+      <div className="delete-schedule-modal">
+        <div className="delete-schedule-icon-wrap">
+          <img
+            src={NosmileImg}
+            alt="안내 아이콘"
+            className="delete-schedule-icon"
+          />
+        </div>
+
+        <p className="delete-schedule-message">{message}</p>
+
+        <div className="delete-schedule-buttons">
+          <button
+            type="button"
+            className="delete-schedule-confirm"
+            onClick={onClose}
+          >
+            확인
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function CourseReviewPage() {
   const { courseId } = useParams(); // ex) /course-review/:courseId
@@ -29,44 +101,48 @@ export default function CourseReviewPage() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // 작성/수정 폼
   const [newContent, setNewContent] = useState("");
   const [newRating, setNewRating] = useState(0); // 0 ~ 5, 0.5 단위
   const [submitting, setSubmitting] = useState(false);
 
-  // 어떤 리뷰를 수정 중인지 (null이면 새로 작성 모드)
-  const [editingReview, setEditingReview] = useState(null);
+  // 수정 모드 여부 (수정 대상 리뷰 id)
+  const [editingReviewId, setEditingReviewId] = useState(null);
 
   // 삭제 모달 상태
-  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteTargetReview, setDeleteTargetReview] = useState(null);
 
-  // 결과 모달 상태 (등록/수정/삭제 공용)
-  const [showResultModal, setShowResultModal] = useState(false);
-  const [resultMessage, setResultMessage] = useState("");
+  // 결과 모달(등록/수정/삭제 완료)
+  const [resultModal, setResultModal] = useState({
+    visible: false,
+    message: "",
+  });
 
   const courseName = course?.name || "강의명";
 
-  /** 강의 + 강의평 전체 재조회 */
-  const loadCourse = useCallback(async () => {
-    if (!courseId) return;
+  /** 강의 + 강의평 전체 조회 (리스트 재호출) */
+  const loadCourse = useCallback(
+    async () => {
+      if (!courseId) return;
 
-    setLoading(true);
-    showLoading();
-    try {
-      const res = await api.get(`/courses/${courseId}`);
-      const data = res.data ?? {};
-      setCourse(data);
-      setReviews(Array.isArray(data.reviews) ? data.reviews : []);
-    } catch (err) {
-      console.error("강의 정보 조회 실패:", err);
-      alert("강의 정보를 불러오는 중 오류가 발생했어요.");
-    } finally {
-      hideLoading();
-      setLoading(false);
-    }
-  }, [courseId, showLoading, hideLoading]);
+      setLoading(true);
+      showLoading();
+      try {
+        const res = await api.get(`/courses/${courseId}`);
+        const data = res.data ?? {};
+        setCourse(data);
+        setReviews(Array.isArray(data.reviews) ? data.reviews : []);
+      } catch (err) {
+        console.error("강의 정보 조회 실패:", err);
+        alert("강의 정보를 불러오는 중 오류가 발생했어요.");
+      } finally {
+        hideLoading();
+        setLoading(false);
+      }
+    },
+    [courseId, showLoading, hideLoading]
+  );
 
   useEffect(() => {
     loadCourse();
@@ -76,63 +152,74 @@ export default function CourseReviewPage() {
     navigate(-1);
   };
 
-  const isEditMode = !!editingReview;
+  const isEditing = useMemo(
+    () => editingReviewId !== null,
+    [editingReviewId]
+  );
 
-  const canSubmit = useMemo(() => {
-    return newRating > 0 && newContent.trim().length > 0 && !submitting;
-  }, [newRating, newContent, submitting]);
+  const canSubmit = useMemo(
+    () =>
+      newRating > 0 &&
+      newContent.trim().length > 0 &&
+      !submitting,
+    [newRating, newContent, submitting]
+  );
 
   /** 리스트에서 "수정" 아이콘 클릭 */
-  const handleEditReview = (review) => {
+  const handleEditReviewClick = (review) => {
     if (!review) return;
-    setEditingReview(review);
-    setNewRating(review.rating || 0);
+    setEditingReviewId(review.id ?? 0);
     setNewContent(review.content || "");
+    setNewRating(review.rating || 0);
   };
 
   /** 리스트에서 "삭제" 아이콘 클릭 */
-  const handleRequestDeleteReview = (review) => {
+  const handleDeleteReviewClick = (review) => {
     if (!review) return;
-    setDeleteTarget(review);
-    setShowDeleteModal(true);
+    setDeleteTargetReview(review);
+    setDeleteModalOpen(true);
   };
 
-  /** 삭제 모달에서 "삭제하기" 버튼 */
-  const handleConfirmDeleteReview = async () => {
-    if (!courseId || !deleteTarget) return;
-    setDeleteLoading(true);
+  /** 삭제 모달에서 "취소" */
+  const handleCancelDeleteReview = () => {
+    if (deleteLoading) return;
+    setDeleteModalOpen(false);
+    setDeleteTargetReview(null);
+  };
 
+  /** 삭제 모달에서 "확인" → 삭제 API + 리스트 재호출 + 완료 모달 */
+  const handleConfirmDeleteReview = async () => {
+    if (!courseId || !deleteTargetReview) return;
+    if (deleteLoading) return;
+
+    setDeleteLoading(true);
     try {
-      // ✅ 강의평 삭제 API
+      // 삭제 API
       await api.delete(`/courses/reviews/me/${courseId}`);
 
-      // ✅ 삭제 후 강의 + 강의평 재조회
+      // 삭제 모달 먼저 닫기
+      setDeleteModalOpen(false);
+      setDeleteTargetReview(null);
+
+      // 리스트 재호출 (여기서 로더가 뜨고, 끝나면 사라짐)
       await loadCourse();
 
-      // 만약 삭제한 리뷰를 수정 중이었다면 폼 초기화
-      if (editingReview && editingReview.id === deleteTarget.id) {
-        setEditingReview(null);
-        setNewContent("");
-        setNewRating(0);
-      }
+      // 만약 수정 중이던 리뷰를 삭제했으면 입력 초기화
+      setEditingReviewId(null);
+      setNewContent("");
+      setNewRating(0);
 
-      setResultMessage("강의평이 삭제되었습니다!");
-      setShowResultModal(true);
+      // 로딩이 다 끝난 뒤 완료 모달 표시
+      setResultModal({
+        visible: true,
+        message: "강의평이 삭제되었습니다.",
+      });
     } catch (err) {
       console.error("강의평 삭제 실패:", err);
       alert("강의평 삭제 중 오류가 발생했어요.");
     } finally {
       setDeleteLoading(false);
-      setShowDeleteModal(false);
-      setDeleteTarget(null);
     }
-  };
-
-  /** 삭제 모달에서 "취소" 버튼 */
-  const handleCancelDeleteReview = () => {
-    if (deleteLoading) return;
-    setShowDeleteModal(false);
-    setDeleteTarget(null);
   };
 
   /** 평가하기 / 수정하기 버튼 클릭 */
@@ -144,41 +231,43 @@ export default function CourseReviewPage() {
     }
 
     setSubmitting(true);
+    const body = {
+      rating: newRating,
+      content: newContent.trim(),
+    };
+
     try {
-      const body = {
-        rating: newRating,
-        content: newContent.trim(),
-      };
-
-      if (isEditMode) {
-        // ✅ 수정 API
-        await api.put(`/courses/reviews/${courseId}`, body);
-
-        // ✅ 수정 후 강의 + 강의평 재조회
-        await loadCourse();
-
-        setResultMessage("강의평이 수정되었습니다!");
+      if (isEditing) {
+        // 수정
+        await api.patch(`/courses/reviews/${courseId}`, body);
       } else {
-        // ✅ 등록 API
+        // 신규 등록
         await api.post(`/courses/reviews/${courseId}`, body);
-
-        // ✅ 등록 후 강의 + 강의평 재조회
-        await loadCourse();
-
-        setResultMessage("강의평이 등록되었습니다!");
       }
 
-      // 폼 초기화
+      // 등록/수정 후 -> 리스트 재호출
+      // (여기서 로더가 뜨고, 다 끝난 다음에 모달이 뜨게 순서 보장)
+      await loadCourse();
+
+      // 입력값/수정 상태 초기화
       setNewContent("");
       setNewRating(0);
-      setEditingReview(null);
+      setEditingReviewId(null);
 
-      // 결과 모달 노출
-      setShowResultModal(true);
+      // 로딩이 끝난 후 성공 모달
+      setResultModal({
+        visible: true,
+        message: isEditing
+          ? "강의평이 수정되었습니다!"
+          : "강의평이 등록되었습니다!",
+      });
     } catch (err) {
-      console.error("강의평 저장 실패:", err);
+      console.error(
+        isEditing ? "강의평 수정 실패:" : "강의평 등록 실패:",
+        err
+      );
       alert(
-        isEditMode
+        isEditing
           ? "강의평 수정 중 오류가 발생했어요."
           : "강의평 등록 중 오류가 발생했어요."
       );
@@ -187,10 +276,16 @@ export default function CourseReviewPage() {
     }
   };
 
-  /** 결과 모달 닫기 */
   const handleCloseResultModal = () => {
-    setShowResultModal(false);
+    setResultModal({ visible: false, message: "" });
   };
+
+  const buttonLabel = useMemo(() => {
+    if (submitting) {
+      return isEditing ? "수정 중..." : "등록 중...";
+    }
+    return isEditing ? "수정하기" : "평가하기";
+  }, [submitting, isEditing]);
 
   return (
     <div className="course-review-page">
@@ -225,8 +320,8 @@ export default function CourseReviewPage() {
             <CourseReviewListSection
               reviews={reviews}
               semesterCode={course.semesterCode}
-              onEditReview={handleEditReview}
-              onDeleteReview={handleRequestDeleteReview}
+              onEditReview={handleEditReviewClick}
+              onDeleteReview={handleDeleteReviewClick}
             />
 
             {/* 3. 강의평 쓰기 섹션 */}
@@ -237,7 +332,7 @@ export default function CourseReviewPage() {
               onRatingChange={setNewRating}
             />
 
-            {/* 하단 버튼: 작성/수정 공용 */}
+            {/* 하단 평가하기 / 수정하기 버튼 */}
             <div className="course-review-submit-wrap">
               <button
                 type="button"
@@ -245,31 +340,25 @@ export default function CourseReviewPage() {
                 onClick={handleSubmitReview}
                 disabled={!canSubmit}
               >
-                {submitting
-                  ? isEditMode
-                    ? "수정 중..."
-                    : "등록 중..."
-                  : isEditMode
-                  ? "수정하기"
-                  : "평가하기"}
+                {buttonLabel}
               </button>
             </div>
           </>
         )}
       </main>
 
-      {/* ✅ 삭제 확인 모달 (강의평 삭제) */}
-      <CourseReviewDeleteModal
-        visible={showDeleteModal}
+      {/* 강의평 삭제 확인 모달 */}
+      <ReviewDeleteModal
+        visible={deleteModalOpen}
         loading={deleteLoading}
         onConfirm={handleConfirmDeleteReview}
         onCancel={handleCancelDeleteReview}
       />
 
-      {/* ✅ 등록/수정/삭제 결과 모달 (확인 버튼 1개) */}
+      {/* 등록/수정/삭제 완료 모달 */}
       <ReviewResultModal
-        visible={showResultModal}
-        message={resultMessage}
+        visible={resultModal.visible}
+        message={resultModal.message}
         onClose={handleCloseResultModal}
       />
     </div>
