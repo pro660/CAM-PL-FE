@@ -180,7 +180,9 @@ const buildTimeWindowsFromSlots = (slots = []) => {
   });
 
   Object.keys(byDay).forEach((day) => {
-    const arr = byDay[day].slice().sort((a, b) => a.startMinutes - b.startMinutes);
+    const arr = byDay[day]
+      .slice()
+      .sort((a, b) => a.startMinutes - b.startMinutes);
     const merged = [];
     let cur = arr[0];
 
@@ -204,13 +206,9 @@ const buildTimeWindowsFromSlots = (slots = []) => {
   return byDay; // { "월": [{startMinutes, endMinutes}, ...], ... }
 };
 
-/** 🔥 강의 1개가 선택한 시간 범위 안에 "완전히 포함"되는지 판단
- *  - 부분 겹침 X
- *  - 선택한 시간 안에서 "시작"하고 "끝나는" 강의만 true
- */
+/** 🔥 강의 1개가 선택한 시간 범위 안에 "완전히 포함"되는지 판단 */
 const matchTimeFilter = (course, timeSlots = []) => {
   if (!timeSlots || timeSlots.length === 0) {
-    // 시간 필터 없으면 모든 강의 허용
     return true;
   }
 
@@ -260,7 +258,9 @@ const applyClientSideFilters = (
   const useYearFilter =
     years.length > 0 && years.length < ALL_YEAR_KEYS.length;
 
-  const credits = Array.isArray(selectedCredits) ? selectedCredits : [];
+  const credits = Array.isArray(selectedCredits)
+    ? selectedCredits
+    : [];
   const useCreditFilter =
     credits.length > 0 && credits.length < ALL_CREDIT_KEYS.length;
 
@@ -284,7 +284,7 @@ const applyClientSideFilters = (
       }
     }
 
-    // 🔥 시간 필터: 선택한 바운더리 안에서 "시작·종료가 모두 포함"되는 강의만 통과
+    // 시간 필터
     if (useTimeFilter) {
       if (!matchTimeFilter(course, timeSlots)) {
         return false;
@@ -295,8 +295,14 @@ const applyClientSideFilters = (
   });
 };
 
-/** 🔔 강의 추가 / 충돌 / 에러용 팝업 (Delete_schdule 스타일 재사용) */
-const CourseAlertModal = ({ visible, mode, message, onConfirm, onCancel }) => {
+/** 🔔 강의 추가 / 충돌 / 에러용 팝업 */
+const CourseAlertModal = ({
+  visible,
+  mode,
+  message,
+  onConfirm,
+  onCancel,
+}) => {
   if (!visible) return null;
 
   const isConflict = mode === "conflict";
@@ -379,17 +385,17 @@ const CourseSearchBottomSheet = ({
   );
 
   // 필터 UI 상태
-  const [activeFilter, setActiveFilter] = useState(null); // type | time | year | credit | ...
+  const [activeFilter, setActiveFilter] = useState(null);
   const [filterValues, setFilterValues] = useState(() =>
     FILTER_CONFIG.reduce((acc, f) => {
       if (f.key === "type") {
-        acc[f.key] = savedArea.categoryName; // 전공/교양 라벨
+        acc[f.key] = savedArea.categoryName;
       } else if (f.key === "year") {
-        acc[f.key] = savedYear.label; // 학년 라벨
+        acc[f.key] = savedYear.label;
       } else if (f.key === "credit") {
-        acc[f.key] = savedCredit.label; // 학점 라벨
+        acc[f.key] = savedCredit.label;
       } else if (f.key === "time") {
-        acc[f.key] = savedTime.label || "전체"; // 시간 라벨
+        acc[f.key] = savedTime.label || "전체";
       } else {
         acc[f.key] = f.defaultValue;
       }
@@ -485,7 +491,7 @@ const CourseSearchBottomSheet = ({
 
   /** 🔥 필터 pill 내부 X 클릭 → 해당 필터만 "전체"로 초기화 + localStorage도 정리 */
   const handleFilterClearClick = (e, key) => {
-    e.stopPropagation(); // pill 클릭 이벤트 막기
+    e.stopPropagation();
 
     const config = FILTER_CONFIG.find((f) => f.key === key);
     if (!config) return;
@@ -497,7 +503,6 @@ const CourseSearchBottomSheet = ({
     }));
 
     try {
-      // 실제 필터 상태 + localStorage 동기화
       if (key === "type") {
         setSelectedCategoryId(null);
         localStorage.removeItem("course_area_filter");
@@ -519,34 +524,29 @@ const CourseSearchBottomSheet = ({
   /** 필터 pill 클릭 */
   const handleFilterClick = (key) => {
     if (key === "type") {
-      // 전공/영역 선택 페이지
       onClose?.();
       navigate("/course-area");
       return;
     }
 
     if (key === "year") {
-      // 학년 선택 페이지
       onClose?.();
       navigate("/course-year");
       return;
     }
 
     if (key === "credit") {
-      // 학점 선택 페이지
       onClose?.();
       navigate("/course-credit");
       return;
     }
 
     if (key === "time") {
-      // 시간 선택 페이지
       onClose?.();
       navigate("/course-time");
       return;
     }
 
-    // 나머지(keyword)는 입력창 토글
     if (activeFilter === key) {
       setActiveFilter(null);
       setFilterInput("");
@@ -602,8 +602,8 @@ const CourseSearchBottomSheet = ({
 
   /** 강의평 버튼 클릭 → 강의평 페이지로 이동 */
   const handleReviewClick = (e, courseId) => {
-    e.stopPropagation(); // 카드 onClick 막기
-    onClose?.(); // 바텀시트 닫기
+    e.stopPropagation();
+    onClose?.();
     navigate(`/course-review/${courseId}`);
   };
 
@@ -671,7 +671,6 @@ const CourseSearchBottomSheet = ({
     const { mode } = modalState;
 
     if (mode === "conflict") {
-      // 교체하기
       setModalState((prev) => ({ ...prev, visible: false }));
       resolveConflict("REPLACE");
       return;
@@ -684,7 +683,6 @@ const CourseSearchBottomSheet = ({
       if (lastAddedInfo && onTimetableAdded) {
         onTimetableAdded(lastAddedInfo); // { courseId, itemId }
       } else if (onTimetableAdded) {
-        // 혹시 모르니 fallback
         onTimetableAdded();
       }
 
@@ -701,7 +699,6 @@ const CourseSearchBottomSheet = ({
     const { mode } = modalState;
 
     if (mode === "conflict") {
-      // 유지하기
       setModalState((prev) => ({ ...prev, visible: false }));
       resolveConflict("KEEP");
       return;
@@ -735,16 +732,31 @@ const CourseSearchBottomSheet = ({
         return;
       }
 
-      if (data.createdEventCount > 0 || !("conflict" in data)) {
-        // 🔥 바로 추가 성공 → 여기서 itemId 저장
+      // 🔥 성공 응답 (conflict=false) 에는 itemId가 반드시 포함된다고 가정
+      if (data.createdEventCount > 0 && data.itemId != null) {
         setLastAddedInfo({
           courseId,
-          itemId: data.itemId ?? null,
+          itemId: data.itemId,
         });
         setModalState({
           visible: true,
           mode: "added",
           message: "시간표에 강의가 추가되었어요.",
+        });
+        return;
+      }
+
+      // createdEventCount는 있는데 itemId가 없다면, 삭제 기능이 깨지므로 에러로 처리
+      if (data.createdEventCount > 0 && data.itemId == null) {
+        console.error(
+          "강의 추가 응답에 itemId가 없습니다. 삭제 기능에 필요한 값입니다.",
+          data
+        );
+        setLastAddedInfo(null);
+        setModalState({
+          visible: true,
+          mode: "error",
+          message: "강의는 추가되었지만, 이후 삭제를 위한 정보가 누락되었습니다.",
         });
         return;
       }
@@ -837,7 +849,7 @@ const CourseSearchBottomSheet = ({
               })}
             </div>
 
-            {/* 전공/교양, 학년, 학점, 시간 제외한 필터 입력 박스 (지금은 keyword만) */}
+            {/* keyword 입력 박스 */}
             {activeFilterConfig &&
               activeFilterConfig.key !== "type" &&
               activeFilterConfig.key !== "year" &&

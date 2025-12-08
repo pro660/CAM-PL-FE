@@ -30,6 +30,31 @@ const WEEKDAY_KR_LONG = [
   "토요일",
 ];
 
+// 🔥 courseId → itemId 매핑을 localStorage에 저장/복원
+const TIMETABLE_ITEM_MAP_KEY = "timetable_item_map";
+
+function loadItemMapFromStorage() {
+  try {
+    const raw = localStorage.getItem(TIMETABLE_ITEM_MAP_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object") {
+      return parsed;
+    }
+  } catch (e) {
+    console.error("timetable_item_map 파싱 실패:", e);
+  }
+  return {};
+}
+
+function saveItemMapToStorage(map) {
+  try {
+    localStorage.setItem(TIMETABLE_ITEM_MAP_KEY, JSON.stringify(map));
+  } catch (e) {
+    console.error("timetable_item_map 저장 실패:", e);
+  }
+}
+
 // 🔔 시간표 과목 삭제 팝업 (Delete_schdule 스타일 재사용)
 const TimetableDeleteModal = ({
   visible,
@@ -107,11 +132,13 @@ export default function MyPage() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showUnregisterModal, setShowUnregisterModal] = useState(false);
 
-  // 🔥 과목ID -> itemId 매핑 (과목 추가 API 성공 시 세팅)
+  // 🔥 과목ID -> itemId 매핑 (localStorage와 동기화)
   // 예: { [courseId]: itemId }
-  const [timetableItemMap, setTimetableItemMap] = useState({});
+  const [timetableItemMap, setTimetableItemMap] = useState(() =>
+    loadItemMapFromStorage()
+  );
 
-  // 🔥 삭제 대상(블록 클릭 시 세팅)  { itemId, title, timeLabel }
+  // 🔥 삭제 대상(블록 클릭 시 세팅)  { courseId, itemId, title, timeLabel }
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
@@ -150,7 +177,7 @@ export default function MyPage() {
       setIsCourseSheetOpen(true);
     }
 
-    // 한 번 사용한 뒤에는 history state를 정리 (뒤로가기 시 계속 열리는 것 방지)
+    // history state 정리
     if (
       location.state?.openCourseSearchSheet &&
       window.history?.replaceState
@@ -204,20 +231,40 @@ export default function MyPage() {
     });
   };
 
+  // 🔥 itemMap 업데이트 + localStorage 동기화 함수
+  const upsertItemMap = useCallback((courseId, itemId) => {
+    if (!courseId || !itemId) return;
+    setTimetableItemMap((prev) => {
+      const next = {
+        ...prev,
+        [courseId]: itemId,
+      };
+      saveItemMapToStorage(next);
+      return next;
+    });
+  }, []);
+
+  const removeFromItemMap = useCallback((courseId) => {
+    if (!courseId) return;
+    setTimetableItemMap((prev) => {
+      if (!prev || !(courseId in prev)) return prev;
+      const next = { ...prev };
+      delete next[courseId];
+      saveItemMapToStorage(next);
+      return next;
+    });
+  }, []);
+
   /**
    * ⛳ 바텀시트에서 "시간표 추가" 성공 시 호출되는 콜백
    *
    * SearchSheet.jsx 쪽에서:
-   *   onTimetableAdded?.({ courseId: 선택한과목.id, itemId: res.data.itemId });
-   * 이렇게 넘겨준다고 가정.
+   *   onTimetableAdded?.({ courseId, itemId })
+   * 이렇게 넘겨줌.
    */
   const handleTimetableAdded = (info) => {
-    // info: { courseId, itemId }
     if (info && info.courseId && info.itemId) {
-      setTimetableItemMap((prev) => ({
-        ...prev,
-        [info.courseId]: info.itemId,
-      }));
+      upsertItemMap(info.courseId, info.itemId);
       console.log("🧩 itemId 매핑 추가:", info.courseId, "→", info.itemId);
     }
 
@@ -243,9 +290,10 @@ export default function MyPage() {
   };
 
   // 🔥 시간표 블록 클릭 → 무조건 삭제 모달 오픈
-  // block: { itemId, title, timeLabel }
+  // block: { courseId, itemId, title, timeLabel }
   const handleTimetableBlockClick = (block) => {
     setDeleteTarget({
+      courseId: block?.courseId,
       itemId: block?.itemId,
       title: block?.title,
       timeLabel: block?.timeLabel,
@@ -263,10 +311,27 @@ export default function MyPage() {
     console.log("🗑 삭제 요청 deleteTarget :", deleteTarget);
 
     const itemId = deleteTarget?.itemId;
+    const courseId = deleteTarget?.courseId;
+
+    // 🔥 itemId가 없으면 API 호출 자체를 막아서 500 방지
+    if (!itemId) {
+      console.error(
+        "삭제할 itemId가 없습니다. 아마 매핑이 없는 과목일 수 있습니다.",
+        deleteTarget
+      );
+      setDeleteTarget(null);
+      return;
+    }
 
     setDeleteLoading(true);
     try {
       await api.delete(`/timetable/items/${itemId}`);
+
+      // 🔥 매핑에서도 제거
+      if (courseId) {
+        removeFromItemMap(courseId);
+      }
+
       await loadTimetable();
     } catch (e) {
       console.error("시간표 과목 삭제 실패:", e);
@@ -303,7 +368,7 @@ export default function MyPage() {
           courses={courses}
           previewCourse={previewCourse}
           onBlockClick={handleTimetableBlockClick}
-          itemMap={timetableItemMap} // 🔥 여기!
+          itemMap={timetableItemMap}
         />
       </section>
 

@@ -50,11 +50,13 @@ function buildDayColumns(courses = [], itemMap = {}) {
         ((clampedEnd - clampedStart) / TOTAL_MINUTES) * 100;
 
       // ✅ 이 과목에 대응되는 itemId (추가 API에서 받은 값)
-      const itemId = itemMap[course.id] ?? null;
+      const courseId = course.id;
+      const itemId = courseId ? itemMap[courseId] : undefined;
 
       columns[dayIndex].push({
         // React key용 id (course 기준 고유값)
         id: `${course.id}-${idx}-${t.dayOfWeek}-${t.startTime}`,
+        courseId,
         itemId,
         title: course.name,
         room: t.room,
@@ -163,10 +165,11 @@ export default function MyTimetable({
                         top: `${block.topPercent}%`,
                         height: `${block.heightPercent}%`,
                       }}
-                      // ✅ 네 말대로: 클릭하면 무조건 부모로 전달 → 부모에서 모달 띄움
+                      // ✅ 클릭 시 courseId + itemId 모두 부모로 전달
                       onClick={() =>
                         onBlockClick &&
                         onBlockClick({
+                          courseId: block.courseId,
                           itemId: block.itemId,
                           title: block.title,
                           timeLabel: block.timeLabel,
