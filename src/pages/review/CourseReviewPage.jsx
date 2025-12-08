@@ -14,7 +14,11 @@ import { useLoading } from "../../context/LoadingContext.jsx";
 import CourseReviewHeaderSection from "./CourseReviewHeaderSection.jsx";
 import CourseReviewListSection from "./CourseReviewListSection.jsx";
 import CourseReviewWriteSection from "./CourseReviewWriteSection.jsx";
-import ReviewConfirmModal from "../../components/review/ReviewConfirmModal.jsx";
+
+// ✅ 공통 모달 (등록/수정/삭제 완료용)
+import ReviewResultModal from "../../components/review/ReviewResultModal.jsx";
+// ✅ 강의평 삭제 확인 모달
+import CourseReviewDeleteModal from "../../components/review/CourseReviewDeleteModal.jsx";
 
 export default function CourseReviewPage() {
   const { courseId } = useParams(); // ex) /course-review/:courseId
@@ -25,19 +29,26 @@ export default function CourseReviewPage() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // 작성/수정 폼
   const [newContent, setNewContent] = useState("");
   const [newRating, setNewRating] = useState(0); // 0 ~ 5, 0.5 단위
   const [submitting, setSubmitting] = useState(false);
 
-  // 수정/삭제 관련 상태
-  const [editingReview, setEditingReview] = useState(null);      // 내가 수정 중인 리뷰 객체
-  const [deleteTargetReview, setDeleteTargetReview] = useState(null); // 삭제 대상 리뷰
+  // 어떤 리뷰를 수정 중인지 (null이면 새로 작성 모드)
+  const [editingReview, setEditingReview] = useState(null);
+
+  // 삭제 모달 상태
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [showEditSuccessModal, setShowEditSuccessModal] =
-    useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  // 결과 모달 상태 (등록/수정/삭제 공용)
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [resultMessage, setResultMessage] = useState("");
 
   const courseName = course?.name || "강의명";
 
+  /** 강의 + 강의평 전체 재조회 */
   const loadCourse = useCallback(async () => {
     if (!courseId) return;
 
@@ -65,98 +76,64 @@ export default function CourseReviewPage() {
     navigate(-1);
   };
 
-  // 작성/수정 가능 조건
+  const isEditMode = !!editingReview;
+
   const canSubmit = useMemo(() => {
-    return (
-      newRating > 0 &&
-      newContent.trim().length > 0 &&
-      !submitting
-    );
+    return newRating > 0 && newContent.trim().length > 0 && !submitting;
   }, [newRating, newContent, submitting]);
 
   /** 리스트에서 "수정" 아이콘 클릭 */
-  const handleEditReview = useCallback((review) => {
+  const handleEditReview = (review) => {
+    if (!review) return;
     setEditingReview(review);
-    setNewContent(review.content || "");
     setNewRating(review.rating || 0);
+    setNewContent(review.content || "");
+  };
 
-    // 작성 섹션으로 스크롤 (옵션)
-    const writeSection = document.querySelector(".cr-write-wrapper");
-    if (writeSection) {
-      writeSection.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }
-  }, []);
+  /** 리스트에서 "삭제" 아이콘 클릭 */
+  const handleRequestDeleteReview = (review) => {
+    if (!review) return;
+    setDeleteTarget(review);
+    setShowDeleteModal(true);
+  };
 
-  /** 리스트에서 "삭제" 아이콘 클릭 → 모달 오픈 */
-  const handleDeleteReviewRequest = useCallback((review) => {
-    setDeleteTargetReview(review);
-  }, []);
-
-  /** 삭제 모달에서 확인 클릭 → 삭제 API 호출 */
-  const handleConfirmDeleteReview = useCallback(async () => {
-    if (!courseId || !deleteTargetReview) return;
-
+  /** 삭제 모달에서 "삭제하기" 버튼 */
+  const handleConfirmDeleteReview = async () => {
+    if (!courseId || !deleteTarget) return;
     setDeleteLoading(true);
+
     try {
-      // 삭제 API: DELETE /api/courses/reviews/me/{courseId}
+      // ✅ 강의평 삭제 API
       await api.delete(`/courses/reviews/me/${courseId}`);
 
-      const targetKey =
-        deleteTargetReview.id || deleteTargetReview.createdAt;
+      // ✅ 삭제 후 강의 + 강의평 재조회
+      await loadCourse();
 
-      // 로컬 리뷰 목록에서 제거
-      setReviews((prev) =>
-        prev.filter(
-          (r) => (r.id || r.createdAt) !== targetKey
-        )
-      );
+      // 만약 삭제한 리뷰를 수정 중이었다면 폼 초기화
+      if (editingReview && editingReview.id === deleteTarget.id) {
+        setEditingReview(null);
+        setNewContent("");
+        setNewRating(0);
+      }
 
-      // 평균 / 개수 갱신
-      setCourse((prev) => {
-        if (!prev) return prev;
-        const prevCount = prev.ratingCount || 0;
-        const prevAvg = prev.ratingAvg || 0;
-        const targetRating = deleteTargetReview.rating || 0;
-
-        if (prevCount <= 1) {
-          return {
-            ...prev,
-            ratingCount: 0,
-            ratingAvg: 0,
-          };
-        }
-
-        const newCount = prevCount - 1;
-        const newAvg =
-          (prevAvg * prevCount - targetRating) / newCount;
-
-        return {
-          ...prev,
-          ratingCount: newCount,
-          ratingAvg: newAvg,
-        };
-      });
-
-      // 혹시 삭제 대상이 현재 수정 중인 리뷰라면 상태 리셋
-      setEditingReview((prev) => {
-        if (!prev) return prev;
-        const prevKey = prev.id || prev.createdAt;
-        return prevKey === targetKey ? null : prev;
-      });
-
-      setNewContent("");
-      setNewRating(0);
+      setResultMessage("강의평이 삭제되었습니다!");
+      setShowResultModal(true);
     } catch (err) {
       console.error("강의평 삭제 실패:", err);
       alert("강의평 삭제 중 오류가 발생했어요.");
     } finally {
       setDeleteLoading(false);
-      setDeleteTargetReview(null);
+      setShowDeleteModal(false);
+      setDeleteTarget(null);
     }
-  }, [courseId, deleteTargetReview]);
+  };
+
+  /** 삭제 모달에서 "취소" 버튼 */
+  const handleCancelDeleteReview = () => {
+    if (deleteLoading) return;
+    setShowDeleteModal(false);
+    setDeleteTarget(null);
+  };
 
   /** 평가하기 / 수정하기 버튼 클릭 */
   const handleSubmitReview = async () => {
@@ -166,79 +143,6 @@ export default function CourseReviewPage() {
       return;
     }
 
-    // === 수정 모드 ===
-    if (editingReview) {
-      setSubmitting(true);
-      try {
-        const body = {
-          rating: newRating,
-          content: newContent.trim(),
-        };
-
-        // 수정 API: PUT /api/courses/reviews/{courseId}
-        const res = await api.put(
-          `/courses/reviews/${courseId}`,
-          body
-        );
-        const updated = res.data ?? {
-          ...editingReview,
-          ...body,
-        };
-
-        const targetKey =
-          editingReview.id || editingReview.createdAt;
-
-        // 로컬 리뷰 목록 갱신
-        setReviews((prev) =>
-          prev.map((r) =>
-            (r.id || r.createdAt) === targetKey
-              ? {
-                  ...r,
-                  rating: updated.rating,
-                  content: updated.content,
-                  createdAt:
-                    updated.createdAt || r.createdAt,
-                }
-              : r
-          )
-        );
-
-        // 평균 갱신: (기존 합 - old + new) / count
-        setCourse((prev) => {
-          if (!prev) return prev;
-          const prevCount = prev.ratingCount || 0;
-          const prevAvg = prev.ratingAvg || 0;
-          if (prevCount <= 0) {
-            return {
-              ...prev,
-              ratingCount: 1,
-              ratingAvg: updated.rating,
-            };
-          }
-          const oldRating = editingReview.rating || 0;
-          const newAvg =
-            (prevAvg * prevCount - oldRating + updated.rating) /
-            prevCount;
-
-          return {
-            ...prev,
-            ratingAvg: newAvg,
-          };
-        });
-
-        setShowEditSuccessModal(true);
-        setEditingReview(null);
-        // newContent/newRating는 수정된 값 그대로 둠
-      } catch (err) {
-        console.error("강의평 수정 실패:", err);
-        alert("강의평 수정 중 오류가 발생했어요.");
-      } finally {
-        setSubmitting(false);
-      }
-      return;
-    }
-
-    // === 신규 등록 모드 ===
     setSubmitting(true);
     try {
       const body = {
@@ -246,50 +150,47 @@ export default function CourseReviewPage() {
         content: newContent.trim(),
       };
 
-      const res = await api.post(
-        `/courses/reviews/${courseId}`,
-        body
-      );
-      const created = res.data ?? body;
+      if (isEditMode) {
+        // ✅ 수정 API
+        await api.put(`/courses/reviews/${courseId}`, body);
 
-      // 로컬 리뷰 목록 맨 위에 추가
-      setReviews((prev) => [created, ...prev]);
+        // ✅ 수정 후 강의 + 강의평 재조회
+        await loadCourse();
 
-      // 평균 / 개수 갱신 (대략적으로 계산)
-      setCourse((prev) => {
-        if (!prev) return prev;
-        const prevCount = prev.ratingCount || 0;
-        const prevAvg = prev.ratingAvg || 0;
-        const newCount = prevCount + 1;
-        const newAvg =
-          (prevAvg * prevCount +
-            (created.rating ?? newRating)) /
-          newCount;
-        return {
-          ...prev,
-          ratingCount: newCount,
-          ratingAvg: newAvg,
-        };
-      });
+        setResultMessage("강의평이 수정되었습니다!");
+      } else {
+        // ✅ 등록 API
+        await api.post(`/courses/reviews/${courseId}`, body);
 
+        // ✅ 등록 후 강의 + 강의평 재조회
+        await loadCourse();
+
+        setResultMessage("강의평이 등록되었습니다!");
+      }
+
+      // 폼 초기화
       setNewContent("");
       setNewRating(0);
-      alert("강의평이 등록되었어요.");
+      setEditingReview(null);
+
+      // 결과 모달 노출
+      setShowResultModal(true);
     } catch (err) {
-      console.error("강의평 등록 실패:", err);
-      alert("강의평 등록 중 오류가 발생했어요.");
+      console.error("강의평 저장 실패:", err);
+      alert(
+        isEditMode
+          ? "강의평 수정 중 오류가 발생했어요."
+          : "강의평 등록 중 오류가 발생했어요."
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
-  const submitButtonLabel = editingReview
-    ? submitting
-      ? "수정 중..."
-      : "수정하기"
-    : submitting
-    ? "등록 중..."
-    : "평가하기";
+  /** 결과 모달 닫기 */
+  const handleCloseResultModal = () => {
+    setShowResultModal(false);
+  };
 
   return (
     <div className="course-review-page">
@@ -325,7 +226,7 @@ export default function CourseReviewPage() {
               reviews={reviews}
               semesterCode={course.semesterCode}
               onEditReview={handleEditReview}
-              onDeleteReview={handleDeleteReviewRequest}
+              onDeleteReview={handleRequestDeleteReview}
             />
 
             {/* 3. 강의평 쓰기 섹션 */}
@@ -336,7 +237,7 @@ export default function CourseReviewPage() {
               onRatingChange={setNewRating}
             />
 
-            {/* 하단 평가하기 / 수정하기 버튼 */}
+            {/* 하단 버튼: 작성/수정 공용 */}
             <div className="course-review-submit-wrap">
               <button
                 type="button"
@@ -344,36 +245,32 @@ export default function CourseReviewPage() {
                 onClick={handleSubmitReview}
                 disabled={!canSubmit}
               >
-                {submitButtonLabel}
+                {submitting
+                  ? isEditMode
+                    ? "수정 중..."
+                    : "등록 중..."
+                  : isEditMode
+                  ? "수정하기"
+                  : "평가하기"}
               </button>
             </div>
           </>
         )}
       </main>
 
-      {/* 삭제 확인 모달 */}
-      <ReviewConfirmModal
-        visible={!!deleteTargetReview}
-        message="해당 강의평을 삭제하시겠습니까?"
-        confirmText={deleteLoading ? "삭제 중..." : "삭제하기"}
-        cancelText="취소"
+      {/* ✅ 삭제 확인 모달 (강의평 삭제) */}
+      <CourseReviewDeleteModal
+        visible={showDeleteModal}
         loading={deleteLoading}
         onConfirm={handleConfirmDeleteReview}
-        onCancel={() => {
-          if (deleteLoading) return;
-          setDeleteTargetReview(null);
-        }}
+        onCancel={handleCancelDeleteReview}
       />
 
-      {/* 수정 완료 모달 */}
-      <ReviewConfirmModal
-        visible={showEditSuccessModal}
-        message="강의평이 수정되었습니다!"
-        confirmText="확인"
-        cancelText={null} // 취소 버튼 숨김
-        loading={false}
-        onConfirm={() => setShowEditSuccessModal(false)}
-        onCancel={() => setShowEditSuccessModal(false)}
+      {/* ✅ 등록/수정/삭제 결과 모달 (확인 버튼 1개) */}
+      <ReviewResultModal
+        visible={showResultModal}
+        message={resultMessage}
+        onClose={handleCloseResultModal}
       />
     </div>
   );

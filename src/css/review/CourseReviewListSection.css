@@ -32,7 +32,7 @@
   border-top: none;
 }
 
-/* 상단: 별점 + 액션 아이콘 */
+/* 상단: 별점 + 아이콘들 */
 .cr-review-card-top {
   display: flex;
   align-items: center;
@@ -65,24 +65,23 @@
   position: absolute;
   left: 0;
   top: 0;
-  color: #ffc94a;        /* 채운 별 색 */
-  overflow: hidden;      /* width로 잘라낼 부분 숨기기 */
-  white-space: nowrap;   /* 별 문자 줄바꿈 방지 */
+  color: #ffc94a;       /* 채운 별 색 */
+  overflow: hidden;     /* width로 잘라낼 부분 숨기기 */
+  white-space: nowrap;  /* 별 문자 줄바꿈 방지 */
 }
 
-/* 액션 아이콘 영역 */
+/* 상단 아이콘 영역 */
 .cr-review-actions {
   display: flex;
+  align-items: center;
   gap: 0.25rem;
 }
 
 .cr-review-icon-btn {
-  padding: 0;
-  margin: 0;
   border: none;
   background: none;
+  padding: 0;
   cursor: pointer;
-  line-height: 0;
 }
 
 .cr-review-icon-img {
@@ -95,7 +94,7 @@
 .cr-review-semester {
   font-size: 0.75rem;
   color: #888888;
-  margin-bottom: 0.25rem;
+  margin: 0.15rem 0 0.25rem;
 }
 
 .cr-review-content {

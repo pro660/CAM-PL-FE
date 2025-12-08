@@ -94,6 +94,7 @@
 }
 
 .cr-header-info-row dd {
+  margin-left: 0.5rem;
   margin: 0;
   flex: 1;
   color: #444444;

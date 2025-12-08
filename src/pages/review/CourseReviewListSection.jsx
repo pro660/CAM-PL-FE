@@ -3,7 +3,7 @@ import React, { useMemo } from "react";
 import "../../css/review/CourseReviewListSection.css";
 import StarRatingDisplay from "../../components/review/StarRatingDisplay.jsx";
 
-// 실제 아이콘 경로 (프로젝트 구조 기준으로 맞게 사용)
+// 아이콘 경로 (실제 프로젝트 기준으로 맞게 수정)
 import EDIT_ICON_SRC from "../../images/calendar/edit.svg";
 import DELETE_ICON_SRC from "../../images/calendar/trash.svg";
 
@@ -24,7 +24,7 @@ const formatSemesterLabel = (semesterCode) => {
 export default function CourseReviewListSection({
   reviews = [],
   semesterCode,
-  onEditReview,   // (review) => void
+  onEditReview, // (review) => void
   onDeleteReview, // (review) => void
 }) {
   const semesterLabel = useMemo(
@@ -51,8 +51,11 @@ export default function CourseReviewListSection({
       ) : (
         <div className="cr-review-list">
           {sortedReviews.map((review) => {
-            // 🔥 백엔드에서 내려주는 mine 필드로 내 리뷰 여부 판단
-            const isMine = review.mine === true;
+            const isMine =
+              review.mine ??
+              review.isMine ??
+              review.ownedByMe ??
+              false;
 
             return (
               <article
