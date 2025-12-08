@@ -223,18 +223,9 @@ const HomePage = () => {
           .filter((d) => d._dValue !== null);
 
         if (withParsed.length > 0) {
-          // 1단계: 0~5일 이내 일정만 우선
-          let candidate = withParsed.filter(
-            (d) => d._dValue >= 0 && d._dValue <= 5
-          );
-
-          // 2단계: 5일 이내가 하나도 없으면 전체 사용
-          if (candidate.length === 0) {
-            candidate = withParsed;
-          }
-
-          // 3단계: 가장 가까운 일정 순으로 정렬
-          candidate.sort((a, b) => {
+          // 🔥 기간 제한 없이 전체 ddays 사용
+          //    → 가장 가까운 일정 순(일수 오름차순) + 원래 순서 보정
+          const candidate = [...withParsed].sort((a, b) => {
             if (a._dValue !== b._dValue) {
               return a._dValue - b._dValue;
             }
