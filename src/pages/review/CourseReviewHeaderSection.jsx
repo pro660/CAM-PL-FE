@@ -55,24 +55,28 @@ const formatCourseTime = (times = []) => {
 /** ⭐ 별점 표시용 (읽기 전용, 0.5 단위) */
 function StarRatingDisplay({ value = 0 }) {
   const safeValue = Math.max(0, Math.min(5, value || 0));
+
   const stars = Array.from({ length: 5 }, (_, idx) => {
     const starIndex = idx + 1;
-    let fill = 0;
+    let fillPercent = "0%";
 
     if (safeValue >= starIndex) {
-      fill = 100; // 꽉 찬 별
+      fillPercent = "100%"; // 꽉 찬 별
     } else if (safeValue >= starIndex - 0.5) {
-      fill = 50; // 반 별
-    } else {
-      fill = 0; // 빈 별
+      fillPercent = "50%"; // 반 별
     }
 
     return (
-      <span
-        key={starIndex}
-        className="cr-star"
-        style={{ "--star-fill": `${fill}%` }}
-      />
+      <span key={starIndex} className="cr-star">
+        {/* 리스트와 동일한 구조 */}
+        <span className="cr-star-base">★</span>
+        <span
+          className="cr-star-fill"
+          style={{ width: fillPercent }}
+        >
+          ★
+        </span>
+      </span>
     );
   });
 

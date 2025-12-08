@@ -47,13 +47,13 @@
   color: #888888;
 }
 
-/* ⭐ 입력용 별점 (헤더/리스트와 동일한 스타일) */
+/* ⭐ 입력용 별점 – 리스트/헤더와 동일한 구조 + 버튼 인터랙션 */
 .cr-star-input-row {
   display: inline-flex;
-  gap: 0.1rem; /* .cr-star-row, .cr-list-star-row와 동일 간격 */
+  gap: 0.1rem; /* 리스트(.cr-list-star-row)와 동일 간격 */
 }
 
-/* 버튼 하나 = 별 하나 (스타일은 .cr-star와 동일) */
+/* 버튼 하나 = 별 하나 (컨테이너) */
 .cr-star-input {
   position: relative;
   padding: 0;
@@ -62,29 +62,26 @@
   background: transparent;
   cursor: pointer;
 
-  font-size: 1.1rem;   /* 헤더 별 크기(.cr-star)와 동일 */
+  font-size: 1.4rem;  /* 작성 시는 좀 더 크게 */
   line-height: 1;
-  color: #e0e0e0;      /* 빈 별 색 */
 
   outline: none;
 }
 
-/* 빈 별 모양 */
-.cr-star-input::before {
-  content: "★";
+/* 빈 별 */
+.cr-star-input-base {
+  color: #e0e0e0;
 }
 
-/* 채워진 별 – 가로로 잘라서 일부만 보여줌 (헤더와 동일 방식) */
-.cr-star-input::after {
-  content: "★";
+/* 채워진 별 – width로 잘라내는 방식 (리스트와 동일) */
+.cr-star-input-fill {
   position: absolute;
   left: 0;
   top: 0;
-
-  color: #ffc94a;               /* 채운 별 색 */
-  width: var(--star-fill, 0%);  /* 0, 50, 100% 등 JS에서 지정 */
-  overflow: hidden;             /* 오른쪽 잘라내기 */
+  color: #ffc94a;
+  overflow: hidden;
   white-space: nowrap;
+  /* width는 인라인 스타일에서 설정: style={{ width: '0%', '50%', '100%' }} */
 }
 
 /* 살짝 터치 피드백 */

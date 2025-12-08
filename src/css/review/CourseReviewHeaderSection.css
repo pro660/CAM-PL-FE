@@ -39,34 +39,34 @@
   color: #888888;
 }
 
-/* ⭐ 별점 표시 (읽기 전용) */
+/* ⭐ 별점 표시 (읽기 전용) – 리스트와 동일한 방식으로 렌더링 */
 .cr-star-row {
   display: inline-flex;
-  gap: 0.1rem;
+  gap: 0.1rem; /* 리스트(.cr-list-star-row)와 동일 간격 */
 }
 
+/* 별 하나 컨테이너 */
 .cr-star {
   position: relative;
   display: inline-block;
-  font-size: 1.1rem; /* 별 크기 */
+  font-size: 1.1rem;  /* 헤더에서는 살짝 크게 */
   line-height: 1;
-  color: #e0e0e0;    /* 빈 별 색 */
 }
 
 /* 빈 별 */
-.cr-star::before {
-  content: "★";
+.cr-star-base {
+  color: #e0e0e0;
 }
 
-/* 채워진 별 – 가로로 잘라서 일부만 보여줌 */
-.cr-star::after {
-  content: "★";
+/* 채워진 별 – width로 잘라내는 방식 (리스트와 동일) */
+.cr-star-fill {
   position: absolute;
   left: 0;
   top: 0;
-  color: #ffc94a;                    /* 채운 별 색 */
-  width: var(--star-fill, 0%);       /* 0, 50, 100% */
-  overflow: hidden;                  /* 오른쪽 잘라내기 */
+  color: #ffc94a;
+  overflow: hidden;
+  white-space: nowrap;
+  /* width는 인라인 스타일에서 설정: style={{ width: '0%', '50%', '100%' }} */
 }
 
 /* 과목 상세 카드 */
