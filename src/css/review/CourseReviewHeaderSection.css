@@ -1,4 +1,3 @@
-/* CourseReviewHeaderSection.css */
 /* 상단 과목 정보 섹션 전체 배경 (연한 회색) */
 .cr-header-wrapper {
   background-color: #f5f5f7;
@@ -39,17 +38,16 @@
   color: #888888;
 }
 
-/* ⭐ 별점 표시 (읽기 전용) – 리스트와 동일한 방식으로 렌더링 */
+/* ⭐ 헤더별점: 리스트와 동일한 width + overflow 방식, 클래스만 다름 */
 .cr-star-row {
   display: inline-flex;
-  gap: 0.1rem; /* 리스트(.cr-list-star-row)와 동일 간격 */
+  gap: 0.1rem; /* .cr-list-star-row와 동일 */
 }
 
-/* 별 하나 컨테이너 */
 .cr-star {
   position: relative;
   display: inline-block;
-  font-size: 1.1rem;  /* 헤더에서는 살짝 크게 */
+  font-size: 1.1rem; /* 헤더는 살짝 크게 */
   line-height: 1;
 }
 
@@ -58,7 +56,7 @@
   color: #e0e0e0;
 }
 
-/* 채워진 별 – width로 잘라내는 방식 (리스트와 동일) */
+/* 채워진 별 – width로 잘라내기 (리스트와 동일) */
 .cr-star-fill {
   position: absolute;
   left: 0;
@@ -66,7 +64,7 @@
   color: #ffc94a;
   overflow: hidden;
   white-space: nowrap;
-  /* width는 인라인 스타일에서 설정: style={{ width: '0%', '50%', '100%' }} */
+  /* width는 인라인 스타일로 0 / 50 / 100% 설정 */
 }
 
 /* 과목 상세 카드 */

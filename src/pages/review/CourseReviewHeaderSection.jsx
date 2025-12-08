@@ -100,7 +100,7 @@ export default function CourseReviewHeaderSection({ course }) {
           <div className="cr-header-rating-wrap">
             <span className="cr-header-rating-number">{avgText}</span>
 
-            {/* ⭐ 공용 별 컴포넌트 사용, 헤더용 클래스 지정 */}
+            {/* 리스트와 동일한 StarRatingDisplay, 헤더용 클래스만 지정 */}
             <StarRatingDisplay
               value={ratingAvg || 0}
               rowClass="cr-star-row"
