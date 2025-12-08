@@ -3,7 +3,10 @@ import "../../css/review/CourseReviewWriteSection.css";
 
 /** 입력용 별점 (0.5 단위 클릭) */
 function StarRatingInput({ value = 0, onChange }) {
-  const safeValue = Math.max(0, Math.min(5, value || 0));
+  const safeValue = Math.max(
+    0,
+    Math.min(5, typeof value === "number" ? value : 0)
+  );
 
   const handleClick = (index, e) => {
     if (!onChange) return;
@@ -23,9 +26,9 @@ function StarRatingInput({ value = 0, onChange }) {
     let fill = 0;
     const diff = safeValue - (i - 1);
 
-    if (diff >= 1) fill = 100;       // 꽉 찬 별
+    if (diff >= 1) fill = 100; // 꽉 찬 별
     else if (diff >= 0.5) fill = 50; // 반 별
-    else fill = 0;                   // 빈 별
+    else fill = 0; // 빈 별
 
     stars.push(
       <button
@@ -59,7 +62,10 @@ export default function CourseReviewWriteSection({
     onContentChange?.(e.target.value);
   };
 
-  const safeRating = typeof rating === "number" ? rating : 0;
+  const safeRating =
+    typeof rating === "number"
+      ? Math.max(0, Math.min(5, rating))
+      : 0;
   const ratingText = `${safeRating.toFixed(1)} / 5.0`;
 
   return (
@@ -77,10 +83,7 @@ export default function CourseReviewWriteSection({
       </div>
 
       <div className="cr-write-rating-row">
-        <StarRatingInput
-          value={rating}
-          onChange={onRatingChange}
-        />
+        <StarRatingInput value={rating} onChange={onRatingChange} />
         <span className="cr-write-rating-text">{ratingText}</span>
       </div>
     </section>
