@@ -3,9 +3,9 @@ import React, { useMemo } from "react";
 import "../../css/review/CourseReviewListSection.css";
 import StarRatingDisplay from "../../components/review/StarRatingDisplay.jsx";
 
-// TODO: 실제 아이콘 경로로 교체해서 사용
-const EDIT_ICON_SRC = "../../images/calendar/edit.svg";
-const DELETE_ICON_SRC = "../../images/calendar/trash.svg";
+// 아이콘 경로는 실제 프로젝트 구조에 맞게 수정
+import EDIT_ICON_SRC from "../../image/calendar/edit.svg";
+import DELETE_ICON_SRC from "../../image/calendar/trash.svg";
 
 const formatSemesterLabel = (semesterCode) => {
   if (!semesterCode) return "";
@@ -54,11 +54,10 @@ export default function CourseReviewListSection({
             const isMine =
               review.mine ?? review.isMine ?? review.ownedByMe ?? false;
 
+            const key = review.id || review.createdAt;
+
             return (
-              <article
-                key={review.id || review.createdAt}
-                className="cr-review-card"
-              >
+              <article key={key} className="cr-review-card">
                 {/* 상단: 별점 + (내 리뷰면) 수정/삭제 아이콘 */}
                 <div className="cr-review-card-top">
                   <div className="cr-review-rating-row">
