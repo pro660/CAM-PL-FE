@@ -3,7 +3,7 @@ import React, { useMemo } from "react";
 import "../../css/review/CourseReviewListSection.css";
 import StarRatingDisplay from "../../components/review/StarRatingDisplay.jsx";
 
-// ✅ 다른 곳과 맞춘 경로 (images)
+// 실제 아이콘 경로 (프로젝트 구조 기준으로 맞게 사용)
 import EDIT_ICON_SRC from "../../images/calendar/edit.svg";
 import DELETE_ICON_SRC from "../../images/calendar/trash.svg";
 
@@ -51,47 +51,48 @@ export default function CourseReviewListSection({
       ) : (
         <div className="cr-review-list">
           {sortedReviews.map((review) => {
-            const key = review.id || review.createdAt;
-
-            // 🔍 나중에 백엔드에서 mine/isMine/ownedByMe 같은 필드를 확정해주면
-            // 여기에서 다시 isMine 조건을 걸면 됨.
-            // const isMine = review.mine === true; 이런 식으로.
+            // 🔥 백엔드에서 내려주는 mine 필드로 내 리뷰 여부 판단
+            const isMine = review.mine === true;
 
             return (
-              <article key={key} className="cr-review-card">
-                {/* 상단: 별점 + 수정/삭제 아이콘 */}
+              <article
+                key={review.id || review.createdAt}
+                className="cr-review-card"
+              >
+                {/* 상단: 별점 + (내 리뷰면) 수정/삭제 아이콘 */}
                 <div className="cr-review-card-top">
                   <div className="cr-review-rating-row">
                     <StarRatingDisplay value={review.rating || 0} />
                   </div>
 
-                  {/* 🔥 지금은 아이콘이 잘 뜨는지 확인하기 위해 항상 노출 */}
-                  <div className="cr-review-actions">
-                    <button
-                      type="button"
-                      className="cr-review-icon-btn"
-                      onClick={() => onEditReview?.(review)}
-                      aria-label="강의평 수정"
-                    >
-                      <img
-                        src={EDIT_ICON_SRC}
-                        alt="수정"
-                        className="cr-review-icon-img"
-                      />
-                    </button>
-                    <button
-                      type="button"
-                      className="cr-review-icon-btn"
-                      onClick={() => onDeleteReview?.(review)}
-                      aria-label="강의평 삭제"
-                    >
-                      <img
-                        src={DELETE_ICON_SRC}
-                        alt="삭제"
-                        className="cr-review-icon-img"
-                      />
-                    </button>
-                  </div>
+                  {isMine && (
+                    <div className="cr-review-actions">
+                      <button
+                        type="button"
+                        className="cr-review-icon-btn"
+                        onClick={() => onEditReview?.(review)}
+                        aria-label="강의평 수정"
+                      >
+                        <img
+                          src={EDIT_ICON_SRC}
+                          alt="수정"
+                          className="cr-review-icon-img"
+                        />
+                      </button>
+                      <button
+                        type="button"
+                        className="cr-review-icon-btn"
+                        onClick={() => onDeleteReview?.(review)}
+                        aria-label="강의평 삭제"
+                      >
+                        <img
+                          src={DELETE_ICON_SRC}
+                          alt="삭제"
+                          className="cr-review-icon-img"
+                        />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {semesterLabel && (
