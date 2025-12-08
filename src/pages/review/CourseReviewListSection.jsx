@@ -1,189 +1,113 @@
-// src/pages/review/CourseReviewPage.jsx
-import React, { useEffect, useState, useCallback, useMemo } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import "../../css/review/CourseReviewPage.css";
+// src/pages/review/CourseReviewListSection.jsx
+import React, { useMemo } from "react";
+import "../../css/review/CourseReviewListSection.css";
+import StarRatingDisplay from "../../components/review/StarRatingDisplay.jsx";
 
-import api from "../../api/axios";
-import { useLoading } from "../../context/LoadingContext.jsx";
+// 실제 아이콘 경로 (프로젝트 구조 기준으로 맞게 사용)
+import EDIT_ICON_SRC from "../../images/calendar/edit.svg";
+import DELETE_ICON_SRC from "../../images/calendar/trash.svg";
 
-import CourseReviewHeaderSection from "./CourseReviewHeaderSection.jsx";
-import CourseReviewListSection from "./CourseReviewListSection.jsx";
-import CourseReviewWriteSection from "./CourseReviewWriteSection.jsx";
+const formatSemesterLabel = (semesterCode) => {
+  if (!semesterCode) return "";
+  const [yearStr, semStr] = semesterCode.split("-");
+  if (!yearStr || !semStr) return "";
+  const shortYear = yearStr.slice(2); // 2025 -> 25
+  const semLabel =
+    semStr === "1"
+      ? "1학기"
+      : semStr === "2"
+      ? "2학기"
+      : `${semStr}학기`;
+  return `${shortYear}년 ${semLabel} 수강자`;
+};
 
-// ✅ 새로 추가: 등록 완료 모달
-import ReviewResultModal from "../../components/review/ReviewResultModal.jsx";
+export default function CourseReviewListSection({
+  reviews = [],
+  semesterCode,
+  onEditReview,   // (review) => void
+  onDeleteReview, // (review) => void
+}) {
+  const semesterLabel = useMemo(
+    () => formatSemesterLabel(semesterCode),
+    [semesterCode]
+  );
 
-export default function CourseReviewPage() {
-  const { courseId } = useParams(); // ex) /course-review/:courseId
-  const navigate = useNavigate();
-  const { showLoading, hideLoading } = useLoading();
-
-  const [course, setCourse] = useState(null);
-  const [reviews, setReviews] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  const [newContent, setNewContent] = useState("");
-  const [newRating, setNewRating] = useState(0); // 0 ~ 5, 0.5 단위
-  const [submitting, setSubmitting] = useState(false);
-
-  const courseName = course?.name || "강의명";
-
-  // ✅ 등록 결과 모달 상태
-  const [showResultModal, setShowResultModal] = useState(false);
-  const [resultMessage, setResultMessage] = useState("");
-
-  const loadCourse = useCallback(async () => {
-    if (!courseId) return;
-
-    setLoading(true);
-    showLoading();
-    try {
-      const res = await api.get(`/courses/${courseId}`);
-      const data = res.data ?? {};
-      setCourse(data);
-      setReviews(Array.isArray(data.reviews) ? data.reviews : []);
-    } catch (err) {
-      console.error("강의 정보 조회 실패:", err);
-      alert("강의 정보를 불러오는 중 오류가 발생했어요.");
-    } finally {
-      hideLoading();
-      setLoading(false);
-    }
-  }, [courseId, showLoading, hideLoading]);
-
-  useEffect(() => {
-    loadCourse();
-  }, [loadCourse]);
-
-  const handleBack = () => {
-    navigate(-1);
-  };
-
-  const canSubmit = useMemo(() => {
-    return newRating > 0 && newContent.trim().length > 0 && !submitting;
-  }, [newRating, newContent, submitting]);
-
-  /** 평가하기 버튼 클릭 */
-  const handleSubmitReview = async () => {
-    if (!courseId) return;
-    if (!newRating || !newContent.trim()) {
-      alert("별점과 내용을 모두 입력해주세요.");
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const body = {
-        rating: newRating,
-        content: newContent.trim(),
-      };
-
-      const res = await api.post(`/courses/reviews/${courseId}`, body);
-      const created = res.data ?? body;
-
-      // 로컬 리뷰 목록 맨 위에 추가
-      setReviews((prev) => [created, ...prev]);
-
-      // 평균 / 개수 갱신 (대략적으로 계산)
-      setCourse((prev) => {
-        if (!prev) return prev;
-        const prevCount = prev.ratingCount || 0;
-        const prevAvg = prev.ratingAvg || 0;
-        const newCount = prevCount + 1;
-        const newAvg =
-          (prevAvg * prevCount + (created.rating ?? newRating)) / newCount;
-        return {
-          ...prev,
-          ratingCount: newCount,
-          ratingAvg: newAvg,
-        };
-      });
-
-      // 입력값 초기화
-      setNewContent("");
-      setNewRating(0);
-
-      // ✅ alert 대신 모달 표시
-      setResultMessage("강의평이 등록되었습니다.");
-      setShowResultModal(true);
-    } catch (err) {
-      console.error("강의평 등록 실패:", err);
-      alert("강의평 등록 중 오류가 발생했어요.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  // 모달 닫기
-  const handleCloseResultModal = () => {
-    setShowResultModal(false);
-  };
+  const sortedReviews = useMemo(() => {
+    return [...reviews].sort((a, b) => {
+      const aTime = new Date(a.createdAt || 0).getTime();
+      const bTime = new Date(b.createdAt || 0).getTime();
+      return bTime - aTime; // 최신순
+    });
+  }, [reviews]);
 
   return (
-    <div className="course-review-page">
-      {/* 상단 헤더 */}
-      <header className="course-review-topbar">
-        <button
-          type="button"
-          className="course-review-back-btn"
-          onClick={handleBack}
-          aria-label="이전 페이지로"
-        >
-          {/* 간단한 화살표 (←) */}
-          <span className="course-review-back-icon">←</span>
-        </button>
-        <h1 className="course-review-topbar-title">강의평</h1>
-      </header>
+    <section className="cr-list-wrapper">
+      <h3 className="cr-section-title">강의평</h3>
 
-      <main className="course-review-main">
-        {loading && !course ? (
-          <div className="course-review-loading">
-            강의 정보를 불러오는 중이에요...
-          </div>
-        ) : !course ? (
-          <div className="course-review-loading">
-            강의 정보를 찾을 수 없어요.
-          </div>
-        ) : (
-          <>
-            {/* 1. 과목 정보 섹션 */}
-            <CourseReviewHeaderSection course={course} />
+      {sortedReviews.length === 0 ? (
+        <p className="cr-list-empty-text">
+          아직 등록된 강의평이 없어요.
+        </p>
+      ) : (
+        <div className="cr-review-list">
+          {sortedReviews.map((review) => {
+            // 🔥 백엔드에서 내려주는 mine 필드로 내 리뷰 여부 판단
+            const isMine = review.mine === true;
 
-            {/* 2. 강의평 리스트 섹션 */}
-            <CourseReviewListSection
-              reviews={reviews}
-              semesterCode={course.semesterCode}
-            />
-
-            {/* 3. 강의평 쓰기 섹션 */}
-            <CourseReviewWriteSection
-              content={newContent}
-              onContentChange={setNewContent}
-              rating={newRating}
-              onRatingChange={setNewRating}
-            />
-
-            {/* 하단 평가하기 버튼 */}
-            <div className="course-review-submit-wrap">
-              <button
-                type="button"
-                className="course-review-submit-btn"
-                onClick={handleSubmitReview}
-                disabled={!canSubmit}
+            return (
+              <article
+                key={review.id || review.createdAt}
+                className="cr-review-card"
               >
-                {submitting ? "등록 중..." : "평가하기"}
-              </button>
-            </div>
-          </>
-        )}
-      </main>
+                {/* 상단: 별점 + (내 리뷰면) 수정/삭제 아이콘 */}
+                <div className="cr-review-card-top">
+                  <div className="cr-review-rating-row">
+                    <StarRatingDisplay value={review.rating || 0} />
+                  </div>
 
-      {/* ✅ 등록 완료 모달 */}
-      <ReviewResultModal
-        visible={showResultModal}
-        message={resultMessage}
-        onClose={handleCloseResultModal}
-      />
-    </div>
+                  {isMine && (
+                    <div className="cr-review-actions">
+                      <button
+                        type="button"
+                        className="cr-review-icon-btn"
+                        onClick={() => onEditReview?.(review)}
+                        aria-label="강의평 수정"
+                      >
+                        <img
+                          src={EDIT_ICON_SRC}
+                          alt="수정"
+                          className="cr-review-icon-img"
+                        />
+                      </button>
+                      <button
+                        type="button"
+                        className="cr-review-icon-btn"
+                        onClick={() => onDeleteReview?.(review)}
+                        aria-label="강의평 삭제"
+                      >
+                        <img
+                          src={DELETE_ICON_SRC}
+                          alt="삭제"
+                          className="cr-review-icon-img"
+                        />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {semesterLabel && (
+                  <div className="cr-review-semester">
+                    {semesterLabel}
+                  </div>
+                )}
+                <p className="cr-review-content">
+                  {review.content || ""}
+                </p>
+              </article>
+            );
+          })}
+        </div>
+      )}
+    </section>
   );
 }
