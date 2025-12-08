@@ -94,8 +94,7 @@
 }
 
 .cr-header-info-row dd {
-  margin-left: 1.5rem;
-  margin: 0;
+  margin: 0 1rem 0 0;
   flex: 1;
   color: #444444;
   word-break: keep-all;
