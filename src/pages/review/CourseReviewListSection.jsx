@@ -4,8 +4,8 @@ import "../../css/review/CourseReviewListSection.css";
 import StarRatingDisplay from "../../components/review/StarRatingDisplay.jsx";
 
 // 아이콘 경로는 실제 프로젝트 구조에 맞게 수정
-import EDIT_ICON_SRC from "../../image/calendar/edit.svg";
-import DELETE_ICON_SRC from "../../image/calendar/trash.svg";
+import EDIT_ICON_SRC from "../../images/calendar/edit.svg";
+import DELETE_ICON_SRC from "../../images/calendar/trash.svg";
 
 const formatSemesterLabel = (semesterCode) => {
   if (!semesterCode) return "";
