@@ -1,4 +1,3 @@
-/* CourseReviewWriteSection.css */
 /* 강의평 쓰기 섹션 */
 .cr-write-wrapper {
   padding: 0.8rem 1.2rem 0.5rem;
@@ -47,10 +46,10 @@
   color: #888888;
 }
 
-/* ⭐ 입력용 별점 – 리스트/헤더와 동일한 구조 + 버튼 인터랙션 */
+/* ⭐ 입력용 별점 – 리스트와 동일한 구조 + 버튼 인터랙션 */
 .cr-star-input-row {
   display: inline-flex;
-  gap: 0.1rem; /* 리스트(.cr-list-star-row)와 동일 간격 */
+  gap: 0.1rem; /* .cr-list-star-row와 동일 */
 }
 
 /* 버튼 하나 = 별 하나 (컨테이너) */
@@ -61,16 +60,14 @@
   border: none;
   background: transparent;
   cursor: pointer;
-
-  font-size: 1.4rem;  /* 작성 시는 좀 더 크게 */
   line-height: 1;
-
+  font-size: 0.9rem; /* 리스트와 동일한 크기로 맞춤 */
   outline: none;
 }
 
 /* 빈 별 */
 .cr-star-input-base {
-  color: #e0e0e0;
+  color: #e0e0e0; /* 리스트와 동일 */
 }
 
 /* 채워진 별 – width로 잘라내는 방식 (리스트와 동일) */
@@ -78,10 +75,9 @@
   position: absolute;
   left: 0;
   top: 0;
-  color: #ffc94a;
-  overflow: hidden;
-  white-space: nowrap;
-  /* width는 인라인 스타일에서 설정: style={{ width: '0%', '50%', '100%' }} */
+  color: #ffc94a;        /* 리스트와 동일 */
+  overflow: hidden;      /* width로 반 별 잘라내기 */
+  white-space: nowrap;   /* 별 문자 줄바꿈 방지 */
 }
 
 /* 살짝 터치 피드백 */

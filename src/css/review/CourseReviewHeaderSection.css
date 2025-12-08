@@ -38,7 +38,7 @@
   color: #888888;
 }
 
-/* ⭐ 헤더별점: 리스트와 동일한 width + overflow 방식, 클래스만 다름 */
+/* ⭐ 헤더 별점 – 리스트와 동일한 구조/방식 */
 .cr-star-row {
   display: inline-flex;
   gap: 0.1rem; /* .cr-list-star-row와 동일 */
@@ -47,24 +47,21 @@
 .cr-star {
   position: relative;
   display: inline-block;
-  font-size: 1.1rem; /* 헤더는 살짝 크게 */
+  font-size: 0.9rem; /* 리스트와 동일한 크기로 맞춤 */
   line-height: 1;
 }
 
-/* 빈 별 */
 .cr-star-base {
-  color: #e0e0e0;
+  color: #e0e0e0; /* 빈 별 색 (리스트와 동일) */
 }
 
-/* 채워진 별 – width로 잘라내기 (리스트와 동일) */
 .cr-star-fill {
   position: absolute;
   left: 0;
   top: 0;
-  color: #ffc94a;
-  overflow: hidden;
-  white-space: nowrap;
-  /* width는 인라인 스타일로 0 / 50 / 100% 설정 */
+  color: #ffc94a;        /* 채운 별 색 (리스트와 동일) */
+  overflow: hidden;      /* width 로 반 별 잘라내기 */
+  white-space: nowrap;   /* 별 문자 줄바꿈 방지 */
 }
 
 /* 과목 상세 카드 */
@@ -93,7 +90,7 @@
 .cr-header-info-row dt {
   min-width: 3.2rem;
   font-weight: 600;
-  color: #8888a0;
+  color: #8A65BF;
 }
 
 .cr-header-info-row dd {

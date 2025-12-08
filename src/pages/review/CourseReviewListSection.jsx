@@ -2,6 +2,9 @@ import React, { useMemo } from "react";
 import "../../css/review/CourseReviewListSection.css";
 import StarRatingDisplay from "../../components/review/StarRatingDisplay.jsx";
 
+import TrashIcon from "../../images/calendar/trash.svg"
+import PenIcon from "../../images/calendar/edit.svg"
+
 const formatSemesterLabel = (semesterCode) => {
   if (!semesterCode) return "";
   const [yearStr, semStr] = semesterCode.split("-");
@@ -51,6 +54,8 @@ export default function CourseReviewListSection({
               <div className="cr-review-rating-row">
                 {/* ⭐ 공용 별 컴포넌트 사용 (기본 클래스 = 리스트용) */}
                 <StarRatingDisplay value={review.rating || 0} />
+                <img src={TrashIcon} alt="쓰레기통 아이콘"/>
+                <img src={PenIcon} alt="펜 아이콘"/>
               </div>
               {semesterLabel && (
                 <div className="cr-review-semester">
