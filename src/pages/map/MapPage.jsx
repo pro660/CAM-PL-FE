@@ -9,6 +9,7 @@ import ScheduleList from "../../components/map/ScheduleList";
 import NearbyPlaces from "../../components/map/NearbyPlaces";
 import RecommendModal from "../../components/map/RecommendModal";
 import PlaceEventsBar from "../../components/map/PlaceEventsBar";
+import AddScheduleConfirm from "../../components/map/AddScheduleConfirm.jsx";
 
 import api from "../../api/axios";
 import { useLoading } from "../../context/LoadingContext";
@@ -161,6 +162,10 @@ export default function MapPage() {
 
   // 추천 모달 열림 여부
   const [showRecommend, setShowRecommend] = useState(false);
+
+  // 👉 주변 시설에서 일정 추가 확인용 모달 상태
+  const [addConfirmVisible, setAddConfirmVisible] = useState(false);
+  const [pendingPlaceToAdd, setPendingPlaceToAdd] = useState(null);
 
   // 👉 오늘의 일정 칩/마커에서 선택된 장소 "키" (extractPlaceLabel 기준)
   const [selectedPlace, setSelectedPlace] = useState(null);
@@ -377,7 +382,7 @@ export default function MapPage() {
     setShowRecommend(false);
   };
 
-  // 모달에서 “일정에 추가하기” 눌렀을 때
+  // 모달에서 “일정에 추가하기” 눌렀을 때 (장소 추천 모달용)
   const handleAddToScheduleFromModal = ({ place, category }) => {
     if (!place) return;
 
@@ -393,9 +398,21 @@ export default function MapPage() {
     setShowRecommend(false);
   };
 
-  // ✅ 주변 시설 카드의 + 버튼 클릭 시
+  // ✅ 주변 시설 카드의 + 버튼 클릭 시 → 먼저 확인 모달 띄우기
   const handleClickAddPlace = (place) => {
     if (!place) return;
+    setPendingPlaceToAdd(place);
+    setAddConfirmVisible(true);
+  };
+
+  // ✅ 추가 확인 모달에서 "추가하기" 눌렀을 때 → 실제 일정 추가 동작
+  const handleConfirmAddPlace = () => {
+    if (!pendingPlaceToAdd) {
+      setAddConfirmVisible(false);
+      return;
+    }
+
+    const place = pendingPlaceToAdd;
 
     navigate("/calendar", {
       state: {
@@ -404,6 +421,15 @@ export default function MapPage() {
         },
       },
     });
+
+    setAddConfirmVisible(false);
+    setPendingPlaceToAdd(null);
+  };
+
+  // ✅ 추가 확인 모달에서 "취소" 눌렀을 때
+  const handleCancelAddPlace = () => {
+    setAddConfirmVisible(false);
+    setPendingPlaceToAdd(null);
   };
 
   // 오늘의 일정 칩 클릭 핸들러
@@ -535,6 +561,14 @@ export default function MapPage() {
         visible={showRecommend}
         onClose={handleCloseRecommend}
         onAddToSchedule={handleAddToScheduleFromModal}
+      />
+
+      {/* 주변 장소 + 아이콘 클릭 시 뜨는 "일정 추가" 확인 모달 */}
+      <AddScheduleConfirm
+        visible={addConfirmVisible}
+        place={pendingPlaceToAdd}
+        onConfirm={handleConfirmAddPlace}
+        onCancel={handleCancelAddPlace}
       />
     </div>
   );
