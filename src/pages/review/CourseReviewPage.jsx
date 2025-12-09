@@ -239,7 +239,7 @@ export default function CourseReviewPage() {
     try {
       if (isEditing) {
         // 수정
-        await api.patch(`/courses/reviews/${courseId}`, body);
+        await api.put(`/courses/reviews/${courseId}`, body);
       } else {
         // 신규 등록
         await api.post(`/courses/reviews/${courseId}`, body);
